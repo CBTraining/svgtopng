@@ -75,7 +75,7 @@
         
         <header class="text-center mb-8">
             <h1 class="text-4xl font-extrabold mb-2 gradient-text">Icon Scaler</h1>
-            <p class="text-gray-600">Paste your SVG code below to generate pixel-perfect, scaled PNGs (2x, 4x, 8x, 16x).</p>
+            <p class="text-gray-600">Paste your SVG code below or upload a file to generate pixel-perfect, scaled PNGs (2x, 4x, 8x, 16x).</p>
         </header>
 
         <!-- Input Area -->
@@ -84,6 +84,18 @@
             <textarea id="svgInput" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
                 class="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 outline-none text-text-dark text-sm transition duration-150 ease-in-out"></textarea>
             
+            <!-- File Upload Area -->
+            <div id="fileUploadArea" class="mt-4 flex items-center justify-between space-x-4">
+                <p class="text-gray-500 text-sm hidden sm:block">OR</p>
+                <!-- Hidden input that is triggered by the visible button -->
+                <input type="file" id="svgFileUploader" accept=".svg,image/svg+xml" class="hidden">
+                <button id="uploadButton" 
+                    class="flex-1 w-full px-4 py-2 text-text-dark font-bold rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-150 ease-in-out shadow-sm">
+                    <span class="mr-2 text-lg">📁</span> Upload SVG File
+                </button>
+                <p class="text-gray-500 text-sm hidden sm:block">TO</p>
+            </div>
+
             <button id="convertButton" 
                 class="mt-4 w-full md:w-auto px-6 py-3 text-white font-bold rounded-lg shadow-lg gradient-button">
                 Generate Scaled PNGs
@@ -115,6 +127,11 @@
         const resultsDiv = document.getElementById('resultsDiv');
         const resultsTitle = document.getElementById('resultsTitle');
         const messageBox = document.getElementById('messageBox');
+        
+        // New elements for file upload
+        const svgFileUploader = document.getElementById('svgFileUploader');
+        const uploadButton = document.getElementById('uploadButton');
+
 
         /**
          * Utility to show a temporary message box.
@@ -180,7 +197,7 @@
             resultsTitle.style.display = 'none';
 
             if (!svgText) {
-                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Please paste some SVG code.</p>`;
+                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Please paste some SVG code or upload an SVG file.</p>`;
                 return;
             }
 
@@ -282,6 +299,40 @@
 
         // Event Listeners
         convertButton.addEventListener('click', generateScaledImages);
+
+        // Click handler for the visible upload button to trigger the hidden file input
+        uploadButton.addEventListener('click', () => {
+            svgFileUploader.click();
+        });
+
+        // Change handler for the actual file input
+        svgFileUploader.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                // Basic check for SVG file type
+                if (file.type !== 'image/svg+xml' && !file.name.toLowerCase().endsWith('.svg')) {
+                    showMessage('Please upload a valid SVG file.', '#ef4444', '#ffffff');
+                    // Clear the file input so the same file can be selected again if needed
+                    event.target.value = ''; 
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // Populate the textarea with the file content
+                    svgInput.value = e.target.result;
+                    // Clear the file input for re-uploading the same file
+                    event.target.value = ''; 
+                    // Trigger conversion
+                    generateScaledImages();
+                };
+                reader.onerror = () => {
+                    showMessage('Error reading file.', '#ef4444', '#ffffff');
+                };
+                reader.readAsText(file);
+            }
+        });
+
 
         // Pre-fill with a sample SVG for immediate testing
         svgInput.value = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
