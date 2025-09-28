@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Scaler & PNG Converter</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Exo 2 font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Configure Tailwind with new colors and Exo 2 font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-light': '#f9fafb', // Gray 50 (Near white)
+                        'secondary-light': '#ffffff', // White
+                        'text-dark': '#1f2937', // Gray 900
+                    },
+                    fontFamily: {
+                        sans: ['Exo 2', 'sans-serif'], // Changed to Exo 2
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Set Exo 2 font globally and use the new light background */
+        body {
+            font-family: 'Exo 2', sans-serif; /* Changed to Exo 2 */
+            background-color: #f9fafb; /* Primary Light */
+            color: #1f2937; /* Text Dark */
+            min-height: 100vh;
+        }
+
+        /* Custom scrollbar for the textarea for light mode */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background-color: #d1d5db; /* Gray 300 */
+            border-radius: 4px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f3f4f6; /* Gray 100 */
+        }
+
+        /* Styling for generated images */
+        .scaled-image {
+            border: 1px solid #d1d5db; /* Light gray border */
+            image-rendering: pixelated; /* Ensures sharp scaling, especially important for icons */
+        }
+        
+        /* Gradient for accents (buttons, headers) */
+        .gradient-text {
+            background-image: linear-gradient(to right, #06b6d4, #84cc16); /* Turquoise to Lime */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-button {
+            background-image: linear-gradient(to right, #06b6d4, #84cc16);
+            transition: all 0.2s ease-in-out;
+        }
+        .gradient-button:hover {
+            opacity: 0.9;
+            box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.4), 0 2px 4px -2px rgba(132, 204, 22, 0.4);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex flex-col items-center">
+
+    <div class="w-full max-w-4xl bg-secondary-light p-6 md:p-10 rounded-xl shadow-2xl border border-gray-100">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold mb-2 gradient-text">Icon Scaler</h1>
+            <p class="text-gray-600">Paste your SVG code below to generate pixel-perfect, scaled PNGs (2x, 4x, 8x, 16x).</p>
+        </header>
+
+        <!-- Input Area -->
+        <section class="mb-8">
+            <label for="svgInput" class="block text-lg font-medium mb-2 text-text-dark">Paste SVG Code Here:</label>
+            <textarea id="svgInput" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
+                class="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 outline-none text-text-dark text-sm transition duration-150 ease-in-out"></textarea>
+            
+            <button id="convertButton" 
+                class="mt-4 w-full md:w-auto px-6 py-3 text-white font-bold rounded-lg shadow-lg gradient-button">
+                Generate Scaled PNGs
+            </button>
+        </section>
+
+        <!-- Results Area -->
+        <section id="resultsSection" class="mt-12">
+            <h2 class="text-2xl font-semibold mb-6 text-text-dark" id="resultsTitle" style="display: none;">Generated Scaled Images</h2>
+            <div id="resultsDiv" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Scaled images will be injected here -->
+            </div>
+        </section>
+
+        <!-- Notification/Message Box -->
+        <div id="messageBox" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-xl hidden transition-opacity duration-300 z-50" 
+             style="background-color: #1f2937; color: #f3f4f6;">
+            Message...
+        </div>
+
+    </div>
+
+    <script type="text/javascript">
+        // Global Constants
+        const DEFAULT_BASE_SIZE = 32;
+        const SCALES = [2, 4, 8, 16];
+        const svgInput = document.getElementById('svgInput');
+        const convertButton = document.getElementById('convertButton');
+        const resultsDiv = document.getElementById('resultsDiv');
+        const resultsTitle = document.getElementById('resultsTitle');
+        const messageBox = document.getElementById('messageBox');
+
+        /**
+         * Utility to show a temporary message box.
+         * @param {string} message - The message to display.
+         * @param {string} bgColor - CSS background color.
+         * @param {string} textColor - CSS text color.
+         */
+        function showMessage(message, bgColor = '#1f2937', textColor = '#f3f4f6') {
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = bgColor;
+            messageBox.style.color = textColor;
+            messageBox.classList.remove('hidden');
+            messageBox.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageBox.style.opacity = '0';
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
+            }, 3000); // Display for 3 seconds
+        }
+
+        /**
+         * Attempts to copy a PNG image data URL to the clipboard as an image blob.
+         * If the Clipboard API is restricted, it provides a manual instruction.
+         * @param {string} dataUrl - The base64 data URL of the PNG image.
+         */
+        async function copyImageToClipboard(dataUrl) {
+            // Message to show when automatic copy is blocked (common in iframes)
+            const blockedMessage = 'Copy blocked. Right-click the image and select "Copy Image" or "Save Image As...".';
+            
+            try {
+                const blob = await (await fetch(dataUrl)).blob();
+                
+                // Use the modern, preferred Clipboard API
+                if (navigator.clipboard && navigator.clipboard.write) {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    showMessage('Image copied to clipboard!', '#10b981', '#ffffff'); // Green for success
+                } else {
+                    // Fallback: inform user of manual alternative
+                    showMessage(blockedMessage, '#f59e0b', '#ffffff'); // Amber for warning
+                }
+            } catch (error) {
+                // Catch specific NotAllowedError (which causes the console error)
+                if (error.name === 'NotAllowedError') {
+                    // Instruct the user to use the manual method.
+                    showMessage(blockedMessage, '#f59e0b', '#ffffff'); // Amber for warning
+                    console.error("Clipboard API access denied (NotAllowedError). Instructing manual copy.", error);
+                } else {
+                    // Handle other errors
+                    showMessage('Copy failed. Check console for details.', '#ef4444', '#ffffff'); // Red for error
+                    console.error('Failed to copy image:', error);
+                }
+            }
+        }
+
+        /**
+         * Main function to generate scaled PNGs from SVG.
+         */
+        async function generateScaledImages() {
+            const svgText = svgInput.value.trim();
+            resultsDiv.innerHTML = '';
+            resultsTitle.style.display = 'none';
+
+            if (!svgText) {
+                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Please paste some SVG code.</p>`;
+                return;
+            }
+
+            convertButton.disabled = true;
+            convertButton.textContent = 'Generating...';
+
+            try {
+                const parser = new DOMParser();
+                const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+                const svgElement = svgDoc.documentElement;
+
+                // 1. Determine base dimensions
+                let baseWidth = parseInt(svgElement.getAttribute('width')) || DEFAULT_BASE_SIZE;
+                let baseHeight = parseInt(svgElement.getAttribute('height')) || DEFAULT_BASE_SIZE;
+
+                // Attempt to use viewBox for aspect ratio if width/height are missing
+                const viewBox = svgElement.getAttribute('viewBox');
+                if (viewBox && !svgElement.getAttribute('width') && !svgElement.getAttribute('height')) {
+                    const parts = viewBox.split(/[,\s]+/);
+                    // parts[2] = width, parts[3] = height
+                    baseWidth = parseFloat(parts[2]) || DEFAULT_BASE_SIZE;
+                    baseHeight = parseFloat(parts[3]) || DEFAULT_BASE_SIZE;
+                }
+
+                // 2. Prepare SVG for data URI
+                const encodedSvg = encodeURIComponent(svgText).replace(/%20/g, ' ');
+                const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodedSvg}`;
+
+                // 3. Load the SVG onto an Image object
+                const img = new Image();
+                img.src = svgDataUrl;
+
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error("SVG image loading timed out.")), 5000);
+                    img.onload = () => { clearTimeout(timeout); resolve(); };
+                    img.onerror = () => { clearTimeout(timeout); reject(new Error("Failed to load SVG into image object. Check SVG syntax.")); };
+                });
+
+                // 4. Generate and display scaled images
+                for (const scale of SCALES) {
+                    const factor = scale;
+                    const width = baseWidth * factor;
+                    const height = baseHeight * factor;
+
+                    // Create canvas
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+
+                    // Clear canvas with transparency (important for PNG)
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    // Draw the image onto the canvas, scaled to fit
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convert to PNG data URL
+                    const dataUrl = canvas.toDataURL('image/png');
+
+                    // Create display container
+                    const container = document.createElement('div');
+                    container.className = 'flex flex-col items-center p-4 bg-gray-100 rounded-xl shadow-lg transition duration-150 ease-in-out';
+                    
+                    // Image element
+                    const imgElement = document.createElement('img');
+                    imgElement.src = dataUrl;
+                    imgElement.alt = `${factor}x Scaled Image`;
+                    imgElement.className = 'scaled-image w-full h-auto bg-white p-2 rounded-lg mb-3 shadow-md';
+                    imgElement.style.maxWidth = `${width}px`;
+                    imgElement.title = `Right-click to save or copy image manually. ${factor}x (${width}x${height}) PNG`;
+                    
+                    // Size label
+                    const label = document.createElement('p');
+                    label.className = 'text-sm font-semibold text-gray-700 mb-3';
+                    label.textContent = `${factor}x (${width}x${height} px)`;
+
+                    // Copy Button
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'w-full px-4 py-2 text-white font-semibold rounded-lg shadow-md gradient-button text-sm';
+                    copyButton.textContent = 'Copy Image (PNG)';
+                    copyButton.addEventListener('click', () => copyImageToClipboard(dataUrl));
+
+                    container.appendChild(imgElement);
+                    container.appendChild(label);
+                    container.appendChild(copyButton);
+                    resultsDiv.appendChild(container);
+                }
+
+                resultsTitle.style.display = 'block';
+
+            } catch (error) {
+                console.error("Conversion error:", error);
+                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Error processing SVG: ${error.message}</p>`;
+            } finally {
+                convertButton.disabled = false;
+                convertButton.textContent = 'Generate Scaled PNGs';
+            }
+        }
+
+        // Event Listeners
+        convertButton.addEventListener('click', generateScaledImages);
+
+        // Pre-fill with a sample SVG for immediate testing
+        svgInput.value = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 3c-7.18 0-13 5.82-13 13s5.82 13 13 13 13-5.82 13-13-5.82-13-13-13z"/>
+    <path d="M12 20l8-8"/>
+    <path d="M20 20l-8-8"/>
+</svg>`;
+        
+    </script>
+</body>
+</html>
