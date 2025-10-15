@@ -3,186 +3,708 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVG Scaler & PNG Converter</title>
-    <!-- Load Tailwind CSS -->
+    <title>Dual SVG Utility (Resizer & Scaler)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Exo 2 font from Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Use Inter as the main font for the entire page -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Exo+2:wght@700&display=swap" rel="stylesheet">
     
-    <!-- Configure Tailwind with new colors and Exo 2 font -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-light': '#f9fafb', // Gray 50 (Near white)
-                        'secondary-light': '#ffffff', // White
-                        'text-dark': '#1f2937', // Gray 900
-                    },
-                    fontFamily: {
-                        sans: ['Exo 2', 'sans-serif'], // Changed to Exo 2
-                    },
-                }
-            }
-        }
-    </script>
     <style>
-        /* Set Exo 2 font globally and use the new light background */
+        /* Base Aesthetic (Google Light Mode) */
         body {
-            font-family: 'Exo 2', sans-serif; /* Changed to Exo 2 */
-            background-color: #f9fafb; /* Primary Light */
-            color: #1f2937; /* Text Dark */
+            font-family: 'Inter', sans-serif;
             min-height: 100vh;
+            background-color: #f8f9fa; /* Very light grey */
+            color: #1f2937; /* Dark text */
         }
-
-        /* Custom scrollbar for the textarea for light mode */
-        textarea::-webkit-scrollbar {
-            width: 8px;
-        }
-        textarea::-webkit-scrollbar-thumb {
-            background-color: #d1d5db; /* Gray 300 */
-            border-radius: 4px;
-        }
-        textarea::-webkit-scrollbar-track {
-            background: #f3f4f6; /* Gray 100 */
-        }
-
-        /* Styling for generated images */
-        .scaled-image {
-            border: 1px solid #d1d5db; /* Light gray border */
-            image-rendering: pixelated; /* Ensures sharp scaling, especially important for icons */
+        .tool-card {
+            background-color: #ffffff; /* White card background */
+            /* Removed shadow: 0 5px 15px rgba(0, 0, 0, 0.1); */
+            border: 1px solid #e0e0e0; /* Added subtle border for definition */
         }
         
-        /* Gradient for accents (buttons, headers) */
-        .gradient-text {
+        /* --- Tool 1: SVG Resizer Styles (#34A853 Accent) --- */
+        
+        #svg-display {
+            min-height: 200px; 
+            border: 2px dashed #cccccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0; 
+            overflow: hidden;
+            padding: 1rem;
+        }
+        #svg-display > p {
+            color: #888888;
+        }
+        #svg-display > svg {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto !important; 
+            height: auto !important;
+        }
+        
+        /* Resizer Pulse Outline Animation (#34A853) */
+        @keyframes pulse-resizer {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
+            50% { box-shadow: 0 0 0 8px rgba(52, 168, 83, 0); }
+        }
+        .pulse-outline-resizer {
+            animation: pulse-resizer 2s infinite;
+            border: 2px solid #34A853; 
+        }
+
+        /* Resizer Slider Track (#e0e0e0) and Thumb (#000000) */
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 4px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px; height: 18px;
+            background: #000000;
+            cursor: pointer;
+            border-radius: 9999px;
+            margin-top: -7px;
+            box-shadow: 0 0 8px #34A853; /* Resizer Accent Glow */
+        }
+        input[type=range]::-moz-range-track { background: #e0e0e0; height: 4px; }
+        input[type=range]::-moz-range-thumb {
+            background: #000000;
+            border: none;
+            width: 18px; height: 18px;
+            border-radius: 9999px;
+            box-shadow: 0 0 8px #34A853;
+        }
+
+        /* --- Tool 2: Icon Scaler Styles (Turquoise/Lime Gradient) --- */
+        
+        /* Gradient for accents (buttons, headers) - Scaler Accent */
+        .gradient-text-scaler {
+            font-family: 'Exo 2', sans-serif;
             background-image: linear-gradient(to right, #06b6d4, #84cc16); /* Turquoise to Lime */
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .gradient-button {
+        .gradient-button-scaler {
             background-image: linear-gradient(to right, #06b6d4, #84cc16);
             transition: all 0.2s ease-in-out;
         }
-        .gradient-button:hover {
+        .gradient-button-scaler:hover {
             opacity: 0.9;
-            box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.4), 0 2px 4px -2px rgba(132, 204, 22, 0.4);
+            /* Removed shadow: box-shadow: 0 4px 6px -1px rgba(6, 182, 212, 0.4), 0 2px 4px -2px rgba(132, 204, 22, 0.4); */
         }
+
+        /* Custom scrollbar for the textarea for light mode */
+        #svgInputScaler::-webkit-scrollbar { width: 8px; }
+        #svgInputScaler::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
+        #svgInputScaler::-webkit-scrollbar-track { background: #f3f4f6; }
+
+        /* Styling for generated images */
+        .scaled-image {
+            border: 1px solid #d1d5db;
+            image-rendering: pixelated; 
+            /* Removed shadow */
+        }
+
+        /* --- Collapsible Title Style --- */
+        .tool-title {
+            cursor: pointer;
+            padding: 1.5rem;
+            margin-bottom: 0 !important;
+            border-radius: 0.75rem 0.75rem 0 0;
+            transition: background-color 0.15s;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .tool-title:hover {
+            background-color: #f0f0f0; /* Applied to both titles for consistency */
+        }
+        
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col items-center">
+<body class="p-4 sm:p-8">
 
-    <div class="w-full max-w-4xl bg-secondary-light p-6 md:p-10 rounded-xl shadow-2xl border border-gray-100">
+    <div id="app-container" class="max-w-4xl mx-auto space-y-8">
         
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-extrabold mb-2 gradient-text">Icon Scaler</h1>
-            <p class="text-gray-600">Paste your SVG code below or upload a file to generate pixel-perfect, scaled PNGs (2x, 4x, 8x, 16x).</p>
-        </header>
+        <!-- ============================================== -->
+        <!-- TOOL 1: SVG RESIZER & PNG CONVERTER (#34A853) -->
+        <!-- ============================================== -->
+        <div class="tool-card rounded-xl">
+            <!-- Updated title to include flex container for icon and onclick handler -->
+            <h1 class="tool-title text-2xl font-bold text-[#34A853] mb-0 rounded-b-none flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
+                <span>SVG Resizer & PNG Converter (Max 6000px)</span>
+                <span id="resizer-icon" class="collapse-icon transform transition-transform duration-300">
+                    <!-- Down Arrow (Initial state: Open/0 degrees rotation) -->
+                    <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </span>
+            </h1>
 
-        <!-- Input Area -->
-        <section class="mb-8">
-            <label for="svgInput" class="block text-lg font-medium mb-2 text-text-dark">Paste SVG Code Here:</label>
-            <textarea id="svgInput" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
-                class="w-full p-4 bg-gray-50 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 outline-none text-text-dark text-sm transition duration-150 ease-in-out"></textarea>
-            
-            <!-- File Upload Area -->
-            <div id="fileUploadArea" class="mt-4 flex items-center justify-between space-x-4">
-                <p class="text-gray-500 text-sm hidden sm:block"></p>
-                <!-- Hidden input that is triggered by the visible button -->
-                <input type="file" id="svgFileUploader" accept=".svg,image/svg+xml" class="hidden">
-                <button id="uploadButton" 
-                    class="flex-1 w-full px-4 py-2 text-text-dark font-bold rounded-lg border border-gray-300 hover:bg-gray-100 transition duration-150 ease-in-out shadow-sm">
-                    <span class="mr-2 text-lg">📁</span> Upload SVG
-                </button>
-                <p class="text-gray-500 text-sm hidden sm:block"></p>
+            <!-- Content Area - OPEN by default -->
+            <div id="resizer-content" class="p-6 sm:p-8 space-y-8">
+                
+                <!-- Upload Area -->
+                <div>
+                    <!-- Label: Dark Gray (#1f2937) -->
+                    <label for="svg-upload" class="block text-lg font-semibold text-[#1f2937] mb-2">
+                        1. Upload SVG File
+                    </label>
+                    <!-- File Input: file:bg-Accent file:text-white -->
+                    <input type="file" id="svg-upload" accept=".svg" class="w-full text-sm text-[#1f2937]
+                        pulse-outline-resizer rounded-lg transition duration-300
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-lg file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-[#34A853] file:text-white
+                        hover:file:bg-[#2c8d48]"
+                    />
+                </div>
+
+                <!-- SVG Display and Controls -->
+                <div id="processing-area" class="opacity-50 pointer-events-none transition-opacity duration-300">
+                    
+                    <!-- Heading: Dark Gray (#1f2937) -->
+                    <h2 class="text-xl font-semibold text-[#1f2937] mb-4">2. Preview and Set Dimensions</h2>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Display Panel -->
+                        <div class="lg:col-span-1">
+                            <!-- Label: Gray (#6b7280) -->
+                            <label class="block text-md font-medium text-[#6b7280] mb-2">
+                                SVG Preview (Original Aspect Ratio)
+                            </label>
+                            <div id="svg-display" class="rounded-lg">
+                                <!-- Placeholder text: Medium Gray (#888888) -->
+                                <p class="text-[#888888]">Upload an SVG to begin.</p>
+                            </div>
+                        </div>
+
+                        <!-- Resizing Controls Panel -->
+                        <div class="lg:col-span-1 space-y-4">
+                            <!-- Label: Gray (#6b7280) -->
+                            <label class="block text-md font-medium text-[#6b7280] mb-2">
+                                PNG Output Size (Max 6000 px)
+                            </label>
+
+                            <!-- Width Control -->
+                            <!-- Background: Light Gray (#f0f0f0) -->
+                            <div class="space-y-2 p-4 bg-[#f0f0f0] rounded-lg border border-[#cccccc]">
+                                <!-- Label: Accent Green (#34A853) -->
+                                <label for="width-input" class="block text-sm font-medium text-[#34A853]">
+                                    Width: <span id="width-value" class="font-bold">500</span> px
+                                </label>
+                                <input type="range" id="width-range" min="100" max="6000" value="500"
+                                    class="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                                >
+                                
+                                <!-- Custom Input with Stepper Buttons -->
+                                <div class="flex items-center space-x-2">
+                                    <!-- Stepper Button: Light BG, Accent Text -->
+                                    <button type="button" data-target="width" data-step="-1" class="step-button-resizer p-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-[#34A853] rounded-lg font-bold w-12 flex justify-center items-center transition duration-150">
+                                        -
+                                    </button>
+                                    <input type="number" id="width-input" min="1" value="500"
+                                        class="flex-grow p-2 border border-[#cccccc] bg-white text-[#1f2937] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853]"
+                                        placeholder="Custom width (pixels)"
+                                    >
+                                    <button type="button" data-target="width" data-step="1" class="step-button-resizer p-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-[#34A853] rounded-lg font-bold w-12 flex justify-center items-center transition duration-150">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Height Control -->
+                            <div class="space-y-2 p-4 bg-[#f0f0f0] rounded-lg border border-[#cccccc]">
+                                <!-- Label: Accent Green (#34A853) -->
+                                <label for="height-input" class="block text-sm font-medium text-[#34A853]">
+                                    Height: <span id="height-value" class="font-bold">500</span> px
+                                </label>
+                                <input type="range" id="height-range" min="100" max="6000" value="500"
+                                    class="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                                >
+                                
+                                <!-- Custom Input with Stepper Buttons -->
+                                <div class="flex items-center space-x-2">
+                                    <button type="button" data-target="height" data-step="-1" class="step-button-resizer p-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-[#34A853] rounded-lg font-bold w-12 flex justify-center items-center transition duration-150">
+                                        -
+                                    </button>
+                                    <input type="number" id="height-input" min="1" value="500"
+                                        class="flex-grow p-2 border border-[#cccccc] bg-white text-[#1f2937] rounded-lg text-sm text-center focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853]"
+                                        placeholder="Custom height (pixels)"
+                                    >
+                                    <button type="button" data-target="height" data-step="1" class="step-button-resizer p-2 bg-[#e5e7eb] hover:bg-[#d1d5db] text-[#34A853] rounded-lg font-bold w-12 flex justify-center items-center transition duration-150">
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-2 mt-4">
+                                <!-- Checkbox: Accent Green (#34A853), Gray Border -->
+                                <input type="checkbox" id="lock-aspect" checked
+                                    class="form-checkbox h-4 w-4 text-[#34A853] rounded border-[#9ca3af] focus:ring-[#34A853]"
+                                >
+                                <!-- Label: Dark Gray (#374151) -->
+                                <label for="lock-aspect" class="text-[#374151] text-sm">Lock Aspect Ratio</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Download Button (Accent Green) -->
+                    <div class="mt-8">
+                        <button id="download-button"
+                            class="w-full py-3 px-6 bg-[#34A853] text-white font-semibold text-lg rounded-lg hover:bg-[#2c8d48] transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            3. Convert and Download PNG
+                        </button>
+                        <!-- Message Box: Error Red (#d33030) -->
+                        <p id="message-box" class="text-center text-sm mt-2 text-[#d33030] hidden"></p>
+                    </div>
+                </div>
+                
+                <!-- Hidden Canvas for Conversion -->
+                <canvas id="conversion-canvas" class="hidden"></canvas>
+                
             </div>
-
-            <button id="convertButton" 
-                class="mt-4 w-full md:w-auto px-6 py-3 text-white font-bold rounded-lg shadow-lg gradient-button">
-                Generate Scaled PNGs
-            </button>
-        </section>
-
-        <!-- Results Area -->
-        <section id="resultsSection" class="mt-12">
-            <h2 class="text-2xl font-semibold mb-6 text-text-dark" id="resultsTitle" style="display: none;">Generated Scaled Images</h2>
-            <div id="resultsDiv" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <!-- Scaled images will be injected here -->
-            </div>
-        </section>
-
-        <!-- Notification/Message Box -->
-        <div id="messageBox" class="fixed bottom-4 right-4 p-4 rounded-lg shadow-xl hidden transition-opacity duration-300 z-50" 
-             style="background-color: #1f2937; color: #f3f4f6;">
-            Message...
         </div>
 
+        <!-- ============================================== -->
+        <!-- TOOL 2: ICON SCALER (Turquoise/Lime Gradient) -->
+        <!-- ============================================== -->
+        <div class="tool-card rounded-xl">
+            <!-- Updated title to include flex container for icon and onclick handler -->
+             <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none gradient-text-scaler flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
+                <span>Icon Scaler (2x, 4x, 8x, 16x)</span>
+                <span id="scaler-icon" class="collapse-icon transform transition-transform duration-300 rotate-90">
+                    <!-- Right Arrow (Initial state: Closed/90 degrees rotation) -->
+                    <svg class="w-6 h-6 text-[#06b6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </span>
+            </h1>
+
+            <!-- Content Area - CLOSED by default -->
+            <div id="scaler-content" class="p-6 sm:p-8 space-y-8 hidden">
+                
+                <!-- Input Area -->
+                <section class="mb-8">
+                    <label for="svgInputScaler" class="block text-lg font-medium mb-2 text-[#1f2937]">Paste SVG Code Here:</label>
+                    <textarea id="svgInputScaler" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
+                        class="w-full p-4 bg-[#f9fafb] border border-[#cccccc] rounded-lg focus:ring-2 focus:ring-[#06b6d4] focus:border-[#06b6d4] outline-none text-[#1f2937] text-sm transition duration-150 ease-in-out"></textarea>
+                    
+                    <!-- File Upload Area -->
+                    <div id="fileUploadAreaScaler" class="mt-4 flex items-center justify-between space-x-4">
+                        <p class="text-[#6b7280] text-sm hidden sm:block"></p>
+                        <!-- Hidden input that is triggered by the visible button -->
+                        <input type="file" id="svgFileUploaderScaler" accept=".svg,image/svg+xml" class="hidden">
+                        <button id="uploadButtonScaler" 
+                            class="flex-1 w-full px-4 py-2 text-[#1f2937] font-bold rounded-lg border border-[#cccccc] hover:bg-[#f0f0f0] transition duration-150 ease-in-out">
+                            <span class="mr-2 text-lg">📁</span> Upload SVG
+                        </button>
+                        <p class="text-[#6b7280] text-sm hidden sm:block"></p>
+                    </div>
+
+                    <button id="convertButtonScaler" 
+                        class="mt-4 w-full md:w-auto px-6 py-3 text-white font-bold rounded-lg gradient-button-scaler">
+                        Generate Scaled PNGs
+                    </button>
+                </section>
+
+                <!-- Results Area -->
+                <section id="resultsSectionScaler" class="mt-8">
+                    <h2 class="text-xl font-semibold mb-6 text-[#1f2937]" id="resultsTitleScaler" style="display: none;">Generated Scaled Images</h2>
+                    <div id="resultsDivScaler" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Scaled images will be injected here -->
+                    </div>
+                </section>
+
+                <!-- Notification/Message Box for Scaler (hidden and separate from the Resizer's general message box) -->
+                 <div id="messageBoxScaler" class="fixed bottom-4 right-4 p-4 rounded-lg hidden transition-opacity duration-300 z-50" 
+                    style="background-color: #1f2937; color: #f3f4f6;">
+                    Message...
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript">
-        // Global Constants
-        const DEFAULT_BASE_SIZE = 32;
-        const SCALES = [2, 4, 8, 16];
-        const svgInput = document.getElementById('svgInput');
-        const convertButton = document.getElementById('convertButton');
-        const resultsDiv = document.getElementById('resultsDiv');
-        const resultsTitle = document.getElementById('resultsTitle');
-        const messageBox = document.getElementById('messageBox');
         
-        // New elements for file upload
-        const svgFileUploader = document.getElementById('svgFileUploader');
-        const uploadButton = document.getElementById('uploadButton');
+        // ===============================================
+        // GLOBAL FUNCTIONS
+        // ===============================================
+
+        /**
+         * Toggles the visibility of a tool's content and rotates the arrow icon.
+         * @param {string} contentId - The ID of the content div to toggle.
+         * @param {HTMLElement} titleElement - The <h1> element that was clicked.
+         */
+        function toggleTool(contentId, titleElement) {
+            const content = document.getElementById(contentId);
+            if (content) {
+                // Find the icon element within the clicked title
+                const icon = titleElement.querySelector('.collapse-icon');
+                
+                if (content.classList.contains('hidden')) {
+                    // Opening the content
+                    content.classList.remove('hidden');
+                    if (icon) {
+                        icon.classList.remove('rotate-90'); // Point down (open)
+                    }
+                } else {
+                    // Closing the content
+                    content.classList.add('hidden');
+                    if (icon) {
+                        icon.classList.add('rotate-90'); // Point right (closed)
+                    }
+                }
+            }
+        }
+        
+        // ===============================================
+        // TOOL 1: SVG RESIZER LOGIC
+        // ===============================================
+
+        const svgUpload = document.getElementById('svg-upload');
+        const svgDisplay = document.getElementById('svg-display');
+        const widthRange = document.getElementById('width-range');
+        const heightRange = document.getElementById('height-range');
+        const widthInput = document.getElementById('width-input');
+        const heightInput = document.getElementById('height-input');
+        const widthValue = document.getElementById('width-value');
+        const heightValue = document.getElementById('height-value');
+        const lockAspect = document.getElementById('lock-aspect');
+        const downloadButton = document.getElementById('download-button');
+        const conversionCanvas = document.getElementById('conversion-canvas');
+        const processingArea = document.getElementById('processing-area');
+        const messageBox = document.getElementById('message-box');
+        const stepButtonsResizer = document.querySelectorAll('.step-button-resizer');
+
+        let svgData = {
+            content: null,
+            originalWidth: 0,
+            originalHeight: 0,
+            aspectRatio: 1,
+            fileName: 'resized-svg'
+        };
+
+        const MAX_DIMENSION = 6000;
+
+        /**
+         * Safely gets the viewBox dimensions from an SVG string.
+         */
+        function getSvgDimensions(svgString) {
+            const widthMatch = svgString.match(/width="(\d+\.?\d*)"/i);
+            const heightMatch = svgString.match(/height="(\d+\.?\d*)"/i);
+            const viewBoxMatch = svgString.match(/viewBox="(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)\s+(\d+\.?\d*)"/i);
+
+            let w = 500;
+            let h = 500;
+
+            if (viewBoxMatch && viewBoxMatch.length === 5) {
+                w = parseFloat(viewBoxMatch[3]);
+                h = parseFloat(viewBoxMatch[4]);
+            } else if (widthMatch && heightMatch) {
+                w = parseFloat(widthMatch[1]);
+                h = parseFloat(heightMatch[1]);
+            }
+
+            return {
+                width: Math.max(1, Math.round(w)),
+                height: Math.max(1, Math.round(h))
+            };
+        }
+
+        /**
+         * Updates the UI display values for width and height.
+         */
+        function updateDisplay(w, h) {
+            widthInput.value = w;
+            widthRange.value = w;
+            widthValue.textContent = w;
+
+            heightInput.value = h;
+            heightRange.value = h;
+            heightValue.textContent = h;
+        }
+
+        /**
+         * Displays a temporary message in the message box for the Resizer tool.
+         */
+        function showMessageResizer(message, isError = false) {
+            const errorHex = '#d33030';
+            const successHex = '#34A853';
+
+            messageBox.textContent = message;
+            
+            messageBox.classList.remove('hidden', 'text-[#34A853]', 'text-[#d33030]');
+            messageBox.classList.add(isError ? 'text-[#d33030]' : 'text-[#34A853]');
+            
+            clearTimeout(messageBox.timeout);
+            messageBox.timeout = setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 5000);
+        }
+
+        /**
+         * Handles file upload for the Resizer tool.
+         */
+        svgUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file || file.type !== 'image/svg+xml') {
+                showMessageResizer('Please select a valid SVG file (.svg).', true);
+                return;
+            }
+
+            svgData.fileName = file.name.replace(/\.svg$/i, '');
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                const svgString = e.target.result;
+                svgData.content = svgString;
+
+                const { width, height } = getSvgDimensions(svgString);
+                svgData.originalWidth = width;
+                svgData.originalHeight = height;
+                svgData.aspectRatio = width / height;
+
+                svgDisplay.innerHTML = svgString;
+
+                const initialSize = Math.min(MAX_DIMENSION, Math.max(500, width)); 
+                updateDisplay(initialSize, Math.round(initialSize / svgData.aspectRatio));
+
+                processingArea.classList.remove('opacity-50', 'pointer-events-none');
+                downloadButton.disabled = false;
+                showMessageResizer(`SVG "${svgData.fileName}" loaded successfully!`);
+                
+                svgUpload.classList.remove('pulse-outline-resizer');
+                svgUpload.classList.add('border-2', 'border-[#34A853]');
+            };
+
+            reader.onerror = () => {
+                showMessageResizer('Error reading file.', true);
+                svgData.content = null;
+                processingArea.classList.add('opacity-50', 'pointer-events-none');
+                downloadButton.disabled = true;
+            };
+
+            reader.readAsText(file);
+        });
+
+        /**
+         * Synchronizes range and number inputs, and applies aspect ratio lock.
+         */
+        function handleResizeInput(e) {
+            const isWidthEvent = e.target === widthRange || e.target === widthInput;
+            let triggerValue = parseInt(e.target.value) || 1;
+            
+            if (e.target.type === 'number' || e.type === 'change') {
+                triggerValue = Math.min(MAX_DIMENSION, Math.max(1, triggerValue));
+                e.target.value = triggerValue;
+            }
+            
+            let w = parseInt(widthInput.value) || 1;
+            let h = parseInt(heightInput.value) || 1;
+
+            if (isWidthEvent) {
+                w = triggerValue;
+            } else { 
+                h = triggerValue;
+            }
+            
+            w = Math.max(1, w);
+            h = Math.max(1, h);
+
+            if (svgData.content && lockAspect.checked) {
+                if (isWidthEvent) {
+                    h = Math.round(w / svgData.aspectRatio);
+                } else {
+                    w = Math.round(h * svgData.aspectRatio);
+                }
+
+                if (isWidthEvent && h > MAX_DIMENSION) {
+                    h = MAX_DIMENSION;
+                    w = Math.round(h * svgData.aspectRatio);
+                } else if (!isWidthEvent && w > MAX_DIMENSION) {
+                    w = MAX_DIMENSION;
+                    h = Math.round(w / svgData.aspectRatio);
+                }
+            }
+            
+            updateDisplay(w, h);
+        }
+        
+        /**
+         * Handles the click event for the +/- stepper buttons.
+         */
+        function handleStepResizer(e) {
+            if (!svgData.content) {
+                showMessageResizer('Please upload an SVG before changing dimensions.', true);
+                return;
+            }
+            
+            const target = e.currentTarget.dataset.target;
+            const step = parseInt(e.currentTarget.dataset.step);
+
+            const inputElement = target === 'width' ? widthInput : heightInput;
+            const currentValue = parseInt(inputElement.value) || 1;
+            let newValue = currentValue + step;
+
+            newValue = Math.min(MAX_DIMENSION, Math.max(1, newValue));
+            inputElement.value = newValue;
+
+            const simulatedEvent = { 
+                target: inputElement, 
+                type: 'change'
+            };
+
+            handleResizeInput(simulatedEvent);
+        }
+
+        widthRange.addEventListener('input', handleResizeInput);
+        heightRange.addEventListener('input', handleResizeInput);
+        widthInput.addEventListener('change', handleResizeInput);
+        heightInput.addEventListener('change', handleResizeInput);
+        lockAspect.addEventListener('change', handleResizeInput);
+        
+        stepButtonsResizer.forEach(button => {
+            button.addEventListener('click', handleStepResizer);
+        });
+
+        /**
+         * Converts the current SVG content to PNG and triggers download.
+         */
+        downloadButton.addEventListener('click', async () => {
+            if (!svgData.content) {
+                showMessageResizer('Please upload an SVG first.', true);
+                return;
+            }
+            
+            downloadButton.disabled = true;
+            downloadButton.textContent = 'Processing...';
+            showMessageResizer('Converting SVG to PNG...', false);
+
+            let targetWidth = parseInt(widthInput.value) || 500;
+            let targetHeight = parseInt(heightInput.value) || 500;
+
+            targetWidth = Math.min(MAX_DIMENSION, Math.max(1, targetWidth));
+            targetHeight = Math.min(MAX_DIMENSION, Math.max(1, targetHeight));
+            updateDisplay(targetWidth, targetHeight);
+            
+            conversionCanvas.width = targetWidth;
+            conversionCanvas.height = targetHeight;
+            const ctx = conversionCanvas.getContext('2d');
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+            let svgContentForCanvas = svgData.content.replace(/<svg[^>]*>/i, (match) => {
+                const xmlnsAttr = match.includes('xmlns') ? '' : ' xmlns="http://www.w3.org/2000/svg"';
+                const cleanedMatch = match
+                    .replace(/width=['"][^'"]*['"]/i, '')
+                    .replace(/height=['"][^'"]*['"]/i, '');
+
+                return cleanedMatch.replace(/>$/, `${xmlnsAttr} width="${targetWidth}" height="${targetHeight}">`);
+            });
+            
+            const svgBase64 = btoa(unescape(encodeURIComponent(svgContentForCanvas)));
+            const svgDataUrl = 'data:image/svg+xml;base64,' + svgBase64;
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            img.onload = () => {
+                try {
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                    const pngDataUrl = conversionCanvas.toDataURL('image/png');
+                    
+                    const a = document.createElement('a');
+                    a.href = pngDataUrl;
+                    a.download = `${svgData.fileName}-${targetWidth}x${targetHeight}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    showMessageResizer('PNG downloaded successfully!', false);
+
+                } catch (error) {
+                    console.error('Canvas conversion failed:', error);
+                    showMessageResizer('Error during conversion. The SVG might contain embedded images that violate cross-origin policy.', true);
+                } finally {
+                    downloadButton.disabled = false;
+                    downloadButton.textContent = '3. Convert and Download PNG';
+                    ctx.clearRect(0, 0, targetWidth, targetHeight);
+                }
+            };
+
+            img.onerror = (e) => {
+                console.error('Image loading error:', e);
+                showMessageResizer('Failed to load SVG into image object. Check console for details.', true);
+                downloadButton.disabled = false;
+                downloadButton.textContent = '3. Convert and Download PNG';
+            };
+
+            img.src = svgDataUrl;
+        });
+
+        // Initialize Resizer state message
+        showMessageResizer('Waiting for SVG upload...', false);
+
+        
+        // ===============================================
+        // TOOL 2: ICON SCALER LOGIC
+        // ===============================================
+        
+        // Global Constants for Scaler
+        const DEFAULT_BASE_SIZE_SCALER = 32;
+        const SCALES_SCALER = [2, 4, 8, 16];
+        const svgInputScaler = document.getElementById('svgInputScaler');
+        const convertButtonScaler = document.getElementById('convertButtonScaler');
+        const resultsDivScaler = document.getElementById('resultsDivScaler');
+        const resultsTitleScaler = document.getElementById('resultsTitleScaler');
+        const messageBoxScaler = document.getElementById('messageBoxScaler');
+        
+        const svgFileUploaderScaler = document.getElementById('svgFileUploaderScaler');
+        const uploadButtonScaler = document.getElementById('uploadButtonScaler');
 
 
         /**
-         * Utility to show a temporary message box.
-         * @param {string} message - The message to display.
-         * @param {string} bgColor - CSS background color.
-         * @param {string} textColor - CSS text color.
+         * Utility to show a temporary message box for the Scaler tool.
          */
-        function showMessage(message, bgColor = '#1f2937', textColor = '#f3f4f6') {
-            messageBox.textContent = message;
-            messageBox.style.backgroundColor = bgColor;
-            messageBox.style.color = textColor;
-            messageBox.classList.remove('hidden');
-            messageBox.style.opacity = '1';
+        function showMessageScaler(message, bgColor = '#1f2937', textColor = '#f3f4f6') {
+            messageBoxScaler.textContent = message;
+            messageBoxScaler.style.backgroundColor = bgColor;
+            messageBoxScaler.style.color = textColor;
+            messageBoxScaler.classList.remove('hidden');
+            messageBoxScaler.style.opacity = '1';
             
             setTimeout(() => {
-                messageBox.style.opacity = '0';
-                setTimeout(() => messageBox.classList.add('hidden'), 300);
-            }, 3000); // Display for 3 seconds
+                messageBoxScaler.style.opacity = '0';
+                setTimeout(() => messageBoxScaler.classList.add('hidden'), 300);
+            }, 3000);
         }
 
         /**
          * Attempts to copy a PNG image data URL to the clipboard as an image blob.
-         * If the Clipboard API is restricted, it provides a manual instruction.
-         * @param {string} dataUrl - The base64 data URL of the PNG image.
          */
-        async function copyImageToClipboard(dataUrl) {
-            // Message to show when automatic copy is blocked (common in iframes)
+        async function copyImageToClipboardScaler(dataUrl) {
             const blockedMessage = 'Copy blocked. Right-click the image and select "Copy Image" or "Save Image As...".';
             
             try {
                 const blob = await (await fetch(dataUrl)).blob();
                 
-                // Use the modern, preferred Clipboard API
                 if (navigator.clipboard && navigator.clipboard.write) {
                     await navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]);
-                    showMessage('Image copied to clipboard!', '#10b981', '#ffffff'); // Green for success
+                    showMessageScaler('Image copied to clipboard!', '#10b981', '#ffffff');
                 } else {
-                    // Fallback: inform user of manual alternative
-                    showMessage(blockedMessage, '#f59e0b', '#ffffff'); // Amber for warning
+                    showMessageScaler(blockedMessage, '#f59e0b', '#ffffff');
                 }
             } catch (error) {
-                // Catch specific NotAllowedError (which causes the console error)
                 if (error.name === 'NotAllowedError') {
-                    // Instruct the user to use the manual method.
-                    showMessage(blockedMessage, '#f59e0b', '#ffffff'); // Amber for warning
+                    showMessageScaler(blockedMessage, '#f59e0b', '#ffffff');
                     console.error("Clipboard API access denied (NotAllowedError). Instructing manual copy.", error);
                 } else {
-                    // Handle other errors
-                    showMessage('Copy failed. Check console for details.', '#ef4444', '#ffffff'); // Red for error
+                    showMessageScaler('Copy failed. Check console for details.', '#ef4444', '#ffffff');
                     console.error('Failed to copy image:', error);
                 }
             }
@@ -192,41 +714,36 @@
          * Main function to generate scaled PNGs from SVG.
          */
         async function generateScaledImages() {
-            const svgText = svgInput.value.trim();
-            resultsDiv.innerHTML = '';
-            resultsTitle.style.display = 'none';
+            const svgText = svgInputScaler.value.trim();
+            resultsDivScaler.innerHTML = '';
+            resultsTitleScaler.style.display = 'none';
 
             if (!svgText) {
-                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Please paste some SVG code or upload an SVG file.</p>`;
+                resultsDivScaler.innerHTML = `<p class="text-[#d33030] p-4">Please paste some SVG code or upload an SVG file.</p>`;
                 return;
             }
 
-            convertButton.disabled = true;
-            convertButton.textContent = 'Generating...';
+            convertButtonScaler.disabled = true;
+            convertButtonScaler.textContent = 'Generating...';
 
             try {
                 const parser = new DOMParser();
                 const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
                 const svgElement = svgDoc.documentElement;
 
-                // 1. Determine base dimensions
-                let baseWidth = parseInt(svgElement.getAttribute('width')) || DEFAULT_BASE_SIZE;
-                let baseHeight = parseInt(svgElement.getAttribute('height')) || DEFAULT_BASE_SIZE;
+                let baseWidth = parseInt(svgElement.getAttribute('width')) || DEFAULT_BASE_SIZE_SCALER;
+                let baseHeight = parseInt(svgElement.getAttribute('height')) || DEFAULT_BASE_SIZE_SCALER;
 
-                // Attempt to use viewBox for aspect ratio if width/height are missing
                 const viewBox = svgElement.getAttribute('viewBox');
                 if (viewBox && !svgElement.getAttribute('width') && !svgElement.getAttribute('height')) {
                     const parts = viewBox.split(/[,\s]+/);
-                    // parts[2] = width, parts[3] = height
-                    baseWidth = parseFloat(parts[2]) || DEFAULT_BASE_SIZE;
-                    baseHeight = parseFloat(parts[3]) || DEFAULT_BASE_SIZE;
+                    baseWidth = parseFloat(parts[2]) || DEFAULT_BASE_SIZE_SCALER;
+                    baseHeight = parseFloat(parts[3]) || DEFAULT_BASE_SIZE_SCALER;
                 }
 
-                // 2. Prepare SVG for data URI
                 const encodedSvg = encodeURIComponent(svgText).replace(/%20/g, ' ');
                 const svgDataUrl = `data:image/svg+xml;charset=utf-8,${encodedSvg}`;
 
-                // 3. Load the SVG onto an Image object
                 const img = new Image();
                 img.src = svgDataUrl;
 
@@ -236,106 +753,90 @@
                     img.onerror = () => { clearTimeout(timeout); reject(new Error("Failed to load SVG into image object. Check SVG syntax.")); };
                 });
 
-                // 4. Generate and display scaled images
-                for (const scale of SCALES) {
+                for (const scale of SCALES_SCALER) {
                     const factor = scale;
                     const width = baseWidth * factor;
                     const height = baseHeight * factor;
 
-                    // Create canvas
                     const canvas = document.createElement('canvas');
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
 
-                    // Clear canvas with transparency (important for PNG)
                     ctx.clearRect(0, 0, width, height);
-                    
-                    // Draw the image onto the canvas, scaled to fit
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    // Convert to PNG data URL
                     const dataUrl = canvas.toDataURL('image/png');
 
-                    // Create display container
                     const container = document.createElement('div');
-                    container.className = 'flex flex-col items-center p-4 bg-gray-100 rounded-xl shadow-lg transition duration-150 ease-in-out';
+                    container.className = 'flex flex-col items-center p-4 bg-[#f0f0f0] rounded-xl transition duration-150 ease-in-out';
                     
-                    // Image element
                     const imgElement = document.createElement('img');
                     imgElement.src = dataUrl;
                     imgElement.alt = `${factor}x Scaled Image`;
-                    imgElement.className = 'scaled-image w-full h-auto bg-white p-2 rounded-lg mb-3 shadow-md';
+                    imgElement.className = 'scaled-image w-full h-auto bg-white p-2 rounded-lg mb-3';
                     imgElement.style.maxWidth = `${width}px`;
                     imgElement.title = `Right-click to save or copy image manually. ${factor}x (${width}x${height}) PNG`;
                     
-                    // Size label
                     const label = document.createElement('p');
-                    label.className = 'text-sm font-semibold text-gray-700 mb-3';
+                    label.className = 'text-sm font-semibold text-[#374151] mb-3';
                     label.textContent = `${factor}x (${width}x${height} px)`;
 
-                    // Copy Button
                     const copyButton = document.createElement('button');
-                    copyButton.className = 'w-full px-4 py-2 text-white font-semibold rounded-lg shadow-md gradient-button text-sm';
+                    copyButton.className = 'w-full px-4 py-2 text-white font-semibold rounded-lg gradient-button-scaler text-sm';
                     copyButton.textContent = 'Copy Image (PNG)';
-                    copyButton.addEventListener('click', () => copyImageToClipboard(dataUrl));
+                    copyButton.addEventListener('click', () => copyImageToClipboardScaler(dataUrl));
 
                     container.appendChild(imgElement);
                     container.appendChild(label);
                     container.appendChild(copyButton);
-                    resultsDiv.appendChild(container);
+                    resultsDivScaler.appendChild(container);
                 }
 
-                resultsTitle.style.display = 'block';
+                resultsTitleScaler.style.display = 'block';
 
             } catch (error) {
                 console.error("Conversion error:", error);
-                resultsDiv.innerHTML = `<p class="text-red-600 p-4">Error processing SVG: ${error.message}</p>`;
+                resultsDivScaler.innerHTML = `<p class="text-[#d33030] p-4">Error processing SVG: ${error.message}</p>`;
             } finally {
-                convertButton.disabled = false;
-                convertButton.textContent = 'Generate Scaled PNGs';
+                convertButtonScaler.disabled = false;
+                convertButtonScaler.textContent = 'Generate Scaled PNGs';
             }
         }
 
-        // Event Listeners
-        convertButton.addEventListener('click', generateScaledImages);
+        // Event Listeners for Scaler
+        convertButtonScaler.addEventListener('click', generateScaledImages);
 
         // Click handler for the visible upload button to trigger the hidden file input
-        uploadButton.addEventListener('click', () => {
-            svgFileUploader.click();
+        uploadButtonScaler.addEventListener('click', () => {
+            svgFileUploaderScaler.click();
         });
 
         // Change handler for the actual file input
-        svgFileUploader.addEventListener('change', (event) => {
+        svgFileUploaderScaler.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (file) {
-                // Basic check for SVG file type
                 if (file.type !== 'image/svg+xml' && !file.name.toLowerCase().endsWith('.svg')) {
-                    showMessage('Please upload a valid SVG file.', '#ef4444', '#ffffff');
-                    // Clear the file input so the same file can be selected again if needed
+                    showMessageScaler('Please upload a valid SVG file.', '#ef4444', '#ffffff');
                     event.target.value = ''; 
                     return;
                 }
 
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // Populate the textarea with the file content
-                    svgInput.value = e.target.result;
-                    // Clear the file input for re-uploading the same file
+                    svgInputScaler.value = e.target.result;
                     event.target.value = ''; 
-                    // Trigger conversion
                     generateScaledImages();
                 };
                 reader.onerror = () => {
-                    showMessage('Error reading file.', '#ef4444', '#ffffff');
+                    showMessageScaler('Error reading file.', '#ef4444', '#ffffff');
                 };
                 reader.readAsText(file);
             }
         });
 
-
-        // Pre-fill with a sample SVG for immediate testing
-        svgInput.value = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        // Pre-fill Scaler with a sample SVG for immediate testing
+        svgInputScaler.value = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#06b6d4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
     <path d="M16 3c-7.18 0-13 5.82-13 13s5.82 13 13 13 13-5.82 13-13-5.82-13-13-13z"/>
     <path d="M12 20l8-8"/>
     <path d="M20 20l-8-8"/>
