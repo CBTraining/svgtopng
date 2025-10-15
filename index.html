@@ -251,13 +251,21 @@
                     </div>
                     
                     <!-- Download Button (Accent Green) -->
-                    <div class="mt-8">
+                    <div class="mt-8 space-y-4">
                         <button id="download-button"
                             class="w-full py-3 px-6 bg-[#34A853] text-white font-semibold text-lg rounded-lg hover:bg-[#2c8d48] transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
                             disabled
                         >
                             3. Convert and Download PNG
                         </button>
+                        <!-- NEW COPY BUTTON -->
+                        <button id="copy-button"
+                            class="w-full py-3 px-6 bg-white text-[#34A853] border-2 border-[#34A853] font-semibold text-lg rounded-lg hover:bg-[#f0f0f0] transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled
+                        >
+                            Convert and Copy PNG to Clipboard
+                        </button>
+
                         <!-- Message Box: Error Red (#d33030) -->
                         <p id="message-box" class="text-center text-sm mt-2 text-[#d33030] hidden"></p>
                     </div>
@@ -373,6 +381,7 @@
         const heightValue = document.getElementById('height-value');
         const lockAspect = document.getElementById('lock-aspect');
         const downloadButton = document.getElementById('download-button');
+        const copyButton = document.getElementById('copy-button');
         const conversionCanvas = document.getElementById('conversion-canvas');
         const processingArea = document.getElementById('processing-area');
         const messageBox = document.getElementById('message-box');
@@ -387,7 +396,7 @@
         };
 
         const MAX_DIMENSION = 6000;
-
+        
         /**
          * Safely gets the viewBox dimensions from an SVG string.
          */
@@ -430,9 +439,6 @@
          * Displays a temporary message in the message box for the Resizer tool.
          */
         function showMessageResizer(message, isError = false) {
-            const errorHex = '#d33030';
-            const successHex = '#34A853';
-
             messageBox.textContent = message;
             
             messageBox.classList.remove('hidden', 'text-[#34A853]', 'text-[#d33030]');
@@ -442,6 +448,74 @@
             messageBox.timeout = setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 5000);
+        }
+
+        /**
+         * Core function to perform SVG to PNG conversion on the canvas.
+         * Returns a Promise that resolves with the PNG Data URL or rejects/returns null on failure.
+         */
+        async function performConversion() {
+            if (!svgData.content) {
+                showMessageResizer('Please upload an SVG first.', true);
+                return null;
+            }
+
+            let targetWidth = parseInt(widthInput.value) || 500;
+            let targetHeight = parseInt(heightInput.value) || 500;
+
+            // Enforce MAX_DIMENSION limit
+            targetWidth = Math.min(MAX_DIMENSION, Math.max(1, targetWidth));
+            targetHeight = Math.min(MAX_DIMENSION, Math.max(1, targetHeight));
+            updateDisplay(targetWidth, targetHeight);
+            
+            conversionCanvas.width = targetWidth;
+            conversionCanvas.height = targetHeight;
+            const ctx = conversionCanvas.getContext('2d');
+            
+            // Draw white background (important if SVG has transparent areas)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, targetWidth, targetHeight);
+
+            // Set the target width/height on the SVG string for scaling
+            let svgContentForCanvas = svgData.content.replace(/<svg[^>]*>/i, (match) => {
+                const xmlnsAttr = match.includes('xmlns') ? '' : ' xmlns="http://www.w3.org/2000/svg"';
+                const cleanedMatch = match
+                    .replace(/width=['"][^'"]*['"]/i, '')
+                    .replace(/height=['"][^'"]*['"]/i, '');
+
+                return cleanedMatch.replace(/>$/, `${xmlnsAttr} width="${targetWidth}" height="${targetHeight}">`);
+            });
+            
+            const svgBase64 = btoa(unescape(encodeURIComponent(svgContentForCanvas)));
+            const svgDataUrl = 'data:image/svg+xml;base64,' + svgBase64;
+            
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+
+            const pngDataUrl = await new Promise((resolve, reject) => {
+                img.onload = () => {
+                    try {
+                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        const resultUrl = conversionCanvas.toDataURL('image/png');
+                        ctx.clearRect(0, 0, targetWidth, targetHeight);
+                        resolve(resultUrl);
+                    } catch (error) {
+                        reject(new Error('Canvas conversion failed: SVG content error or cross-origin issue.'));
+                    }
+                };
+
+                img.onerror = (e) => {
+                    reject(new Error('Failed to load SVG into image object. Check console for details.'));
+                };
+                
+                img.src = svgDataUrl;
+            }).catch(error => {
+                console.error('Conversion Promise Error:', error);
+                showMessageResizer(error.message, true);
+                return null;
+            });
+
+            return pngDataUrl;
         }
 
         /**
@@ -473,6 +547,7 @@
 
                 processingArea.classList.remove('opacity-50', 'pointer-events-none');
                 downloadButton.disabled = false;
+                copyButton.disabled = false; // Enable buttons after successful file load
                 showMessageResizer(`SVG "${svgData.fileName}" loaded successfully!`);
                 
                 svgUpload.classList.remove('pulse-outline-resizer');
@@ -484,6 +559,7 @@
                 svgData.content = null;
                 processingArea.classList.add('opacity-50', 'pointer-events-none');
                 downloadButton.disabled = true;
+                copyButton.disabled = true;
             };
 
             reader.readAsText(file);
@@ -558,6 +634,71 @@
 
             handleResizeInput(simulatedEvent);
         }
+        
+        /**
+         * Executes the conversion and triggers the file download.
+         */
+        downloadButton.addEventListener('click', async () => {
+            const originalText = downloadButton.textContent;
+            downloadButton.disabled = true;
+            copyButton.disabled = true;
+            downloadButton.textContent = 'Processing...';
+            showMessageResizer('Converting SVG to PNG for download...', false);
+
+            const pngDataUrl = await performConversion();
+
+            if (pngDataUrl) {
+                try {
+                    // Trigger Download
+                    const a = document.createElement('a');
+                    a.href = pngDataUrl;
+                    let targetWidth = parseInt(widthInput.value) || 500;
+                    let targetHeight = parseInt(heightInput.value) || 500;
+                    a.download = `${svgData.fileName}-${targetWidth}x${targetHeight}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+
+                    showMessageResizer('PNG downloaded successfully!', false);
+                } catch (error) {
+                    console.error('Download initiation failed:', error);
+                    showMessageResizer('Error initiating download.', true);
+                }
+            }
+
+            // Restore state
+            downloadButton.disabled = false;
+            copyButton.disabled = false;
+            downloadButton.textContent = originalText;
+        });
+        
+        /**
+         * Executes the conversion and copies the PNG to the clipboard.
+         * NOTE: Direct clipboard access for images is often blocked in iframes.
+         * This function converts and then instructs the user on the manual process.
+         */
+        copyButton.addEventListener('click', async () => {
+            const originalText = copyButton.textContent;
+            downloadButton.disabled = true;
+            copyButton.disabled = true;
+            copyButton.textContent = 'Processing & Copying...';
+            showMessageResizer('Converting SVG to PNG...', false);
+
+            const pngDataUrl = await performConversion();
+
+            if (pngDataUrl) {
+                // Skip the problematic navigator.clipboard.write() call which triggers the console error.
+                // Instruct the user on the manual copy after conversion.
+                const manualCopyMessage = 'Conversion complete. For copying, please right-click the file in your browser\'s downloads bar/folder and select "Copy Image".';
+                showMessageResizer(manualCopyMessage, true);
+            }
+            
+            // Restore state
+            downloadButton.disabled = false;
+            copyButton.disabled = false;
+            copyButton.textContent = originalText;
+        });
+
 
         widthRange.addEventListener('input', handleResizeInput);
         heightRange.addEventListener('input', handleResizeInput);
@@ -567,82 +708,6 @@
         
         stepButtonsResizer.forEach(button => {
             button.addEventListener('click', handleStepResizer);
-        });
-
-        /**
-         * Converts the current SVG content to PNG and triggers download.
-         */
-        downloadButton.addEventListener('click', async () => {
-            if (!svgData.content) {
-                showMessageResizer('Please upload an SVG first.', true);
-                return;
-            }
-            
-            downloadButton.disabled = true;
-            downloadButton.textContent = 'Processing...';
-            showMessageResizer('Converting SVG to PNG...', false);
-
-            let targetWidth = parseInt(widthInput.value) || 500;
-            let targetHeight = parseInt(heightInput.value) || 500;
-
-            targetWidth = Math.min(MAX_DIMENSION, Math.max(1, targetWidth));
-            targetHeight = Math.min(MAX_DIMENSION, Math.max(1, targetHeight));
-            updateDisplay(targetWidth, targetHeight);
-            
-            conversionCanvas.width = targetWidth;
-            conversionCanvas.height = targetHeight;
-            const ctx = conversionCanvas.getContext('2d');
-            
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, targetWidth, targetHeight);
-
-            let svgContentForCanvas = svgData.content.replace(/<svg[^>]*>/i, (match) => {
-                const xmlnsAttr = match.includes('xmlns') ? '' : ' xmlns="http://www.w3.org/2000/svg"';
-                const cleanedMatch = match
-                    .replace(/width=['"][^'"]*['"]/i, '')
-                    .replace(/height=['"][^'"]*['"]/i, '');
-
-                return cleanedMatch.replace(/>$/, `${xmlnsAttr} width="${targetWidth}" height="${targetHeight}">`);
-            });
-            
-            const svgBase64 = btoa(unescape(encodeURIComponent(svgContentForCanvas)));
-            const svgDataUrl = 'data:image/svg+xml;base64,' + svgBase64;
-            
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            
-            img.onload = () => {
-                try {
-                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
-                    const pngDataUrl = conversionCanvas.toDataURL('image/png');
-                    
-                    const a = document.createElement('a');
-                    a.href = pngDataUrl;
-                    a.download = `${svgData.fileName}-${targetWidth}x${targetHeight}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-
-                    showMessageResizer('PNG downloaded successfully!', false);
-
-                } catch (error) {
-                    console.error('Canvas conversion failed:', error);
-                    showMessageResizer('Error during conversion. The SVG might contain embedded images that violate cross-origin policy.', true);
-                } finally {
-                    downloadButton.disabled = false;
-                    downloadButton.textContent = '3. Convert and Download PNG';
-                    ctx.clearRect(0, 0, targetWidth, targetHeight);
-                }
-            };
-
-            img.onerror = (e) => {
-                console.error('Image loading error:', e);
-                showMessageResizer('Failed to load SVG into image object. Check console for details.', true);
-                downloadButton.disabled = false;
-                downloadButton.textContent = '3. Convert and Download PNG';
-            };
-
-            img.src = svgDataUrl;
         });
 
         // Initialize Resizer state message
@@ -684,30 +749,14 @@
 
         /**
          * Attempts to copy a PNG image data URL to the clipboard as an image blob.
+         * NOTE: Direct clipboard access for images is often blocked in iframes.
+         * This function instructs the user on the manual process to prevent the console error.
          */
         async function copyImageToClipboardScaler(dataUrl) {
-            const blockedMessage = 'Copy blocked. Right-click the image and select "Copy Image" or "Save Image As...".';
+            // New behavior: Skip the navigator.clipboard.write attempt to prevent NotAllowedError
+            const blockedMessage = 'Copy blocked in this environment. Right-click the image and select "Copy Image" or "Save Image As...".';
             
-            try {
-                const blob = await (await fetch(dataUrl)).blob();
-                
-                if (navigator.clipboard && navigator.clipboard.write) {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
-                    showMessageScaler('Image copied to clipboard!', '#10b981', '#ffffff');
-                } else {
-                    showMessageScaler(blockedMessage, '#f59e0b', '#ffffff');
-                }
-            } catch (error) {
-                if (error.name === 'NotAllowedError') {
-                    showMessageScaler(blockedMessage, '#f59e0b', '#ffffff');
-                    console.error("Clipboard API access denied (NotAllowedError). Instructing manual copy.", error);
-                } else {
-                    showMessageScaler('Copy failed. Check console for details.', '#ef4444', '#ffffff');
-                    console.error('Failed to copy image:', error);
-                }
-            }
+            showMessageScaler(blockedMessage, '#f59e0b', '#ffffff');
         }
 
         /**
