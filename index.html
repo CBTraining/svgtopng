@@ -15,14 +15,13 @@
     <style>
         /* Base Aesthetic (Google Light Mode) */
         body {
-            font-family: 'Google Sans', sans-serif; 
+            font-family: 'Poppins', sans-serif; 
             min-height: 100vh;
             background-color: #f8f9fa; /* Very light grey */
             color: #1f2937; /* Dark text */
         }
         .tool-card {
             background-color: #ffffff; /* White card background */
-            /* Removed shadow: 0 5px 15px rgba(0, 0, 0, 0.1); */
             border: 1px solid #e0e0e0; /* Added subtle border for definition */
         }
         
@@ -36,7 +35,6 @@
             justify-content: center;
             background-color: #f0f0f0; 
             overflow: hidden;
-            /* padding: 1rem; */ /* <-- Removed this line */
         }
         #svg-display > p {
             color: #888888;
@@ -117,7 +115,6 @@
         .scaled-image {
             border: 1px solid #d1d5db;
             image-rendering: pixelated; 
-            /* Removed shadow */
         }
 
         /* --- Collapsible Title Style --- */
@@ -139,10 +136,31 @@
 
     <h1 class="text-4xl font-bold text-center text-[#34A853] mb-8">ImageTools v1</h1>
 
+    <!-- CLIPBOARD DOWNLOAD FEATURE -->
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-8 max-w-lg">
+            <button id="clipboard-download-button" 
+                    class="tool-card p-4 rounded-xl border-2 border-[#34A853] 
+                           w-full text-left flex flex-col items-start 
+                           bg-white hover:bg-gray-100 transition duration-150 group" 
+                    style="cursor: pointer;">
+                
+                <span class="text-lg font-bold text-gray-700 group-hover:text-[#34A853] transition-colors duration-150">
+                    <i class="fas fa-clipboard pr-2"></i> Convert Clipboard to Image
+                </span>
+                <span class="text-xs font-normal text-gray-500 mt-1">
+                    Click to immediately download the image copied to your clipboard.
+                </span>
+            </button>
+        </div>
+    </div>
+    <!-- END NEW FEATURE -->
+
     <div id="app-container" class="max-w-4xl mx-auto space-y-8">
         
         <!-- ============================================== -->
         <!-- TOOL 1: SVG RESIZER & PNG CONVERTER (#34A853) -->
+        <!-- Default state changed to CLOSED (hidden and rotate-90) -->
         <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
@@ -150,12 +168,12 @@
                     <span>SVG Resizer & PNG Converter</span>
                     <p class="text-sm font-normal text-gray-600 mt-1">Upload an SVG file, change the resolution, and download it as a PNG.</p>
                 </div>
-                <span class="collapse-icon transform transition-transform duration-300">
+                <span class="collapse-icon transform transition-transform duration-300 rotate-90">
                     <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </span>
             </h1>
 
-            <div id="resizer-content" class="p-6 sm:p-8 space-y-8">
+            <div id="resizer-content" class="p-6 sm:p-8 space-y-8 hidden">
                 <!-- Upload Area -->
                 <section>
                     <label for="svg-upload" class="block text-lg font-medium mb-4 text-[#1f2937]">Upload SVG File:</label>
@@ -218,6 +236,7 @@
 
         <!-- ============================================== -->
         <!-- TOOL 2: IMAGE COMPRESSOR (#34A853) -->
+        <!-- Default state: CLOSED (hidden and rotate-90) -->
         <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('compressor-content', this)">
@@ -268,6 +287,7 @@
 
         <!-- ============================================== -->
         <!-- TOOL 3: ICON SCALER (2x, 4x, 8x, 16x) -->
+        <!-- Default state: CLOSED (hidden and rotate-90) -->
         <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
@@ -333,11 +353,62 @@
     <script type="text/javascript">
         
         // ===============================================
-        // GLOBAL FUNCTIONS
+        // GLOBAL FUNCTIONS & STATE MANAGEMENT
         // ===============================================
+        
+        const TOOL_STORAGE_KEY = 'toolStates';
+        const TOOL_IDS = ['resizer-content', 'compressor-content', 'scaler-content'];
 
         /**
-         * Toggles the visibility of a tool's content and rotates the arrow icon.
+         * Saves the current open/closed state of all managed tools to localStorage.
+         */
+        function saveToolState() {
+            const states = {};
+            TOOL_IDS.forEach(id => {
+                const content = document.getElementById(id);
+                if (content) {
+                    states[id] = !content.classList.contains('hidden'); // true if visible (open)
+                }
+            });
+            try {
+                localStorage.setItem(TOOL_STORAGE_KEY, JSON.stringify(states));
+            } catch (e) {
+                console.warn("localStorage is blocked or full. Cannot save tool state.", e);
+            }
+        }
+
+        /**
+         * Loads and applies the saved open/closed state of tools from localStorage.
+         */
+        function loadToolState() {
+            try {
+                const storedStates = JSON.parse(localStorage.getItem(TOOL_STORAGE_KEY));
+                if (!storedStates) return;
+
+                TOOL_IDS.forEach(id => {
+                    const content = document.getElementById(id);
+                    // Find the parent's h1 title (previous sibling)
+                    const titleElement = content.parentElement.querySelector('.tool-title'); 
+                    const icon = titleElement ? titleElement.querySelector('.collapse-icon') : null;
+                    
+                    // If state is saved as open (true)
+                    if (storedStates[id] === true) {
+                        content.classList.remove('hidden');
+                        if (icon) icon.classList.remove('rotate-90');
+                    } 
+                    // If state is saved as closed (false)
+                    else if (storedStates[id] === false) {
+                        content.classList.add('hidden');
+                        if (icon) icon.classList.add('rotate-90');
+                    }
+                });
+            } catch (e) {
+                console.error("Error loading tool state from localStorage.", e);
+            }
+        }
+
+        /**
+         * Toggles the visibility of a tool's content, rotates the arrow icon, and saves the state.
          */
         function toggleTool(contentId, titleElement) {
             const content = document.getElementById(contentId);
@@ -351,6 +422,9 @@
                     content.classList.add('hidden');
                     if (icon) icon.classList.add('rotate-90');
                 }
+                
+                // Save the new state immediately after toggling
+                saveToolState(); 
             }
         }
         
@@ -363,6 +437,90 @@
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        /**
+         * Displays a temporary message in the main message box (bottom left).
+         */
+        function showMessage(message, isError = false) {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            messageBox.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
+            messageBox.classList.remove('hidden');
+            clearTimeout(messageBox.timeout);
+            messageBox.timeout = setTimeout(() => messageBox.classList.add('hidden'), 5000);
+        }
+
+        /**
+         * Displays a temporary message in the Scaler message box (bottom right).
+         */
+        function showMessageScaler(message, isError = false) {
+            const messageBoxScaler = document.getElementById('messageBoxScaler');
+            messageBoxScaler.textContent = message;
+            messageBoxScaler.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
+            messageBoxScaler.classList.remove('hidden');
+            setTimeout(() => messageBoxScaler.classList.add('hidden'), 3000);
+        }
+        
+        // ===============================================
+        // CLIPBOARD DOWNLOAD LOGIC
+        // ===============================================
+        {
+            const clipboardDownloadButton = document.getElementById('clipboard-download-button');
+
+            async function clipboardToImageDownload() {
+                const titleSpan = clipboardDownloadButton.querySelector('span:first-child');
+                clipboardDownloadButton.disabled = true;
+                titleSpan.innerHTML = '<i class="fas fa-spinner fa-spin pr-2"></i> Reading Clipboard... (Requires Permission)';
+
+                try {
+                    if (!navigator.clipboard || !navigator.clipboard.read) {
+                        throw new Error("Clipboard API not fully supported or accessible.");
+                    }
+
+                    const items = await navigator.clipboard.read();
+                    
+                    let imageItem = null;
+                    for (const item of items) {
+                        if (item.types.includes('image/png')) {
+                            imageItem = item;
+                            break;
+                        } else if (item.types.includes('image/jpeg')) {
+                            imageItem = item;
+                        }
+                    }
+
+                    if (!imageItem) {
+                        throw new Error("Clipboard does not contain image data (PNG/JPEG).");
+                    }
+
+                    showMessage('Image data found. Preparing download...');
+                    
+                    const blob = await imageItem.getType(imageItem.types[0]); 
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `clipboard-image-${new Date().getTime()}.png`;
+                    a.click();
+                    
+                    URL.revokeObjectURL(url);
+                    showMessage('Image downloaded successfully!');
+
+                } catch (error) {
+                    if (error.name === 'NotAllowedError') {
+                         showMessage('Permission denied. Please ensure you clicked the button immediately after copying the image.', true);
+                    } else {
+                         showMessage(`Download failed: ${error.message}`, true);
+                         console.error("Clipboard Download Error:", error);
+                    }
+                } finally {
+                    clipboardDownloadButton.disabled = false;
+                    titleSpan.innerHTML = '<i class="fas fa-clipboard pr-2"></i> Convert Clipboard to Image';
+                }
+            }
+            
+            clipboardDownloadButton.addEventListener('click', clipboardToImageDownload);
         }
 
         // ===============================================
@@ -380,7 +538,6 @@
             const copyButton = document.getElementById('copy-button');
             const conversionCanvas = document.getElementById('conversion-canvas');
             const processingArea = document.getElementById('processing-area');
-            const messageBox = document.getElementById('message-box');
             const stepButtonsResizer = document.querySelectorAll('.step-button-resizer');
             const roundedRange = document.getElementById('rounded-range');
             const roundedInput = document.getElementById('rounded-input');
@@ -410,24 +567,7 @@
             function updatePreviewRounding() {
                 if (!svgData.content) return;
                 const radiusValue = parseInt(roundedInput.value) || 0;
-                const targetWidth = parseInt(widthInput.value) || 1;
-                const previewSvgElement = svgDisplay.querySelector('svg');
-
-                if (previewSvgElement) {
-                    const displayWidth = previewSvgElement.getBoundingClientRect().width;
-                    const scaleFactor = (targetWidth > 0 && displayWidth > 0) ? (displayWidth / targetWidth) : 1;
-                    svgDisplay.style.borderRadius = `${radiusValue * scaleFactor}px`;
-                } else {
-                    svgDisplay.style.borderRadius = '0.5rem';
-                }
-            }
-
-            function showMessageResizer(message, isError = false) {
-                messageBox.textContent = message;
-                messageBox.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
-                messageBox.classList.remove('hidden');
-                clearTimeout(messageBox.timeout);
-                messageBox.timeout = setTimeout(() => messageBox.classList.add('hidden'), 5000);
+                svgDisplay.style.borderRadius = `${radiusValue}px`;
             }
 
             async function performConversion() {
@@ -471,14 +611,14 @@
                         ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
                         resolve(conversionCanvas.toDataURL('image/png'));
                     };
-                    img.onerror = () => { showMessageResizer('Failed to load SVG into image object.', true); resolve(null); };
+                    img.onerror = () => { showMessage('Failed to load SVG into image object.', true); resolve(null); };
                     img.src = svgDataUrl;
                 });
             }
 
             svgUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
-                if (!file || !file.type.includes('svg')) { showMessageResizer('Please select a valid SVG file.', true); return; }
+                if (!file || !file.type.includes('svg')) { showMessage('Please select a valid SVG file.', true); return; }
 
                 svgData.fileName = file.name.replace(/\.svg$/i, '');
                 const reader = new FileReader();
@@ -499,7 +639,7 @@
                     processingArea.classList.remove('opacity-50', 'pointer-events-none');
                     downloadButton.disabled = false;
                     copyButton.disabled = false;
-                    showMessageResizer(`SVG "${svgData.fileName}" loaded!`);
+                    showMessage(`SVG "${svgData.fileName}" loaded!`);
                 };
                 reader.readAsText(file);
             });
@@ -522,7 +662,7 @@
             }
             
             function handleStepResizer(e) {
-                if (!svgData.content) { showMessageResizer('Upload an SVG first.', true); return; }
+                if (!svgData.content) { showMessage('Upload an SVG first.', true); return; }
                 const input = widthInput;
                 input.value = Math.min(MAX_DIMENSION, Math.max(1, (parseInt(input.value) || 1) + parseInt(e.currentTarget.dataset.step)));
                 handleResizeInput({ target: input });
@@ -533,21 +673,24 @@
                 const originalText = button.textContent;
                 downloadButton.disabled = true; copyButton.disabled = true;
                 button.textContent = 'Processing...';
-                showMessageResizer('Converting SVG to PNG...');
+                showMessage('Converting SVG to PNG...');
                 const pngDataUrl = await performConversion();
                 if (pngDataUrl) {
                     if (isCopy) {
                         try {
                             const blob = await (await fetch(pngDataUrl)).blob();
+                            // Note: This is prone to 'NotAllowedError' in iframes, but we try anyway.
                             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            showMessageResizer('PNG copied to clipboard!');
-                        } catch (err) { showMessageResizer('Copy failed. Browser may not support it.', true); }
+                            showMessage('PNG copied to clipboard!');
+                        } catch (err) { 
+                            showMessage('Copy failed. Please try the "Download" button and copy the resulting image manually.', true); 
+                        }
                     } else {
                         const a = document.createElement('a');
                         a.href = pngDataUrl;
                         a.download = `${svgData.fileName}-${widthInput.value}x${heightInput.value}.png`;
                         a.click();
-                        showMessageResizer('PNG downloaded successfully!');
+                        showMessage('PNG downloaded successfully!');
                     }
                 }
                 downloadButton.disabled = false; copyButton.disabled = false;
@@ -588,7 +731,6 @@
             const downloadCompressedButton = document.getElementById('download-compressed-button');
             const compressorProcessingArea = document.getElementById('compressor-processing-area');
             const imageConversionCanvas = document.getElementById('image-conversion-canvas');
-            const messageBox = document.getElementById('message-box'); // Shared message box
 
             let imageData = {
                 originalUrl: null,
@@ -597,13 +739,6 @@
                 fileName: 'image'
             };
 
-            function showMessageCompressor(message, isError = false) {
-                 messageBox.textContent = message;
-                 messageBox.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
-                 messageBox.classList.remove('hidden');
-                 clearTimeout(messageBox.timeout);
-                 messageBox.timeout = setTimeout(() => messageBox.classList.add('hidden'), 5000);
-            }
             
             async function updateCompression() {
                 if (!imageData.originalUrl) return;
@@ -640,7 +775,7 @@
             imageUpload.addEventListener('change', (event) => {
                 const file = event.target.files[0];
                 if (!file || !file.type.startsWith('image/')) {
-                    showMessageCompressor('Please select a valid image file (JPG/PNG).', true);
+                    showMessage('Please select a valid image file (JPG/PNG).', true);
                     return;
                 }
                 imageData.fileName = file.name.replace(/\.[^/.]+$/, "");
@@ -654,7 +789,7 @@
                     compressorProcessingArea.classList.remove('opacity-50', 'pointer-events-none');
                     downloadCompressedButton.disabled = false;
                     
-                    showMessageCompressor(`Image "${file.name}" loaded!`);
+                    showMessage(`Image "${file.name}" loaded!`);
                     updateCompression();
                 };
                  reader.readAsDataURL(file);
@@ -664,14 +799,14 @@
 
             downloadCompressedButton.addEventListener('click', () => {
                 if (!imageData.compressedUrl) {
-                    showMessageCompressor('No compressed image to download.', true);
+                    showMessage('No compressed image to download.', true);
                     return;
                 }
                 const a = document.createElement('a');
                 a.href = imageData.compressedUrl;
                 a.download = `${imageData.fileName}-compressed.jpg`;
                 a.click();
-                showMessageCompressor('Compressed image downloaded!');
+                showMessage('Compressed image downloaded!');
             });
         }
 
@@ -689,12 +824,6 @@
             const svgFileUploaderScaler = document.getElementById('svgFileUploaderScaler');
             const uploadButtonScaler = document.getElementById('uploadButtonScaler');
 
-            function showMessageScaler(message, isError = false) {
-                messageBoxScaler.textContent = message;
-                messageBoxScaler.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
-                messageBoxScaler.classList.remove('hidden');
-                setTimeout(() => messageBoxScaler.classList.add('hidden'), 3000);
-            }
             
             async function copyImageToClipboardScaler(dataUrl) {
                 try {
@@ -716,7 +845,16 @@
                 convertButtonScaler.textContent = 'Generating...';
 
                 try {
-                    const { width: baseWidth, height: baseHeight } = getSvgDimensions(svgText);
+                    // Re-use the getSvgDimensions function from Tool 1's scope for base dimensions
+                    const { width: baseWidth, height: baseHeight } = (function() {
+                        const viewBoxMatch = svgText.match(/viewBox="[^"]*"/i);
+                        if (viewBoxMatch) {
+                            const parts = viewBoxMatch[0].slice(9, -1).split(/[,\s]+/);
+                            if (parts.length === 4) return { width: Math.max(1, Math.round(parseFloat(parts[2]))), height: Math.max(1, Math.round(parseFloat(parts[3])))};
+                        }
+                        return { width: DEFAULT_BASE_SIZE_SCALER, height: DEFAULT_BASE_SIZE_SCALER };
+                    })();
+                    
                     const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgText)))}`;
 
                     for (const scale of SCALES_SCALER) {
@@ -772,7 +910,11 @@
 </svg>`;
         }
         
+        // ===============================================
+        // INITIALIZATION
+        // ===============================================
+        loadToolState();
+        
     </script>
 </body>
 </html>
-
