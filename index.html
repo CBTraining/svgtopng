@@ -5,27 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ImageTools v1</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Poppins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* Base Aesthetic (Google Light Mode) */
         body {
             font-family: 'Google Sans', sans-serif; 
             min-height: 100vh;
-            background-color: #f8f9fa; /* Very light grey */
-            color: #1f2937; /* Dark text */
+            background-color: #f8f9fa;
+            color: #1f2937;
         }
         .tool-card {
-            background-color: #ffffff; /* White card background */
-            border: 1px solid #e0e0e0; /* Added subtle border for definition */
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
         }
-        
-        /* --- Tool 1: SVG Resizer Styles (#34A853 Accent) --- */
         
         #svg-display {
             min-height: 200px; 
@@ -46,7 +41,6 @@
             height: auto !important;
         }
         
-        /* Resizer Pulse Outline Animation (#34A853) */
         @keyframes pulse-resizer {
             0%, 100% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
             50% { box-shadow: 0 0 0 8px rgba(52, 168, 83, 0); }
@@ -56,7 +50,6 @@
             border: 2px solid #34A853; 
         }
 
-        /* Generic Slider Track (#e0e0e0) and Thumb (#000000) */
         input[type=range] {
             -webkit-appearance: none;
             appearance: none;
@@ -77,7 +70,7 @@
             cursor: pointer;
             border-radius: 9999px;
             margin-top: -7px;
-            box-shadow: 0 0 8px #34A853; /* Default Accent Glow */
+            box-shadow: 0 0 8px #34A853;
         }
         input[type=range]::-moz-range-track { background: #e0e0e0; height: 4px; border-radius: 4px;}
         input[type=range]::-moz-range-thumb {
@@ -88,7 +81,6 @@
             box-shadow: 0 0 8px #34A853;
         }
 
-        /* --- Tool 2: Image Compressor Styles --- */
         .image-preview-box {
             min-height: 200px;
             border: 2px dashed #cccccc;
@@ -104,20 +96,15 @@
             object-fit: contain;
         }
 
-        /* --- Tool 3: Icon Scaler Styles (Turquoise/Lime Gradient) --- */
-        
-        /* Custom scrollbar for the textarea for light mode */
         #svgInputScaler::-webkit-scrollbar { width: 8px; }
         #svgInputScaler::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
         #svgInputScaler::-webkit-scrollbar-track { background: #f3f4f6; }
 
-        /* Styling for generated images */
         .scaled-image {
             border: 1px solid #d1d5db;
             image-rendering: pixelated; 
         }
 
-        /* --- Collapsible Title Style --- */
         .tool-title {
             cursor: pointer;
             padding: 1.5rem;
@@ -127,7 +114,7 @@
             border-bottom: 1px solid #e0e0e0;
         }
         .tool-title:hover {
-            background-color: #f0f0f0; /* Applied to all titles for consistency */
+            background-color: #f0f0f0;
         }
         
     </style>
@@ -136,7 +123,6 @@
 
     <h1 class="text-4xl font-bold text-center text-[#34A853] mb-8">ImageTools v1</h1>
 
-    <!-- CLIPBOARD DOWNLOAD FEATURE -->
     <div class="max-w-4xl mx-auto">
         <div class="mb-8 max-w-lg">
             <button id="clipboard-download-button" 
@@ -145,28 +131,23 @@
                            bg-white hover:bg-gray-100 transition duration-150 group" 
                     style="cursor: pointer;">
                 
-                <span class="text-lg font-bold text-gray-700 group-hover:text-[#34A853] transition-colors duration-150">
+                <span class="lg:text-xl md:text-lg font-bold text-gray-700 group-hover:text-[#34A853] transition-colors duration-150">
                     <i class="fas fa-clipboard pr-2"></i> Convert Clipboard to Image
                 </span>
                 <span class="text-xs font-normal text-gray-500 mt-1">
-                    Click to immediately download the image copied to your clipboard.
+                    Click to immediately download the image copied to your clipboard, or just press CTRL V!
                 </span>
             </button>
         </div>
     </div>
-    <!-- END NEW FEATURE -->
 
     <div id="app-container" class="max-w-4xl mx-auto space-y-8">
         
-        <!-- ============================================== -->
-        <!-- TOOL 1: SVG RESIZER & PNG CONVERTER (#34A853) -->
-        <!-- Default state changed to CLOSED (hidden and rotate-90) -->
-        <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
                 <div>
-                    <span>SVG Resizer & PNG Converter</span>
-                    <p class="text-sm font-normal text-gray-600 mt-1">Upload an SVG file, change the resolution, and download it as a PNG.</p>
+                    <i class="fas fa-arrows-alt-h pr-3"></i> <span>SVG Resizer & PNG Converter</span>
+                    <p class="text-sm font-normal text-gray-600 mt-1 pl-6">Upload an SVG file, change the resolution, and download it as a PNG.</p>
                 </div>
                 <span class="collapse-icon transform transition-transform duration-300 rotate-90">
                     <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -174,7 +155,6 @@
             </h1>
 
             <div id="resizer-content" class="p-6 sm:p-8 space-y-8 hidden">
-                <!-- Upload Area -->
                 <section>
                     <label for="svg-upload" class="block text-lg font-medium mb-4 text-[#1f2937]">Upload SVG File:</label>
                     <div id="svg-display" class="rounded-lg mb-4">
@@ -183,10 +163,8 @@
                     <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
                 </section>
                 
-                <!-- Processing Area (initially disabled) -->
                 <section id="processing-area" class="opacity-50 pointer-events-none space-y-6">
                     <h2 class="text-lg font-medium text-[#1f2937]">Adjust Dimensions (pixels):</h2>
-                    <!-- Width Controls -->
                     <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                         <label for="width-input" class="font-semibold">Width</label>
                         <input type="range" id="width-range" min="1" max="6000" value="500" class="w-full">
@@ -194,7 +172,6 @@
                            <input type="number" id="width-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center">
                         </div>
                     </div>
-                     <!-- Height Controls -->
                     <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                         <label for="height-input" class="font-semibold">Height</label>
                         <input type="range" id="height-range" min="1" max="6000" value="500" class="w-full">
@@ -202,7 +179,6 @@
                            <input type="number" id="height-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center">
                         </div>
                     </div>
-                    <!-- Rounded Edge Controls -->
                     <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                         <label for="rounded-input" class="font-semibold">Rounding (px)</label>
                         <input type="range" id="rounded-range" min="0" max="500" value="0" class="w-full">
@@ -210,7 +186,6 @@
                            <input type="number" id="rounded-input" min="0" max="500" value="0" class="w-24 p-2 border border-gray-300 rounded-md text-center">
                         </div>
                     </div>
-                    <!-- Aspect Lock & Steppers -->
                     <div class="flex justify-between items-center">
                          <div class="flex items-center space-x-2">
                             <span class="text-sm font-medium mr-2">Adjust:</span>
@@ -226,7 +201,6 @@
                     </div>
                 </section>
 
-                <!-- Action Buttons -->
                 <section class="flex flex-col sm:flex-row gap-4">
                     <button id="copy-button" class="flex-1 px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-800 transition-colors duration-150 disabled:opacity-50" disabled>Copy to Clipboard</button>
                     <button id="download-button" class="flex-1 px-6 py-3 bg-[#34A853] text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download as PNG</button>
@@ -234,15 +208,11 @@
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- TOOL 2: IMAGE COMPRESSOR (#34A853) -->
-        <!-- Default state: CLOSED (hidden and rotate-90) -->
-        <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('compressor-content', this)">
                 <div>
-                    <span>Image Compressor</span>
-                    <p class="text-sm font-normal text-gray-600 mt-1">Upload an image, adjust the quality, and download a smaller file.</p>
+                    <i class="fas fa-compress-alt pr-3"></i> <span>Image Compressor</span>
+                    <p class="text-sm font-normal text-gray-600 mt-1 pl-6">Upload an image, adjust the quality, and download a smaller file.</p>
                 </div>
                 <span class="collapse-icon transform transition-transform duration-300 rotate-90">
                     <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -250,7 +220,6 @@
             </h1>
 
             <div id="compressor-content" class="p-6 sm:p-8 space-y-8 hidden">
-                <!-- Upload Area & Previews -->
                 <section>
                     <label for="image-upload" class="block text-lg font-medium mb-4 text-[#1f2937]">Upload Image (JPG/PNG):</label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
@@ -266,7 +235,6 @@
                     <input type="file" id="image-upload" accept="image/jpeg,image/png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
                 </section>
 
-                <!-- Compressor Controls -->
                 <section id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-4">
                      <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                         <label for="quality-slider" class="font-semibold">Quality</label>
@@ -278,22 +246,17 @@
                     </div>
                 </section>
                 
-                <!-- Action Button -->
                 <section>
                     <button id="download-compressed-button" class="w-full px-6 py-3 bg-[#34A853] text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download Compressed Image</button>
                 </section>
             </div>
         </div>
 
-        <!-- ============================================== -->
-        <!-- TOOL 3: ICON SCALER (2x, 4x, 8x, 16x) -->
-        <!-- Default state: CLOSED (hidden and rotate-90) -->
-        <!-- ============================================== -->
         <div class="tool-card rounded-xl">
              <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
                 <div>
-                    <span>SVG Icon Resizer</span>
-                    <p class="text-sm font-normal text-gray-600 mt-1">Paste in SVG code or SVG, and you can resize your icons! Or, paste in the coordinate SVG code to visualize the icon so you can save it as an image.</p>
+                    <i class="fas fa-layer-group pr-3"></i> <span>SVG Icon Resizer</span>
+                    <p class="text-sm font-normal text-gray-600 mt-1 pl-6">Paste in SVG code or SVG, and you can resize your icons! Or, paste in the coordinate SVG code to visualize the icon so you can save it as an image.</p>
                 </div>
                 <span class="collapse-icon transform transition-transform duration-300 rotate-90">
                     <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -336,11 +299,9 @@
         Made by Christopher Gammello - For any fixes or changes please contact via cgammello@cb-retail.com
     </footer>
 
-    <!-- Hidden canvases for conversion -->
     <canvas id="conversion-canvas" class="hidden"></canvas>
     <canvas id="image-conversion-canvas" class="hidden"></canvas>
 
-    <!-- Message boxes for notifications -->
     <div id="message-box" class="fixed bottom-4 left-4 p-4 rounded-lg hidden transition-opacity duration-300 z-50" 
         style="background-color: #1f2937; color: #f3f4f6;">
         Message...
@@ -352,22 +313,15 @@
 
     <script type="text/javascript">
         
-        // ===============================================
-        // GLOBAL FUNCTIONS & STATE MANAGEMENT
-        // ===============================================
-        
         const TOOL_STORAGE_KEY = 'toolStates';
         const TOOL_IDS = ['resizer-content', 'compressor-content', 'scaler-content'];
 
-        /**
-         * Saves the current open/closed state of all managed tools to localStorage.
-         */
         function saveToolState() {
             const states = {};
             TOOL_IDS.forEach(id => {
                 const content = document.getElementById(id);
                 if (content) {
-                    states[id] = !content.classList.contains('hidden'); // true if visible (open)
+                    states[id] = !content.classList.contains('hidden');
                 }
             });
             try {
@@ -377,9 +331,6 @@
             }
         }
 
-        /**
-         * Loads and applies the saved open/closed state of tools from localStorage.
-         */
         function loadToolState() {
             try {
                 const storedStates = JSON.parse(localStorage.getItem(TOOL_STORAGE_KEY));
@@ -387,16 +338,13 @@
 
                 TOOL_IDS.forEach(id => {
                     const content = document.getElementById(id);
-                    // Find the parent's h1 title (previous sibling)
                     const titleElement = content.parentElement.querySelector('.tool-title'); 
                     const icon = titleElement ? titleElement.querySelector('.collapse-icon') : null;
                     
-                    // If state is saved as open (true)
                     if (storedStates[id] === true) {
                         content.classList.remove('hidden');
                         if (icon) icon.classList.remove('rotate-90');
                     } 
-                    // If state is saved as closed (false)
                     else if (storedStates[id] === false) {
                         content.classList.add('hidden');
                         if (icon) icon.classList.add('rotate-90');
@@ -407,9 +355,6 @@
             }
         }
 
-        /**
-         * Toggles the visibility of a tool's content, rotates the arrow icon, and saves the state.
-         */
         function toggleTool(contentId, titleElement) {
             const content = document.getElementById(contentId);
             if (content) {
@@ -423,14 +368,10 @@
                     if (icon) icon.classList.add('rotate-90');
                 }
                 
-                // Save the new state immediately after toggling
                 saveToolState(); 
             }
         }
         
-        /**
-         * Formats bytes into a human-readable string (KB, MB).
-         */
         function formatFileSize(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
@@ -439,9 +380,6 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        /**
-         * Displays a temporary message in the main message box (bottom left).
-         */
         function showMessage(message, isError = false) {
             const messageBox = document.getElementById('message-box');
             messageBox.textContent = message;
@@ -451,9 +389,6 @@
             messageBox.timeout = setTimeout(() => messageBox.classList.add('hidden'), 5000);
         }
 
-        /**
-         * Displays a temporary message in the Scaler message box (bottom right).
-         */
         function showMessageScaler(message, isError = false) {
             const messageBoxScaler = document.getElementById('messageBoxScaler');
             messageBoxScaler.textContent = message;
@@ -462,9 +397,6 @@
             setTimeout(() => messageBoxScaler.classList.add('hidden'), 3000);
         }
         
-        // ===============================================
-        // CLIPBOARD DOWNLOAD LOGIC
-        // ===============================================
         {
             const clipboardDownloadButton = document.getElementById('clipboard-download-button');
 
@@ -521,11 +453,22 @@
             }
             
             clipboardDownloadButton.addEventListener('click', clipboardToImageDownload);
+            
+            document.addEventListener('keydown', (event) => {
+                const isPasteShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
+
+                const tagName = document.activeElement.tagName;
+                const isInputOrTextarea = tagName === 'INPUT' || tagName === 'TEXTAREA';
+
+                if (isPasteShortcut && !isInputOrTextarea) {
+                    event.preventDefault(); 
+                    
+                    clipboardToImageDownload();
+                }
+            });
+
         }
 
-        // ===============================================
-        // TOOL 1: SVG RESIZER LOGIC
-        // ===============================================
         {
             const svgUpload = document.getElementById('svg-upload');
             const svgDisplay = document.getElementById('svg-display');
@@ -679,7 +622,6 @@
                     if (isCopy) {
                         try {
                             const blob = await (await fetch(pngDataUrl)).blob();
-                            // Note: This is prone to 'NotAllowedError' in iframes, but we try anyway.
                             await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
                             showMessage('PNG copied to clipboard!');
                         } catch (err) { 
@@ -718,9 +660,6 @@
             copyButton.addEventListener('click', () => triggerAction(true));
         }
 
-        // ===============================================
-        // TOOL 2: IMAGE COMPRESSOR LOGIC
-        // ===============================================
         {
             const imageUpload = document.getElementById('image-upload');
             const originalImageDisplay = document.getElementById('original-image-display');
@@ -810,9 +749,6 @@
             });
         }
 
-        // ===============================================
-        // TOOL 3: ICON SCALER LOGIC
-        // ===============================================
         {
             const DEFAULT_BASE_SIZE_SCALER = 32;
             const SCALES_SCALER = [2, 4, 8, 16];
@@ -845,7 +781,6 @@
                 convertButtonScaler.textContent = 'Generating...';
 
                 try {
-                    // Re-use the getSvgDimensions function from Tool 1's scope for base dimensions
                     const { width: baseWidth, height: baseHeight } = (function() {
                         const viewBoxMatch = svgText.match(/viewBox="[^"]*"/i);
                         if (viewBoxMatch) {
@@ -864,6 +799,12 @@
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
+                        
+                        // FIX: Disable image smoothing for sharp vector scaling
+                        ctx.imageSmoothingEnabled = false;
+                        if (ctx.mozImageSmoothingEnabled !== undefined) ctx.mozImageSmoothingEnabled = false;
+                        if (ctx.webkitImageSmoothingEnabled !== undefined) ctx.webkitImageSmoothingEnabled = false;
+                        if (ctx.msImageSmoothingEnabled !== undefined) ctx.msImageSmoothingEnabled = false;
                         
                         const img = new Image();
                         const dataUrl = await new Promise((resolve) => {
@@ -903,16 +844,42 @@
                 }
             });
 
-            svgInputScaler.value = `<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#34A853" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-<path d="M16 3c-7.18 0-13 5.82-13 13s5.82 13 13 13 13-5.82 13-13-5.82-13-13-13z"/>
-<path d="M12 20l8-8"/>
-<path d="M20 20l-8-8"/>
+            svgInputScaler.value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 472 89.9" width="472" height="89.9">
+  <defs>
+    <linearGradient id="a" x1="3.2173" y1="15" x2="44.7812" y2="15" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
+      <stop offset="0" stop-color="#d93025"/>
+      <stop offset="1" stop-color="#ea4335"/>
+    </linearGradient>
+    <linearGradient id="b" x1="20.7219" y1="47.6791" x2="41.5039" y2="11.6837" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
+      <stop offset="0" stop-color="#fcc934"/>
+      <stop offset="1" stop-color="#fbbc04"/>
+    </linearGradient>
+    <linearGradient id="c" x1="26.5981" y1="46.5015" x2="5.8161" y2="10.506" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
+      <stop offset="0" stop-color="#1e8e3e"/>
+      <stop offset="1" stop-color="#34a853"/>
+    </linearGradient>
+  </defs>
+  <path d="M 50.917 68.547 C 60.155 84.547 83.249 84.547 92.486 68.547 C 101.724 52.547 90.177 32.547 71.702 32.547 C 67.489 32.547 63.35 33.656 59.702 35.762 C 48.223 42.389 44.29 57.068 50.917 68.547 Z M 82.094 50.547 C 86.713 58.547 80.939 68.547 71.702 68.547 C 62.464 68.547 56.691 58.547 61.309 50.547 C 62.363 48.722 63.878 47.208 65.702 46.154 C 71.441 42.841 78.78 44.807 82.094 50.547 Z" style="fill: none; transform-origin: 236.379px 44.997px;"/>
+  <circle cx="49.242" cy="214.954" r="12" style="fill: rgb(255, 255, 255);" transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)"/>
+  <g transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)">
+    <path d="M 49.242 202.96 L 70.023 202.96 C 60.79 186.962 37.702 186.959 28.464 202.953 C 28.463 202.956 28.461 202.96 28.459 202.963 L 38.85 220.96 L 38.859 220.957 C 34.231 212.976 39.978 202.977 49.204 202.96 C 49.217 202.96 49.229 202.96 49.242 202.96 Z" style="fill: url('#a');"/>
+    <path d="M 59.633 220.963 L 49.242 238.96 C 67.713 238.962 79.26 218.969 70.027 202.971 C 70.025 202.969 70.023 202.966 70.022 202.963 L 49.241 202.963 L 49.238 202.972 C 58.464 202.954 64.25 212.931 59.652 220.929 C 59.646 220.941 59.639 220.952 59.633 220.963 Z" style="fill: url('#b');"/>
+    <path d="M 38.85 220.963 L 28.46 202.966 C 19.222 218.96 30.763 238.957 49.234 238.96 C 49.237 238.96 49.241 238.96 49.244 238.96 L 59.635 220.963 L 59.628 220.956 C 55.03 228.955 43.498 228.977 38.869 220.995 C 38.863 220.985 38.857 220.974 38.85 220.963 Z" style="fill: url('#c');"/>
+  </g>
+  <circle cx="49.242" cy="214.96" r="9.5" style="fill: rgb(26, 115, 232);" transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)"/>
+  <path d="M 132.438 64.099 Q 127.788 64.099 124.161 61.898 Q 120.534 59.697 118.488 55.884 Q 116.442 52.071 116.442 47.297 Q 116.442 42.461 118.488 38.679 Q 120.534 34.897 124.161 32.696 Q 127.788 30.495 132.438 30.495 Q 137.77 30.495 141.211 32.944 Q 144.652 35.393 146.078 39.237 L 141.304 41.221 Q 140.126 38.307 137.801 36.788 Q 135.476 35.269 132.19 35.269 Q 129.4 35.269 127.013 36.757 Q 124.626 38.245 123.138 40.942 Q 121.65 43.639 121.65 47.297 Q 121.65 50.893 123.138 53.621 Q 124.626 56.349 127.013 57.837 Q 129.4 59.325 132.19 59.325 Q 135.538 59.325 137.956 57.775 Q 140.374 56.225 141.552 53.373 L 146.264 55.357 Q 144.714 59.015 141.242 61.557 Q 137.77 64.099 132.438 64.099 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 151.403 63.069 L 151.403 18.677 L 156.673 18.677 L 156.673 31.759 L 156.425 36.099 L 156.673 36.099 Q 157.913 33.743 160.734 32.1 Q 163.555 30.457 166.965 30.457 Q 172.979 30.457 175.893 33.96 Q 178.807 37.463 178.807 42.795 L 178.807 63.069 L 173.537 63.069 L 173.537 43.601 Q 173.537 39.013 171.212 37.122 Q 168.887 35.231 165.725 35.231 Q 163.121 35.231 161.075 36.719 Q 159.029 38.207 157.851 40.563 Q 156.673 42.919 156.673 45.461 L 156.673 63.069 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 186.462 63.069 L 186.462 31.449 L 191.484 31.449 L 191.484 36.533 L 191.732 36.533 Q 192.352 34.735 193.809 33.402 Q 195.266 32.069 197.157 31.294 Q 199.048 30.519 200.908 30.519 Q 202.334 30.519 203.14 30.674 Q 203.946 30.829 204.628 31.139 L 204.628 36.843 Q 203.636 36.347 202.489 36.099 Q 201.342 35.851 200.164 35.851 Q 197.87 35.851 195.948 37.153 Q 194.026 38.455 192.879 40.625 Q 191.732 42.795 191.732 45.399 L 191.732 63.069 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 223.426 64.061 Q 218.652 64.061 214.994 61.829 Q 211.336 59.597 209.259 55.784 Q 207.182 51.971 207.182 47.259 Q 207.182 42.547 209.259 38.734 Q 211.336 34.921 214.994 32.689 Q 218.652 30.457 223.426 30.457 Q 228.2 30.457 231.858 32.72 Q 235.516 34.983 237.593 38.796 Q 239.67 42.609 239.67 47.259 Q 239.67 51.971 237.593 55.784 Q 235.516 59.597 231.858 61.829 Q 228.2 64.061 223.426 64.061 Z M 223.426 59.287 Q 226.278 59.287 228.789 57.861 Q 231.3 56.435 232.85 53.738 Q 234.4 51.041 234.4 47.259 Q 234.4 43.477 232.85 40.78 Q 231.3 38.083 228.789 36.657 Q 226.278 35.231 223.426 35.231 Q 220.574 35.231 218.032 36.657 Q 215.49 38.083 213.94 40.78 Q 212.39 43.477 212.39 47.259 Q 212.39 51.041 213.94 53.738 Q 215.49 56.435 218.032 57.861 Q 220.574 59.287 223.426 59.287 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 259.628 237.415 L 259.628 205.795 L 264.65 205.795 L 264.65 210.445 L 264.898 210.445 Q 266.2 208.089 268.928 206.446 Q 271.656 204.803 274.756 204.803 Q 278.29 204.803 280.832 206.508 Q 283.374 208.213 284.49 210.941 Q 286.102 208.275 288.83 206.539 Q 291.558 204.803 295.34 204.803 Q 300.982 204.803 303.648 208.213 Q 306.314 211.623 306.314 217.141 L 306.314 237.415 L 301.106 237.415 L 301.106 217.947 Q 301.106 213.359 299.246 211.468 Q 297.386 209.577 293.976 209.577 Q 291.558 209.577 289.667 210.972 Q 287.776 212.367 286.691 214.63 Q 285.606 216.893 285.606 219.559 L 285.606 237.415 L 280.336 237.415 L 280.336 218.009 Q 280.336 213.421 278.476 211.499 Q 276.616 209.577 273.268 209.577 Q 270.85 209.577 268.959 211.003 Q 267.068 212.429 265.983 214.723 Q 264.898 217.017 264.898 219.683 L 264.898 237.415 Z" transform="matrix(1.127905, 0, 0, 1, -48.816004, -174.288341)" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 314.256 64.061 Q 309.668 64.061 306.103 61.891 Q 302.538 59.721 300.523 55.939 Q 298.508 52.157 298.508 47.321 Q 298.508 42.795 300.399 38.951 Q 302.29 35.107 305.731 32.782 Q 309.172 30.457 313.822 30.457 Q 318.534 30.457 321.913 32.534 Q 325.292 34.611 327.121 38.269 Q 328.95 41.927 328.95 46.639 Q 328.95 47.073 328.919 47.507 Q 328.888 47.941 328.826 48.251 L 302.786 48.251 L 303.096 43.911 L 323.37 43.911 Q 323.308 42.113 322.347 40.098 Q 321.386 38.083 319.34 36.657 Q 317.294 35.231 313.822 35.231 Q 310.722 35.231 308.459 36.812 Q 306.196 38.393 304.987 41.121 Q 303.778 43.849 303.778 47.321 Q 303.778 51.351 305.328 54.017 Q 306.878 56.683 309.327 57.985 Q 311.776 59.287 314.442 59.287 Q 317.914 59.287 320.177 57.644 Q 322.44 56.001 323.804 53.583 L 328.268 55.753 Q 326.408 59.349 322.936 61.705 Q 319.464 64.061 314.256 64.061 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 364.447 238.824 Q 360.665 238.824 357.813 237.088 Q 354.961 235.352 353.659 233.182 L 353.411 233.182 L 353.411 237.832 L 348.389 237.832 L 348.389 193.44 L 353.659 193.44 L 353.659 206.522 L 353.411 210.924 L 353.659 210.924 Q 354.961 208.692 357.813 206.956 Q 360.665 205.22 364.447 205.22 Q 368.787 205.22 372.197 207.39 Q 375.607 209.56 377.591 213.342 Q 379.575 217.124 379.575 222.022 Q 379.575 226.92 377.591 230.702 Q 375.607 234.484 372.197 236.654 Q 368.787 238.824 364.447 238.824 Z M 363.889 234.05 Q 366.617 234.05 369.004 232.593 Q 371.391 231.136 372.848 228.408 Q 374.305 225.68 374.305 222.022 Q 374.305 218.302 372.848 215.605 Q 371.391 212.908 369.004 211.451 Q 366.617 209.994 363.889 209.994 Q 361.161 209.994 358.774 211.451 Q 356.387 212.908 354.899 215.605 Q 353.411 218.302 353.411 222.022 Q 353.411 225.742 354.899 228.439 Q 356.387 231.136 358.774 232.593 Q 361.161 234.05 363.889 234.05 Z" transform="matrix(1.043222, 0, 0, 1, -29.175147, -174.647746)" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 387.023 64.061 Q 382.249 64.061 378.591 61.829 Q 374.933 59.597 372.856 55.784 Q 370.779 51.971 370.779 47.259 Q 370.779 42.547 372.856 38.734 Q 374.933 34.921 378.591 32.689 Q 382.249 30.457 387.023 30.457 Q 391.797 30.457 395.455 32.72 Q 399.113 34.983 401.19 38.796 Q 403.267 42.609 403.267 47.259 Q 403.267 51.971 401.19 55.784 Q 399.113 59.597 395.455 61.829 Q 391.797 64.061 387.023 64.061 Z M 387.023 59.287 Q 389.875 59.287 392.386 57.861 Q 394.897 56.435 396.447 53.738 Q 397.997 51.041 397.997 47.259 Q 397.997 43.477 396.447 40.78 Q 394.897 38.083 392.386 36.657 Q 389.875 35.231 387.023 35.231 Q 384.171 35.231 381.629 36.657 Q 379.087 38.083 377.537 40.78 Q 375.987 43.477 375.987 47.259 Q 375.987 51.041 377.537 53.738 Q 379.087 56.435 381.629 57.861 Q 384.171 59.287 387.023 59.287 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 423.539 64.061 Q 418.765 64.061 415.107 61.829 Q 411.449 59.597 409.372 55.784 Q 407.295 51.971 407.295 47.259 Q 407.295 42.547 409.372 38.734 Q 411.449 34.921 415.107 32.689 Q 418.765 30.457 423.539 30.457 Q 428.313 30.457 431.971 32.72 Q 435.629 34.983 437.706 38.796 Q 439.783 42.609 439.783 47.259 Q 439.783 51.971 437.706 55.784 Q 435.629 59.597 431.971 61.829 Q 428.313 64.061 423.539 64.061 Z M 423.539 59.287 Q 426.391 59.287 428.902 57.861 Q 431.413 56.435 432.963 53.738 Q 434.513 51.041 434.513 47.259 Q 434.513 43.477 432.963 40.78 Q 431.413 38.083 428.902 36.657 Q 426.391 35.231 423.539 35.231 Q 420.687 35.231 418.145 36.657 Q 415.603 38.083 414.053 40.78 Q 412.503 43.477 412.503 47.259 Q 412.503 51.041 414.053 53.738 Q 415.603 56.435 418.145 57.861 Q 420.687 59.287 423.539 59.287 Z" style="fill: rgb(94, 98, 104);"/>
+  <path d="M 458.996 238.541 L 458.996 194.149 L 464.266 194.149 L 464.266 222.049 L 464.266 222.049 L 479.146 206.921 L 485.842 206.921 L 485.842 207.169 L 464.266 228.807 L 464.266 238.541 Z M 479.89 238.541 L 469.164 222.545 L 472.884 218.887 L 486.214 238.293 L 486.214 238.541 Z" transform="matrix(1.029387, 0, 0, 1, -27.626916, -175.466533)" style="fill: rgb(94, 98, 104);"/>
 </svg>`;
         }
         
-        // ===============================================
-        // INITIALIZATION
-        // ===============================================
         loadToolState();
         
     </script>
