@@ -30,15 +30,14 @@
             justify-content: center;
             background-color: #f0f0f0; 
             overflow: hidden;
+            transition: width 0.15s, height 0.15s, border-radius 0.15s;
         }
         #svg-display > p {
             color: #888888;
         }
         #svg-display > svg {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto !important; 
-            height: auto !important;
+            max-width: none !important; 
+            max-height: none !important;
         }
         
         @keyframes pulse-resizer {
@@ -157,7 +156,7 @@
             <div id="resizer-content" class="p-6 sm:p-8 space-y-8 hidden">
                 <section>
                     <label for="svg-upload" class="block text-lg font-medium mb-4 text-[#1f2937]">Upload SVG File:</label>
-                    <div id="svg-display" class="rounded-lg mb-4">
+                    <div id="svg-display" class="rounded-lg mb-4 mx-auto">
                         <p>Preview will appear here</p>
                     </div>
                     <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
@@ -179,6 +178,47 @@
                            <input type="number" id="height-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center">
                         </div>
                     </div>
+                    
+                    <h2 class="text-lg font-medium text-[#1f2937] pt-4">Cropping (pixels):</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <!-- Crop Left -->
+                        <div class="space-y-2">
+                            <label for="crop-left-input" class="font-semibold block">Left</label>
+                            <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
+                                <input type="range" id="crop-left-range" min="0" max="6000" value="0" class="w-full">
+                                <input type="number" id="crop-left-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm">
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Right -->
+                        <div class="space-y-2">
+                            <label for="crop-right-input" class="font-semibold block">Right</label>
+                            <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
+                                <input type="range" id="crop-right-range" min="0" max="6000" value="0" class="w-full">
+                                <input type="number" id="crop-right-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm">
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Top -->
+                        <div class="space-y-2">
+                            <label for="crop-top-input" class="font-semibold block">Top</label>
+                            <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
+                                <input type="range" id="crop-top-range" min="0" max="6000" value="0" class="w-full">
+                                <input type="number" id="crop-top-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm">
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Bottom -->
+                        <div class="space-y-2">
+                            <label for="crop-bottom-input" class="font-semibold block">Bottom</label>
+                            <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
+                                <input type="range" id="crop-bottom-range" min="0" max="6000" value="0" class="w-full">
+                                <input type="number" id="crop-bottom-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm">
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                         <label for="rounded-input" class="font-semibold">Rounding (px)</label>
                         <input type="range" id="rounded-range" min="0" max="500" value="0" class="w-full">
@@ -311,6 +351,19 @@
         Message...
     </div>
 
+    <!-- Custom File Naming Modal -->
+    <div id="filename-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4 text-[#1f2937]">Name Your Clipboard Image</h3>
+            <p class="text-sm text-gray-600 mb-4">Enter a name for the downloaded file (without extension).</p>
+            <input type="text" id="filename-input" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853]" placeholder="e.g., my_copied_image">
+            <div class="flex justify-end space-x-3">
+                <button id="filename-cancel" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">Cancel</button>
+                <button id="filename-confirm" class="px-4 py-2 bg-[#34A853] text-white rounded-lg hover:bg-[#2c8d48] transition-colors">Download</button>
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript">
         
         const TOOL_STORAGE_KEY = 'toolStates';
@@ -399,11 +452,66 @@
         
         {
             const clipboardDownloadButton = document.getElementById('clipboard-download-button');
+            const filenameModal = document.getElementById('filename-modal');
+            const filenameInput = document.getElementById('filename-input');
+            const filenameCancel = document.getElementById('filename-cancel');
+            const filenameConfirm = document.getElementById('filename-confirm');
+            const buttonTitleSpan = clipboardDownloadButton.querySelector('span:first-child');
+
+            let clipboardBlob = null;
+            let clipboardMimeType = '';
+            
+            function resetClipboardButton() {
+                clipboardDownloadButton.disabled = false;
+                buttonTitleSpan.innerHTML = '<i class="fas fa-clipboard pr-2"></i> Convert Clipboard to Image';
+            }
+
+            function hideFileNamePrompt() {
+                filenameModal.classList.add('hidden');
+                clipboardBlob = null;
+                clipboardMimeType = '';
+                resetClipboardButton();
+            }
+
+            function showFileNamePrompt(mimeType, blob) {
+                clipboardBlob = blob;
+                clipboardMimeType = mimeType;
+                
+                const extension = mimeType.endsWith('jpeg') ? 'jpg' : 'png';
+                
+                filenameInput.value = `clipboard-image-${new Date().getTime()}`;
+                filenameModal.classList.remove('hidden');
+                filenameInput.focus();
+                
+                const handleConfirm = () => {
+                    const filename = filenameInput.value.trim() || `clipboard-image-${new Date().getTime()}`;
+                    const finalFilename = filename.replace(/\.(png|jpg|jpeg)$/i, '') + '.' + extension;
+                    
+                    const url = URL.createObjectURL(clipboardBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = finalFilename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+
+                    showMessage('Image downloaded successfully!');
+                    hideFileNamePrompt();
+                };
+
+                filenameConfirm.onclick = handleConfirm;
+                filenameCancel.onclick = hideFileNamePrompt;
+
+                filenameInput.onkeydown = (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleConfirm();
+                    }
+                };
+            }
 
             async function clipboardToImageDownload() {
-                const titleSpan = clipboardDownloadButton.querySelector('span:first-child');
                 clipboardDownloadButton.disabled = true;
-                titleSpan.innerHTML = '<i class="fas fa-spinner fa-spin pr-2"></i> Reading Clipboard... (Requires Permission)';
+                buttonTitleSpan.innerHTML = '<i class="fas fa-spinner fa-spin pr-2"></i> Reading Clipboard... (Requires Permission)';
 
                 try {
                     if (!navigator.clipboard || !navigator.clipboard.read) {
@@ -413,12 +521,17 @@
                     const items = await navigator.clipboard.read();
                     
                     let imageItem = null;
+                    let mimeType = '';
+
                     for (const item of items) {
                         if (item.types.includes('image/png')) {
                             imageItem = item;
-                            break;
+                            mimeType = 'image/png';
+                            break; 
                         } else if (item.types.includes('image/jpeg')) {
                             imageItem = item;
+                            mimeType = 'image/jpeg';
+                            break; 
                         }
                     }
 
@@ -426,29 +539,20 @@
                         throw new Error("Clipboard does not contain image data (PNG/JPEG).");
                     }
 
-                    showMessage('Image data found. Preparing download...');
+                    showMessage('Image data found. Please name your file.');
                     
-                    const blob = await imageItem.getType(imageItem.types[0]); 
-                    const url = URL.createObjectURL(blob);
-
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `clipboard-image-${new Date().getTime()}.png`;
-                    a.click();
+                    const blob = await imageItem.getType(mimeType); 
                     
-                    URL.revokeObjectURL(url);
-                    showMessage('Image downloaded successfully!');
+                    showFileNamePrompt(mimeType, blob);
 
                 } catch (error) {
                     if (error.name === 'NotAllowedError') {
                          showMessage('Permission denied. Please ensure you clicked the button immediately after copying the image.', true);
                     } else {
-                         showMessage(`Download failed: ${error.message}`, true);
+                         showMessage(`Clipboard read failed: ${error.message}`, true);
                          console.error("Clipboard Download Error:", error);
                     }
-                } finally {
-                    clipboardDownloadButton.disabled = false;
-                    titleSpan.innerHTML = '<i class="fas fa-clipboard pr-2"></i> Convert Clipboard to Image';
+                    resetClipboardButton(); // Reset button on error
                 }
             }
             
@@ -456,14 +560,15 @@
             
             document.addEventListener('keydown', (event) => {
                 const isPasteShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
-
                 const tagName = document.activeElement.tagName;
                 const isInputOrTextarea = tagName === 'INPUT' || tagName === 'TEXTAREA';
 
-                if (isPasteShortcut && !isInputOrTextarea) {
+                if (isPasteShortcut && !isInputOrTextarea && filenameModal.classList.contains('hidden')) {
                     event.preventDefault(); 
-                    
                     clipboardToImageDownload();
+                } else if (isPasteShortcut && document.activeElement === filenameInput) {
+                    // Prevent default paste when typing filename
+                    event.stopPropagation();
                 }
             });
 
@@ -484,6 +589,16 @@
             const stepButtonsResizer = document.querySelectorAll('.step-button-resizer');
             const roundedRange = document.getElementById('rounded-range');
             const roundedInput = document.getElementById('rounded-input');
+            
+            const cropLeftRange = document.getElementById('crop-left-range');
+            const cropRightRange = document.getElementById('crop-right-range');
+            const cropTopRange = document.getElementById('crop-top-range');
+            const cropBottomRange = document.getElementById('crop-bottom-range');
+            const cropLeftInput = document.getElementById('crop-left-input');
+            const cropRightInput = document.getElementById('crop-right-input');
+            const cropTopInput = document.getElementById('crop-top-input');
+            const cropBottomInput = document.getElementById('crop-bottom-input');
+
 
             let svgData = { content: null, originalWidth: 0, originalHeight: 0, aspectRatio: 1, fileName: 'resized-svg' };
             const MAX_DIMENSION = 6000;
@@ -507,35 +622,108 @@
                 heightRange.value = h;
             }
 
-            function updatePreviewRounding() {
+            function getCropValues() {
+                return {
+                    left: Math.max(0, parseInt(cropLeftInput.value) || 0),
+                    right: Math.max(0, parseInt(cropRightInput.value) || 0),
+                    top: Math.max(0, parseInt(cropTopInput.value) || 0),
+                    bottom: Math.max(0, parseInt(cropBottomInput.value) || 0)
+                };
+            }
+
+            function updateCropUI(w, h, crop) {
+                const maxLeft = w - crop.right - 1;
+                const maxRight = w - crop.left - 1;
+                const maxTop = h - crop.bottom - 1;
+                const maxBottom = h - crop.top - 1;
+
+                cropLeftRange.max = cropLeftInput.max = Math.max(0, maxLeft);
+                cropRightRange.max = cropRightInput.max = Math.max(0, maxRight);
+                cropTopRange.max = cropTopInput.max = Math.max(0, maxTop);
+                cropBottomRange.max = cropBottomInput.max = Math.max(0, maxBottom);
+                
+                crop.left = Math.min(crop.left, Math.max(0, maxLeft));
+                cropLeftRange.value = crop.left;
+                cropLeftInput.value = crop.left;
+
+                crop.right = Math.min(crop.right, Math.max(0, maxRight));
+                cropRightRange.value = crop.right;
+                cropRightInput.value = crop.right;
+
+                crop.top = Math.min(crop.top, Math.max(0, maxTop));
+                cropTopRange.value = crop.top;
+                cropTopInput.value = crop.top;
+
+                crop.bottom = Math.min(crop.bottom, Math.max(0, maxBottom));
+                cropBottomRange.value = crop.bottom;
+                cropBottomInput.value = crop.bottom;
+            }
+
+            function updatePreviewStyles() {
                 if (!svgData.content) return;
+                
+                let targetWidth = parseInt(widthInput.value) || 500;
+                let targetHeight = parseInt(heightInput.value) || 500;
+                const crop = getCropValues();
+                
+                const finalWidth = targetWidth - crop.left - crop.right;
+                const finalHeight = targetHeight - crop.top - crop.bottom;
+
                 const radiusValue = parseInt(roundedInput.value) || 0;
                 svgDisplay.style.borderRadius = `${radiusValue}px`;
+
+                const svgEl = svgDisplay.querySelector('svg');
+                
+                if (svgEl) {
+                    svgEl.style.width = `${targetWidth}px`;
+                    svgEl.style.height = `${targetHeight}px`;
+
+                    svgEl.style.marginLeft = `-${crop.left}px`;
+                    svgEl.style.marginTop = `-${crop.top}px`;
+
+                    svgDisplay.style.width = `${finalWidth}px`;
+                    svgDisplay.style.height = `${finalHeight}px`;
+                } else {
+                    svgDisplay.style.width = '100%'; 
+                    svgDisplay.style.height = 'auto';
+                }
             }
 
             async function performConversion() {
                 if (!svgData.content) return null;
+                
                 let targetWidth = parseInt(widthInput.value) || 500;
                 let targetHeight = parseInt(heightInput.value) || 500;
                 targetWidth = Math.min(MAX_DIMENSION, Math.max(1, targetWidth));
                 targetHeight = Math.min(MAX_DIMENSION, Math.max(1, targetHeight));
                 updateDisplay(targetWidth, targetHeight);
+
+                const crop = getCropValues();
+                updateCropUI(targetWidth, targetHeight, crop); 
                 
-                conversionCanvas.width = targetWidth;
-                conversionCanvas.height = targetHeight;
+                const finalWidth = targetWidth - crop.left - crop.right;
+                const finalHeight = targetHeight - crop.top - crop.bottom;
+
+                if (finalWidth <= 0 || finalHeight <= 0) {
+                     showMessage('Cropping is too aggressive. Final dimensions must be greater than zero.', true);
+                     return null;
+                }
+
+                conversionCanvas.width = finalWidth;
+                conversionCanvas.height = finalHeight;
                 const ctx = conversionCanvas.getContext('2d');
-                ctx.clearRect(0, 0, targetWidth, targetHeight);
+                ctx.clearRect(0, 0, finalWidth, finalHeight);
 
                 let radius = parseInt(roundedInput.value) || 0;
-                radius = Math.min(radius, Math.min(targetWidth, targetHeight) / 2);
+                radius = Math.min(radius, Math.min(finalWidth, finalHeight) / 2);
 
                 if (radius > 0) {
                     ctx.beginPath();
                     ctx.moveTo(radius, 0);
-                    ctx.arcTo(targetWidth, 0, targetWidth, targetHeight, radius);
-                    ctx.arcTo(targetWidth, targetHeight, 0, targetHeight, radius);
-                    ctx.arcTo(0, targetHeight, 0, 0, radius);
-                    ctx.arcTo(0, 0, targetWidth, 0, radius);
+                    ctx.arcTo(finalWidth, 0, finalWidth, finalHeight, radius);
+                    ctx.arcTo(finalWidth, finalHeight, 0, finalHeight, radius);
+                    ctx.arcTo(0, finalHeight, 0, 0, radius);
+                    ctx.arcTo(0, 0, finalWidth, 0, radius);
                     ctx.closePath();
                     ctx.clip();
                 }
@@ -551,7 +739,13 @@
 
                 return new Promise((resolve) => {
                     img.onload = () => {
-                        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+                        ctx.drawImage(
+                            img, 
+                            crop.left, crop.top,                           
+                            finalWidth, finalHeight,                       
+                            0, 0,                                          
+                            finalWidth, finalHeight                        
+                        );
                         resolve(conversionCanvas.toDataURL('image/png'));
                     };
                     img.onerror = () => { showMessage('Failed to load SVG into image object.', true); resolve(null); };
@@ -575,9 +769,12 @@
                     
                     roundedInput.value = 0;
                     roundedRange.value = 0;
-                    updatePreviewRounding();
+                    cropLeftInput.value = cropRightInput.value = cropTopInput.value = cropBottomInput.value = 0;
+
                     const initialSize = Math.min(MAX_DIMENSION, Math.max(500, width)); 
                     updateDisplay(initialSize, Math.round(initialSize / svgData.aspectRatio));
+                    updateCropUI(initialSize, Math.round(initialSize / svgData.aspectRatio), getCropValues());
+                    updatePreviewStyles();
 
                     processingArea.classList.remove('opacity-50', 'pointer-events-none');
                     downloadButton.disabled = false;
@@ -589,25 +786,54 @@
 
             function handleResizeInput(e) {
                 if (!svgData.content) return;
-                const isWidthEvent = e.target === widthRange || e.target === widthInput;
-                let val = parseInt(e.target.value) || 1;
-                val = Math.min(MAX_DIMENSION, Math.max(1, val));
-                let w = parseInt(widthInput.value), h = parseInt(heightInput.value);
                 
-                if (isWidthEvent) w = val; else h = val;
+                let w = parseInt(widthInput.value) || 500;
+                let h = parseInt(heightInput.value) || 500;
+                let crop = getCropValues();
                 
-                if (lockAspect.checked) {
-                    if (isWidthEvent) h = Math.round(w / svgData.aspectRatio);
-                    else w = Math.round(h * svgData.aspectRatio);
+                if (e.target === widthRange || e.target === widthInput || e.target === heightRange || e.target === heightInput) {
+                    const isWidthEvent = e.target === widthRange || e.target === widthInput;
+                    let val = parseInt(e.target.value) || 1;
+                    val = Math.min(MAX_DIMENSION, Math.max(1, val));
+                    
+                    if (isWidthEvent) w = val; else h = val;
+                    
+                    if (lockAspect.checked) {
+                        if (isWidthEvent) h = Math.round(w / svgData.aspectRatio);
+                        else w = Math.round(h * svgData.aspectRatio);
+                    }
+                    updateDisplay(w, h);
+                } else if (e.target.id.includes('crop')) {
+                    const idPrefix = e.target.id.replace(/-range|-input/, '');
+                    const inputField = document.getElementById(`${idPrefix}-input`);
+                    const rangeField = document.getElementById(`${idPrefix}-range`);
+
+                    let val = parseInt(e.target.value) || 0;
+                    
+                    let maxVal;
+                    if (idPrefix === 'crop-left') maxVal = w - crop.right - 1;
+                    else if (idPrefix === 'crop-right') maxVal = w - crop.left - 1;
+                    else if (idPrefix === 'crop-top') maxVal = h - crop.bottom - 1;
+                    else if (idPrefix === 'crop-bottom') maxVal = h - crop.top - 1;
+                    
+                    val = Math.max(0, Math.min(val, maxVal));
+                    
+                    inputField.value = val;
+                    rangeField.value = val;
+                    crop[idPrefix.replace('crop-', '')] = val;
                 }
-                updateDisplay(w, h);
-                updatePreviewRounding();
+
+                updateCropUI(w, h, crop);
+                updatePreviewStyles();
             }
             
             function handleStepResizer(e) {
                 if (!svgData.content) { showMessage('Upload an SVG first.', true); return; }
-                const input = widthInput;
+                const targetId = e.currentTarget.dataset.target + '-input';
+                const input = document.getElementById(targetId);
+                
                 input.value = Math.min(MAX_DIMENSION, Math.max(1, (parseInt(input.value) || 1) + parseInt(e.currentTarget.dataset.step)));
+                
                 handleResizeInput({ target: input });
             }
             
@@ -628,9 +854,12 @@
                             showMessage('Copy failed. Please try the "Download" button and copy the resulting image manually.', true); 
                         }
                     } else {
+                        const crop = getCropValues();
+                        const finalWidth = parseInt(widthInput.value) - crop.left - crop.right;
+                        const finalHeight = parseInt(heightInput.value) - crop.top - crop.bottom;
                         const a = document.createElement('a');
                         a.href = pngDataUrl;
-                        a.download = `${svgData.fileName}-${widthInput.value}x${heightInput.value}.png`;
+                        a.download = `${svgData.fileName}-${finalWidth}x${finalHeight}-cropped.png`;
                         a.click();
                         showMessage('PNG downloaded successfully!');
                     }
@@ -643,14 +872,17 @@
                 let value = parseInt(e.target.value) || 0;
                 roundedInput.value = value;
                 roundedRange.value = value;
-                updatePreviewRounding();
+                updatePreviewStyles();
             }
 
+            const allResizeInputs = [
+                widthRange, heightRange, widthInput, heightInput,
+                cropLeftRange, cropRightRange, cropTopRange, cropBottomRange,
+                cropLeftInput, cropRightInput, cropTopInput, cropBottomInput
+            ];
+
             ['input', 'change'].forEach(evt => {
-                widthRange.addEventListener(evt, handleResizeInput);
-                heightRange.addEventListener(evt, handleResizeInput);
-                widthInput.addEventListener(evt, handleResizeInput);
-                heightInput.addEventListener(evt, handleResizeInput);
+                allResizeInputs.forEach(el => el.addEventListener(evt, handleResizeInput));
                 roundedRange.addEventListener(evt, handleRoundingInput);
                 roundedInput.addEventListener(evt, handleRoundingInput);
             });
@@ -800,7 +1032,6 @@
                         canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         
-                        // FIX: Disable image smoothing for sharp vector scaling
                         ctx.imageSmoothingEnabled = false;
                         if (ctx.mozImageSmoothingEnabled !== undefined) ctx.mozImageSmoothingEnabled = false;
                         if (ctx.webkitImageSmoothingEnabled !== undefined) ctx.webkitImageSmoothingEnabled = false;
