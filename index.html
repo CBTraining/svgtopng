@@ -33,13 +33,17 @@
         }
         
         #svg-display {
+            /* Max constraints for the PREVIEW box */
             min-height: 200px; 
+            max-width: 300px;
+            max-height: 300px;
+            
             border: 2px dashed #cccccc;
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #f0f0f0; 
-            overflow: hidden;
+            overflow: hidden; /* CRUCIAL: Hides the cropped areas */
             transition: width 0.15s, height 0.15s, border-radius 0.15s, background-color 0.3s, border-color 0.3s;
         }
         html.dark #svg-display {
@@ -53,6 +57,7 @@
             color: #ffffff;
         }
         #svg-display > svg {
+            /* This SVG element uses the full user-defined pixel size for correct cropping offsets */
             max-width: none !important; 
             max-height: none !important;
         }
@@ -523,8 +528,7 @@
                     themeToggle.innerHTML = MOON_ICON; 
                     localStorage.setItem(THEME_STORAGE_KEY, 'light');
                 }
-                // The icons/buttons are styled via the .header-button-icon/.header-button-style classes 
-                // in the CSS, which are fixed to white/transparent for contrast against the green header bar.
+                
             }
 
             const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
@@ -539,7 +543,7 @@
                 applyTheme(isDark);
             });
             
-            // Initial state for clipboard button (set via HTML now, but JS handles loading state)
+            
             clipboardButton.innerHTML = '<i class="fas fa-download header-button-icon"></i>';
         }
         
@@ -552,7 +556,7 @@
             const imageConversionCanvas = document.getElementById('image-conversion-canvas');
 
             const ORIGINAL_ICON = '<i class="fas fa-download header-button-icon"></i>';
-            const LOADING_ICON = '<i class="fas fa-spinner fa-spin header-button-icon text-white"></i>'; // Color is white via header-button-icon class
+            const LOADING_ICON = '<i class="fas fa-spinner fa-spin header-button-icon text-white"></i>'; 
             
             let clipboardBlob = null;
             let clipboardMimeType = '';
@@ -731,6 +735,7 @@
 
             let svgData = { content: null, originalWidth: 0, originalHeight: 0, aspectRatio: 1, fileName: 'resized-svg' };
             const MAX_DIMENSION = 6000;
+            const MAX_PREVIEW_DIMENSION = 300; 
             
             function getSvgDimensions(svgString) {
                 const widthMatch = svgString.match(/width="(\d+\.?\d*)"/i);
@@ -791,31 +796,49 @@
             function updatePreviewStyles() {
                 if (!svgData.content) return;
                 
-                let targetWidth = parseInt(widthInput.value) || 500;
-                let targetHeight = parseInt(heightInput.value) || 500;
+                const targetWidth = parseInt(widthInput.value) || 500;
+                const targetHeight = parseInt(heightInput.value) || 500;
                 const crop = getCropValues();
                 
-                const finalWidth = targetWidth - crop.left - crop.right;
-                const finalHeight = targetHeight - crop.top - crop.bottom;
+                const finalWidth = Math.max(1, targetWidth - crop.left - crop.right);
+                const finalHeight = Math.max(1, targetHeight - crop.top - crop.bottom);
 
+                // Calculate preview size constrained by MAX_PREVIEW_DIMENSION (300px)
+                const scaleFactor = Math.min(1, MAX_PREVIEW_DIMENSION / finalWidth, MAX_PREVIEW_DIMENSION / finalHeight);
+                const previewWidth = finalWidth * scaleFactor;
+                const previewHeight = finalHeight * scaleFactor;
+
+                // Calculate the corresponding offset scale for the margins
+                const offsetScale = previewWidth / finalWidth;
+                
+                // 1. Rounding
                 const radiusValue = parseInt(roundedInput.value) || 0;
                 svgDisplay.style.borderRadius = `${radiusValue}px`;
 
                 const svgEl = svgDisplay.querySelector('svg');
                 
                 if (svgEl) {
-                    svgEl.style.width = `${targetWidth}px`;
-                    svgEl.style.height = `${targetHeight}px`;
+                    // 2. SVG element keeps its true dimensions (for correct margin-based cropping)
+                    // The SVG element must be scaled to the preview size PLUS the cropped amount
+                    svgEl.style.width = `${targetWidth * offsetScale}px`;
+                    svgEl.style.height = `${targetHeight * offsetScale}px`;
 
-                    svgEl.style.marginLeft = `-${crop.left}px`;
-                    svgEl.style.marginTop = `-${crop.top}px`;
+                    // 3. Cropping offsets (margins) scaled down for the preview
+                    svgEl.style.marginLeft = `-${crop.left * offsetScale}px`;
+                    svgEl.style.marginTop = `-${crop.top * offsetScale}px`;
 
-                    svgDisplay.style.width = `${finalWidth}px`;
-                    svgDisplay.style.height = `${finalHeight}px`;
+                    // 4. Preview container is set to the constrained size, maintaining aspect ratio.
+                    svgDisplay.style.width = `${previewWidth}px`;
+                    svgDisplay.style.height = `${previewHeight}px`;
                 } else {
                     svgDisplay.style.width = '100%'; 
                     svgDisplay.style.height = 'auto';
                 }
+                
+                // Ensure visibility (in case the element was replaced)
+                svgDisplay.classList.remove('hidden');
+                // Ensure centering
+                svgDisplay.classList.add('mx-auto');
             }
 
             async function performConversion() {
@@ -949,7 +972,11 @@
                     
                     inputField.value = val;
                     rangeField.value = val;
-                    crop[idPrefix.replace('crop-', '')] = val;
+                    // Update the local crop variable based on the input that changed, respecting constraints
+                    if (idPrefix === 'crop-left') crop.left = val;
+                    else if (idPrefix === 'crop-right') crop.right = val;
+                    else if (idPrefix === 'crop-top') crop.top = val;
+                    else if (idPrefix === 'crop-bottom') crop.bottom = val;
                 }
 
                 updateCropUI(w, h, crop);
