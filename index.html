@@ -10,57 +10,99 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'accent': '#34A853',
+                        // Centralized Color Variables for Theme Roles (Tailwind utilities link here)
+                        'text-primary': 'var(--text-primary-dark)',
+                        'text-secondary': 'var(--text-secondary-subtle)',
+                        'bg-page': 'var(--bg-page)',
+                        'bg-card': 'var(--bg-card)',
+                        'border-default': 'var(--border-default)',
+                        'bg-input': 'var(--bg-input)',
+                    },
+                }
+            }
+        }
+    </script>
+
     <style>
+        /* --- CENTRALIZED COLOR VARIABLES --- */
+        /* Light Mode Defaults (Primary is Dark, Secondary is Medium Gray) */
+        :root {
+            --text-primary-dark: #1b1c1f;  /* Near Black for main text/labels */
+            --text-secondary-subtle: #18181a; /* User-requested dark color for subtle text */
+            --bg-page: #f8f9fa;       /* Off-White Page Background */
+            --bg-card: #ffffff;       /* Pure White Card Background */
+            --border-default: #e0e0e0; /* Light Gray Border */
+            --bg-input: #f9fafb;      /* Very light gray input background */
+        }
+        /* Dark Mode Overrides (Primary is Light, Secondary is Slate Gray) */
+        html.dark {
+            --text-primary-dark: #f1f5f9;  /* Near White for main text/labels */
+            --text-secondary-subtle: #94a3b8; /* Slate Gray for descriptive/subtle text */
+            --bg-page: #1b1c1d;        /* Dark Gray Page Background */
+            --bg-card: #282a2c;        /* Slightly Lighter Dark Card */
+            --border-default: #353739; /* Dark Border */
+            --bg-input: #1e293b;       /* Darker input background */
+        }
+
+        /* --- GLOBAL STYLES (using variables) --- */
         body {
             font-family: 'Google Sans', sans-serif; 
             min-height: 100vh;
-            background-color: #f8f9fa;
-            color: #1f2937;
+            background-color: var(--bg-page);
+            color: var(--text-primary-dark);
             transition: background-color 0.3s, color 0.3s;
         }
-        html.dark body {
-            background-color: #1b1c1d; 
-            color: #f1f5f9;
+        
+        /* FIX: Explicitly enforce primary and secondary text colors */
+        .text-primary {
+            color: var(--text-primary-dark);
         }
-        .tool-card {
-            background-color: #ffffff;
-            border: 1px solid #e0e0e0;
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        html.dark .tool-card {
-            background-color: #282a2c; 
-            border: 1px solid #353739; 
+        .text-secondary {
+            color: var(--text-secondary-subtle);
         }
         
+        .tool-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-default);
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        .tool-title {
+            cursor: pointer;
+            padding: 1.5rem;
+            margin-bottom: 0 !important;
+            border-radius: 0.75rem 0.75rem 0 0;
+            transition: background-color 0.15s;
+            border-bottom: 1px solid var(--border-default);
+        }
+        .tool-title:hover {
+            background-color: #f0f0f0;
+        }
+        html.dark .tool-title:hover {
+             background-color: #353739;
+        }
+        /* --- COMPONENT SPECIFIC STYLES --- */
+        
         #svg-display {
-            /* Max constraints for the PREVIEW box */
-            min-height: 200px; 
-            max-width: 300px;
-            max-height: 300px;
-            
+            min-height: 200px; max-width: 300px; max-height: 300px;
             border: 2px dashed #cccccc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             background-color: #f0f0f0; 
-            overflow: hidden; /* CRUCIAL: Hides the cropped areas */
+            overflow: hidden; 
             transition: width 0.15s, height 0.15s, border-radius 0.15s, background-color 0.3s, border-color 0.3s;
         }
         html.dark #svg-display {
             background-color: #282a2c;
             border-color: #353739;
         }
-        #svg-display > p {
-            color: #888888;
-        }
-        html.dark #svg-display > p {
-            color: #ffffff;
-        }
-        #svg-display > svg {
-            /* This SVG element uses the full user-defined pixel size for correct cropping offsets */
-            max-width: none !important; 
-            max-height: none !important;
-        }
+        #svg-display > p { color: #888888; }
+        html.dark #svg-display > p { color: var(--text-primary-dark); } 
+        #svg-display > svg { max-width: none !important; max-height: none !important; }
         
         @keyframes pulse-resizer {
             0%, 100% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
@@ -71,115 +113,44 @@
             border: 2px solid #34A853; 
         }
 
-        input[type=range] {
-            -webkit-appearance: none;
-            appearance: none;
-            background: transparent;
-            cursor: pointer;
-            width: 100%;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            background: #e0e0e0;
-            border-radius: 4px;
-            height: 4px;
-        }
-        html.dark input[type=range]::-webkit-slider-runnable-track {
-            background: #353739;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px; height: 18px;
-            background: #000000;
-            cursor: pointer;
-            border-radius: 9999px;
-            margin-top: -7px;
-            box-shadow: 0 0 8px #34A853;
-        }
+        /* Range Slider Styling */
+        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; }
+        input[type=range]::-webkit-slider-runnable-track { background: #e0e0e0; border-radius: 4px; height: 4px; }
+        html.dark input[type=range]::-webkit-slider-runnable-track { background: #353739; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #000000; cursor: pointer; border-radius: 9999px; margin-top: -7px; box-shadow: 0 0 8px #34A853; }
         input[type=range]::-moz-range-track { background: #e0e0e0; height: 4px; border-radius: 4px;}
-        html.dark input[type=range]::-moz-range-track {
-            background: #353739;
-        }
-        input[type=range]::-moz-range-thumb {
-            background: #000000;
-            border: none;
-            width: 18px; height: 18px;
-            border-radius: 9999px;
-            box-shadow: 0 0 8px #34A853;
-        }
+        html.dark input[type=range]::-moz-range-track { background: #353739; }
+        input[type=range]::-moz-range-thumb { background: #000000; border: none; width: 18px; height: 18px; border-radius: 9999px; box-shadow: 0 0 8px #34A853; }
 
         .image-preview-box {
-            min-height: 200px;
-            border: 2px dashed #cccccc;
-            background-color: #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            min-height: 200px; border: 2px dashed #cccccc; background-color: #f0f0f0;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-        html.dark .image-preview-box {
-            background-color: #282a2c;
-            border-color: #353739;
-        }
-        html.dark .image-preview-box p {
-            color: #ffffff;
-        }
-        .image-preview-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-        }
+        html.dark .image-preview-box { background-color: #282a2c; border-color: #353739; }
+        html.dark .image-preview-box p { color: var(--text-primary-dark); }
+        .image-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
         #svgInputScaler::-webkit-scrollbar { width: 8px; }
         #svgInputScaler::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
         #svgInputScaler::-webkit-scrollbar-track { background: #f3f4f6; }
-        html.dark #svgInputScaler { background-color: #353739; color: #f1f5f9; }
+        html.dark #svgInputScaler { background-color: var(--bg-input); color: var(--text-primary-dark); }
         html.dark #svgInputScaler::-webkit-scrollbar-thumb { background-color: #64748b; }
         html.dark #svgInputScaler::-webkit-scrollbar-track { background: #282a2c; }
 
+        .scaled-image { border: 1px solid #d1d5db; image-rendering: pixelated; }
 
-        .scaled-image {
-            border: 1px solid #d1d5db;
-            image-rendering: pixelated; 
-        }
-
-        .tool-title {
-            cursor: pointer;
-            padding: 1.5rem;
-            margin-bottom: 0 !important;
-            border-radius: 0.75rem 0.75rem 0 0;
-            transition: background-color 0.15s;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .tool-title:hover {
-            background-color: #f0f0f0;
-        }
-        html.dark .tool-title {
-             border-bottom: 1px solid #353739;
-        }
-        html.dark .tool-title:hover {
-             background-color: #353739;
-        }
-
-        .header-button-icon {
-            color: white; 
-            font-size: 1.1rem;
-            transition: transform 0.1s ease-in-out;
-        }
+        .header-button-icon { color: white; font-size: 1.1rem; transition: transform 0.1s ease-in-out; }
         .header-button-style {
-            background-color: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.7); 
+            background-color: transparent; border: 2px solid rgba(255, 255, 255, 0.7); 
             transition: background-color 0.2s, border-color 0.2s;
         }
-        .header-button-style:hover {
-            background-color: rgba(255, 255, 255, 0.15); 
-        }
+        .header-button-style:hover { background-color: rgba(255, 255, 255, 0.15); }
         
     </style>
 </head>
 <body class="">
 
-    <header class="w-full bg-[#34A853] text-white p-4 sm:p-5 flex justify-between items-center fixed top-0 left-0 z-40">
+    <header class="w-full bg-accent text-white p-4 sm:p-5 flex justify-between items-center fixed top-0 left-0 z-40">
         <h1 class="text-3xl font-bold">ImageTools v1</h1>
         <div class="flex space-x-3">
             <!-- Clipboard Global Button -->
@@ -201,43 +172,43 @@
         <div id="app-container" class="max-w-4xl mx-auto space-y-8 p-4 sm:p-8 pt-0">
         
             <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
+                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
                     <div>
                         <i class="fas fa-arrows-alt-h pr-3"></i> <span>SVG Resizer & PNG Converter</span>
-                        <p class="text-sm font-normal text-gray-600 dark:text-slate-400 mt-1 pl-6">Upload an SVG file, change the resolution, and download it as a PNG.</p>
+                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Upload an SVG file, change the resolution, and download it as a PNG.</p>
                     </div>
                     <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </span>
                 </h1>
 
                 <div id="resizer-content" class="p-6 sm:p-8 space-y-8 hidden">
-                    <section>
-                        <label for="svg-upload" class="block text-lg font-medium mb-4 text-[#1f2937] dark:text-slate-200">Upload SVG File:</label>
+                    <section class="space-y-6">
+                        <label for="svg-upload" class="block text-lg font-medium text-primary">Upload SVG File:</label>
                         <div id="svg-display" class="rounded-lg mb-4 mx-auto">
                             <p>Preview will appear here</p>
                         </div>
-                        <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
+                        <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
                     </section>
                     
-                    <section id="processing-area" class="opacity-50 pointer-events-none space-y-6">
-                        <h2 class="text-lg font-medium text-[#1f2937] dark:text-slate-200">Adjust Dimensions (pixels):</h2>
+                    <section id="processing-area" class="opacity-50 pointer-events-none space-y-6 text-primary">
+                        <h2 class="text-lg font-medium">Adjust Dimensions (pixels):</h2>
                         <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                             <label for="width-input" class="font-semibold">Width</label>
                             <input type="range" id="width-range" min="1" max="6000" value="500" class="w-full">
                             <div class="flex items-center space-x-2">
-                            <input type="number" id="width-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                            <input type="number" id="width-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                             </div>
                         </div>
                         <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                             <label for="height-input" class="font-semibold">Height</label>
                             <input type="range" id="height-range" min="1" max="6000" value="500" class="w-full">
                             <div class="flex items-center space-x-2">
-                            <input type="number" id="height-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                            <input type="number" id="height-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                             </div>
                         </div>
                         
-                        <h2 class="text-lg font-medium text-[#1f2937] dark:text-slate-200 pt-4">Cropping (pixels):</h2>
+                        <h2 class="text-lg font-medium pt-4">Cropping (pixels):</h2>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                             <!-- Crop Left -->
@@ -245,7 +216,7 @@
                                 <label for="crop-left-input" class="font-semibold block">Left</label>
                                 <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
                                     <input type="range" id="crop-left-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-left-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                                    <input type="number" id="crop-left-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                                 </div>
                             </div>
                             
@@ -254,7 +225,7 @@
                                 <label for="crop-right-input" class="font-semibold block">Right</label>
                                 <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
                                     <input type="range" id="crop-right-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-right-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                                    <input type="number" id="crop-right-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                                 </div>
                             </div>
                             
@@ -263,7 +234,7 @@
                                 <label for="crop-top-input" class="font-semibold block">Top</label>
                                 <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
                                     <input type="range" id="crop-top-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-top-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                                    <input type="number" id="crop-top-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                                 </div>
                             </div>
                             
@@ -272,7 +243,7 @@
                                 <label for="crop-bottom-input" class="font-semibold block">Bottom</label>
                                 <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
                                     <input type="range" id="crop-bottom-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-bottom-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                                    <input type="number" id="crop-bottom-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                                 </div>
                             </div>
                         </div>
@@ -281,7 +252,7 @@
                             <label for="rounded-input" class="font-semibold">Rounding (px)</label>
                             <input type="range" id="rounded-range" min="0" max="500" value="0" class="w-full">
                             <div class="flex items-center space-x-2">
-                            <input type="number" id="rounded-input" min="0" max="500" value="0" class="w-24 p-2 border border-gray-300 rounded-md text-center dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
+                            <input type="number" id="rounded-input" min="0" max="500" value="0" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
                             </div>
                         </div>
                         <div class="flex justify-between items-center">
@@ -294,98 +265,98 @@
                             </div>
                             <div class="flex items-center">
                                 <input type="checkbox" id="lock-aspect" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500" checked>
-                                <label for="lock-aspect" class="ml-2 block text-sm text-gray-900 dark:text-slate-200">Lock Aspect Ratio</label>
+                                <label for="lock-aspect" class="ml-2 block text-sm text-primary">Lock Aspect Ratio</label>
                             </div>
                         </div>
                     </section>
 
                     <section class="flex flex-col sm:flex-row gap-4">
                         <button id="copy-button" class="flex-1 px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-800 transition-colors duration-150 disabled:opacity-50 dark:bg-slate-600 dark:hover:bg-slate-700" disabled>Copy to Clipboard</button>
-                        <button id="download-button" class="flex-1 px-6 py-3 bg-[#34A853] text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download as PNG</button>
+                        <button id="download-button" class="flex-1 px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download as PNG</button>
                     </section>
                 </div>
             </div>
 
             <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('compressor-content', this)">
+                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('compressor-content', this)">
                     <div>
                         <i class="fas fa-compress-alt pr-3"></i> <span>Image Compressor</span>
-                        <p class="text-sm font-normal text-gray-600 dark:text-slate-400 mt-1 pl-6">Upload an image, adjust the quality, and download a smaller file.</p>
+                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Upload an image, adjust the quality, and download a smaller file.</p>
                     </div>
                     <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </span>
                 </h1>
 
                 <div id="compressor-content" class="p-6 sm:p-8 space-y-8 hidden">
-                    <section>
-                        <label for="image-upload" class="block text-lg font-medium mb-4 text-[#1f2937] dark:text-slate-200">Upload Image (JPG/PNG):</label>
+                    <section class="space-y-6">
+                        <label for="image-upload" class="block text-lg font-medium text-primary">Upload Image (JPG/PNG):</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                             <div>
-                                <h3 class="text-center font-semibold mb-2 dark:text-slate-200">Original</h3>
-                                <div id="original-image-display" class="image-preview-box rounded-lg"><p class="text-gray-500 p-4 text-center">Upload an image to see the original</p></div>
+                                <h3 class="text-center font-semibold text-primary mb-2">Original</h3>
+                                <div id="original-image-display" class="image-preview-box rounded-lg"><p class="text-secondary p-4 text-center">Upload an image to see the original</p></div>
                             </div>
                             <div>
-                                <h3 class="text-center font-semibold mb-2 dark:text-slate-200">Compressed</h3>
-                                <div id="compressed-image-display" class="image-preview-box rounded-lg"><p class="text-gray-500 p-4 text-center">Compressed result will appear here</p></div>
+                                <h3 class="text-center font-semibold text-primary mb-2">Compressed</h3>
+                                <div id="compressed-image-display" class="image-preview-box rounded-lg"><p class="text-secondary p-4 text-center">Compressed result will appear here</p></div>
                             </div>
                         </div>
-                        <input type="file" id="image-upload" accept="image/jpeg,image/png" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
+                        <input type="file" id="image-upload" accept="image/jpeg,image/png" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
                     </section>
 
-                    <section id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-4">
+                    <section id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-4 text-primary">
                         <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
                             <label for="quality-slider" class="font-semibold">Quality</label>
                             <input type="range" id="quality-slider" min="0" max="100" value="75" class="w-full">
                             <span id="quality-value" class="font-mono w-12 text-center">75%</span>
                         </div>
-                        <div id="file-size-display" class="text-center text-sm font-medium text-gray-700 dark:text-slate-200 p-2 bg-gray-100 dark:bg-slate-700 rounded-md">
+                        <div id="file-size-display" class="text-center text-sm font-medium text-secondary p-2 bg-gray-100 dark:bg-slate-700 rounded-md">
                             File size info will appear here.
                         </div>
                     </section>
                     
                     <section>
-                        <button id="download-compressed-button" class="w-full px-6 py-3 bg-[#34A853] text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download Compressed Image</button>
+                        <button id="download-compressed-button" class="w-full px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download Compressed Image</button>
                     </section>
                 </div>
             </div>
 
             <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-[#34A853] flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
+                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
                     <div>
                         <i class="fas fa-layer-group pr-3"></i> <span>SVG Icon Resizer</span>
-                        <p class="text-sm font-normal text-gray-600 dark:text-slate-400 mt-1 pl-6">Paste in SVG code or SVG, and you can resize your icons! Or, paste in the coordinate SVG code to visualize the icon so you can save it as an image.</p>
+                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Paste in SVG code or SVG, and you can resize your icons! Or, paste in the coordinate SVG code to visualize the icon so you can save it as an image.</p>
                     </div>
                     <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-[#34A853]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </span>
                 </h1>
 
                 <div id="scaler-content" class="p-6 sm:p-8 space-y-8 hidden">
                     
                     <section class="mb-8">
-                        <label for="svgInputScaler" class="block text-lg font-medium mb-2 text-[#1f2937] dark:text-slate-200">Paste SVG Code Here:</label>
+                        <label for="svgInputScaler" class="block text-lg font-medium mb-2 text-primary">Paste SVG Code Here:</label>
                         <textarea id="svgInputScaler" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
-                            class="w-full p-4 bg-[#f9fafb] border border-[#cccccc] rounded-lg focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] outline-none text-[#1f2937] text-sm transition duration-150 ease-in-out dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"></textarea>
+                            class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none text-primary text-sm transition duration-150 ease-in-out bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"></textarea>
                         
                         <div class="mt-4 flex items-center justify-between space-x-4">
-                            <p class="text-[#6b7280] text-sm hidden sm:block"></p>
+                            <p class="text-secondary text-sm hidden sm:block"></p>
                             <input type="file" id="svgFileUploaderScaler" accept=".svg,image/svg+xml" class="hidden">
                             <button id="uploadButtonScaler" 
-                                class="flex-1 w-full px-4 py-2 text-[#1f2937] dark:text-slate-200 font-bold rounded-lg border border-[#cccccc] dark:border-slate-600 hover:bg-[#f0f0f0] dark:hover:bg-slate-700 transition duration-150 ease-in-out">
+                                class="flex-1 w-full px-4 py-2 text-primary font-bold rounded-lg border border-gray-300 dark:border-slate-600 hover:bg-[#f0f0f0] dark:hover:bg-slate-700 transition duration-150 ease-in-out">
                                 <span class="mr-2 text-lg">📁</span> Upload SVG
                             </button>
-                            <p class="text-[#6b7280] text-sm hidden sm:block"></p>
+                            <p class="text-secondary text-sm hidden sm:block"></p>
                         </div>
 
                         <button id="convertButtonScaler" 
-                            class="mt-4 w-full md:w-auto px-6 py-3 bg-[#34A853] text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150">
+                            class="mt-4 w-full md:w-auto px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150">
                             Generate Scaled PNGs
                         </button>
                     </section>
 
                     <section id="resultsSectionScaler" class="mt-8">
-                        <h2 class="text-xl font-semibold mb-6 text-[#1f2937] dark:text-slate-200" id="resultsTitleScaler" style="display: none;">Generated Scaled Images</h2>
+                        <h2 class="text-xl font-semibold mb-6 text-primary" id="resultsTitleScaler" style="display: none;">Generated Scaled Images</h2>
                         <div id="resultsDivScaler" class="grid grid-cols-2 md:grid-cols-4 gap-6">
                         </div>
                     </section>
@@ -394,7 +365,7 @@
         </div>
     </div>
 
-    <footer class="text-center text-gray-500 dark:text-slate-400 text-sm mt-12">
+    <footer class="text-center text-secondary text-sm mt-12">
         Made by Christopher Gammello - For any fixes or changes please contact via cgammello@cb-retail.com
     </footer>
 
@@ -413,12 +384,12 @@
     <!-- Custom File Naming Modal -->
     <div id="filename-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
         <div class="bg-white dark:bg-slate-700 p-6 rounded-lg w-full max-w-sm">
-            <h3 class="text-xl font-bold mb-4 text-[#1f2937] dark:text-slate-200">Name Your Clipboard Image</h3>
-            <p class="text-sm text-gray-600 dark:text-slate-400 mb-4">Enter a name for the downloaded file (without extension).</p>
-            <input type="text" id="filename-input" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-[#34A853] focus:border-[#34A853] dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200" placeholder="e.g., my_copied_image">
+            <h3 class="text-xl font-bold mb-4 text-primary">Name Your Clipboard Image</h3>
+            <p class="text-sm text-secondary mb-4">Enter a name for the downloaded file (without extension).</p>
+            <input type="text" id="filename-input" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-accent focus:border-accent dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200" placeholder="e.g., my_copied_image">
             <div class="flex justify-end space-x-3">
                 <button id="filename-cancel" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">Cancel</button>
-                <button id="filename-confirm" class="px-4 py-2 bg-[#34A853] text-white rounded-lg hover:bg-[#2c8d48] transition-colors">Download</button>
+                <button id="filename-confirm" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#2c8d48] transition-colors">Download</button>
             </div>
         </div>
     </div>
@@ -1205,8 +1176,8 @@
                         container.className = 'flex flex-col items-center p-4 bg-[#f0f0f0] rounded-xl dark:bg-slate-700';
                         container.innerHTML = `
                             <img src="${dataUrl}" alt="${scale}x Scaled Image" class="scaled-image w-full h-auto bg-white dark:bg-slate-800 p-2 rounded-lg mb-3">
-                            <p class="text-sm font-semibold text-[#374151] dark:text-slate-200 mb-3">${scale}x (${width}x${height} px)</p>
-                            <button class="copy-btn-scaler w-full px-4 py-2 bg-[#34A853] text-white font-semibold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 text-sm">Copy Image (PNG)</button>
+                            <p class="text-sm font-semibold text-primary mb-3">${scale}x (${width}x${height} px)</p>
+                            <button class="copy-btn-scaler w-full px-4 py-2 bg-accent text-white font-semibold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 text-sm">Copy Image (PNG)</button>
                         `;
                         container.querySelector('.copy-btn-scaler').onclick = () => copyImageToClipboardScaler(dataUrl);
                         resultsDivScaler.appendChild(container);
