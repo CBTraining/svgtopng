@@ -7,24 +7,29 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="shortcut icon" type="image/x-icon" href="itfavicon.ico">
+    <link rel="manifest" href="manifest.json">
     
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
                         'accent': '#34A853',
+                        'accent-hover': '#2c8d48',
                         'text-primary': 'var(--text-primary-dark)',
                         'text-secondary': 'var(--text-secondary-subtle)',
                         'bg-page': 'var(--bg-page)',
+                        'bg-sidebar': 'var(--bg-sidebar)',
                         'bg-card': 'var(--bg-card)',
                         'border-default': 'var(--border-default)',
                         'bg-input': 'var(--bg-input)',
+                        'hover-item': 'var(--hover-item)',
                     },
+                    font-family: 'Google Sans', sans-serif; 
+                    }
                 }
             }
         }
@@ -32,432 +37,519 @@
 
     <style>
         /* --- CENTRALIZED COLOR VARIABLES --- */
-        /* Light Mode Defaults (Primary is Dark, Secondary is Medium Gray) */
         :root {
-            --text-primary-dark: #1b1c1f;  /* Near Black for main text/labels */
-            --text-secondary-subtle: #18181a; /* User-requested dark color for subtle text */
-            --bg-page: #f8f9fa;       /* Off-White Page Background */
-            --bg-card: #ffffff;       /* Pure White Card Background */
-            --border-default: #e0e0e0; /* Light Gray Border */
-            --bg-input: #f9fafb;      /* Very light gray input background */
-        }
-        /* Dark Mode Overrides (Primary is Light, Secondary is Slate Gray) */
-        html.dark {
-            --text-primary-dark: #f1f5f9;  /* Near White for main text/labels */
-            --text-secondary-subtle: #94a3b8; /* Slate Gray for descriptive/subtle text */
-            --bg-page: #1b1c1d;        /* Dark Gray Page Background */
-            --bg-card: #282a2c;        /* Slightly Lighter Dark Card */
-            --border-default: #353739; /* Dark Border */
-            --bg-input: #1e293b;       /* Darker input background */
+            --text-primary-dark: #1b1c1f;
+            --text-secondary-subtle: #18181a;
+            --bg-page: #f8f9fa; /* Lighter page background */
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --border-default: #e5e7eb;
+            --bg-input: #f9fafb;
+            --hover-item: #f0fdf4;
         }
 
-        /* --- GLOBAL STYLES (using variables) --- */
+        html.dark {
+            --text-primary-dark: #f1f5f9;
+            --text-secondary-subtle: #94a3b8;
+            --bg-page: #0f172a;
+            --bg-sidebar: #1e293b;
+            --bg-card: #1e293b;
+            --border-default: #334155;
+            --bg-input: #0f172a;
+            --hover-item: #334155;
+        }
+
         body {
-            font-family: 'Google Sans', sans-serif; 
-            min-height: 100vh;
+            font-family: 'Google Sans', sans-serif;  
             background-color: var(--bg-page);
             color: var(--text-primary-dark);
             transition: background-color 0.3s, color 0.3s;
+            overflow: hidden; 
         }
         
-        /* FIX: Explicitly enforce primary and secondary text colors */
-        .text-primary {
-            color: var(--text-primary-dark);
-        }
-        .text-secondary {
-            color: var(--text-secondary-subtle);
+        .sidebar {
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-default);
+            transition: background-color 0.3s, border-color 0.3s;
         }
         
+        .nav-item {
+            color: var(--text-primary-dark); /* Default text color */
+            transition: all 0.2s;
+            font-weight: 500; /* Medium weight for items */
+        }
+        /* Hover state for inactive items */
+        .nav-item:hover:not(.active) {
+            background-color: var(--hover-item);
+            color: #34A853;
+        }
+        /* Active state (Reference style: only color change) */
+        .nav-item.active {
+            color: #34A853; /* Green text */
+            background-color: var(--hover-item); /* Subtle background on active */
+            font-weight: 600; /* Semi-bold weight for active */
+        }
+
         .tool-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-default);
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
             transition: background-color 0.3s, border-color 0.3s;
         }
-        .tool-title {
-            cursor: pointer;
-            padding: 1.5rem;
-            margin-bottom: 0 !important;
-            border-radius: 0.75rem 0.75rem 0 0;
-            transition: background-color 0.15s;
-            border-bottom: 1px solid var(--border-default);
-        }
-        .tool-title:hover {
-            background-color: #f0f0f0;
-        }
-        html.dark .tool-title:hover {
-             background-color: #353739;
-        }
-        /* --- COMPONENT SPECIFIC STYLES --- */
-        
-        #svg-display {
-            min-height: 200px; max-width: 300px; max-height: 300px;
-            border: 2px dashed #cccccc;
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
+        html.dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #475569; }
+
+        #svg-display, .image-preview-box {
+            min-height: 240px; 
+            border: 2px dashed var(--border-default);
             display: flex; align-items: center; justify-content: center;
-            background-color: #f0f0f0; 
-            overflow: hidden; 
-            transition: width 0.15s, height 0.15s, border-radius 0.15s, background-color 0.3s, border-color 0.3s;
+            background-color: var(--bg-input);
+            overflow: hidden;
+            border-radius: 0.5rem;
+            position: relative;
         }
-        html.dark #svg-display {
-            background-color: #282a2c;
-            border-color: #353739;
-        }
-        #svg-display > p { color: #888888; }
-        html.dark #svg-display > p { color: var(--text-primary-dark); } 
-        #svg-display > svg { max-width: none !important; max-height: none !important; }
         
-        @keyframes pulse-resizer {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(52, 168, 83, 0.7); }
-            50% { box-shadow: 0 0 0 8px rgba(52, 168, 83, 0); }
+        #svg-display > svg, .image-preview-box img {
+            max-width: 100%; max-height: 100%; object-fit: contain;
         }
-        .pulse-outline-resizer {
-            animation: pulse-resizer 2s infinite;
-            border: 2px solid #34A853; 
+        
+        input[type="text"], input[type="number"], textarea {
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-default);
+            color: var(--text-primary-dark);
+            border-radius: 0.5rem;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none;
+            border-color: #34A853;
+            ring: 2px solid #34A853;
         }
 
-        /* Range Slider Styling */
-        input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; width: 100%; }
-        input[type=range]::-webkit-slider-runnable-track { background: #e0e0e0; border-radius: 4px; height: 4px; }
-        html.dark input[type=range]::-webkit-slider-runnable-track { background: #353739; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; background: #000000; cursor: pointer; border-radius: 9999px; margin-top: -7px; box-shadow: 0 0 8px #34A853; }
-        input[type=range]::-moz-range-track { background: #e0e0e0; height: 4px; border-radius: 4px;}
-        html.dark input[type=range]::-moz-range-track { background: #353739; }
-        input[type=range]::-moz-range-thumb { background: #000000; border: none; width: 18px; height: 18px; border-radius: 9999px; box-shadow: 0 0 8px #34A853; }
-
-        .image-preview-box {
-            min-height: 200px; border: 2px dashed #cccccc; background-color: #f0f0f0;
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        input[type=range]::-webkit-slider-runnable-track { background: #e5e7eb; border-radius: 4px; height: 6px; }
+        html.dark input[type=range]::-webkit-slider-runnable-track { background: #334155; }
+        input[type=range]::-webkit-slider-thumb { 
+            -webkit-appearance: none; height: 18px; width: 18px; 
+            border-radius: 50%; background: #34A853; margin-top: -6px; cursor: pointer;
+            box-shadow: 0 0 0 2px var(--bg-card);
         }
-        html.dark .image-preview-box { background-color: #282a2c; border-color: #353739; }
-        html.dark .image-preview-box p { color: var(--text-primary-dark); }
-        .image-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        #svgInputScaler::-webkit-scrollbar { width: 8px; }
-        #svgInputScaler::-webkit-scrollbar-thumb { background-color: #d1d5db; border-radius: 4px; }
-        #svgInputScaler::-webkit-scrollbar-track { background: #f3f4f6; }
-        html.dark #svgInputScaler { background-color: var(--bg-input); color: var(--text-primary-dark); }
-        html.dark #svgInputScaler::-webkit-scrollbar-thumb { background-color: #64748b; }
-        html.dark #svgInputScaler::-webkit-scrollbar-track { background: #282a2c; }
-
-        .scaled-image { border: 1px solid #d1d5db; image-rendering: pixelated; }
-
-        .header-button-icon { color: white; font-size: 1.1rem; transition: transform 0.1s ease-in-out; }
-        .header-button-style {
-            background-color: transparent; border: 2px solid rgba(255, 255, 255, 0.7); 
-            transition: background-color 0.2s, border-color 0.2s;
-        }
-        .header-button-style:hover { background-color: rgba(255, 255, 255, 0.15); }
+        
+        .text-primary { color: var(--text-primary-dark) !important; }
+        .text-secondary { color: var(--text-secondary-subtle) !important; }
         
     </style>
 </head>
-<body class="">
+<body class="flex h-screen w-full text-primary">
 
-    <header class="w-full bg-accent text-white p-4 sm:p-5 flex justify-between items-center fixed top-0 left-0 z-40">
-        <h1 class="text-3xl font-bold">ImageTools v1</h1>
-        <div class="flex space-x-3">
-            <!-- Clipboard Global Button -->
-            <button id="clipboard-download-button" 
-                    class="w-10 h-10 rounded-full flex items-center justify-center header-button-style"
-                    title="Press to convert your clipboard to PNG, or press CTRL V">
-                <!-- Icon is set by JavaScript in the style applied below -->
-                <i class="fas fa-download header-button-icon"></i>
-            </button>
-            <!-- Theme Toggle Button -->
-            <button id="theme-toggle" class="w-10 h-10 rounded-full flex items-center justify-center header-button-style"
-                    title="Toggle visual style">
-                <!-- Icon is set by JavaScript -->
+    <!-- SIDEBAR -->
+    <aside class="sidebar w-72 flex-shrink-0 flex flex-col hidden md:flex z-20 h-full">
+        <!-- Logo Area -->
+        <div class="px-6 pt-8 pb-6 flex items-center gap-3">
+            <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white text-xl shadow-md flex-shrink-0">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="flex flex-col justify-center">
+                <h1 class="text-xl font-bold leading-none text-primary">ImageTools</h1>
+                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1.1</p>
+            </div>
+        </div>
+
+        <!-- Big Green Action Button -->
+        <div class="px-6 mb-8">
+            <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group transform active:scale-95">
+                <i class="fas fa-clipboard text-lg"></i>
+                <span>Clipboard to PNG</span>
             </button>
         </div>
-    </header>
 
-    <div class="mt-[80px] w-full"> 
-        <div id="app-container" class="max-w-4xl mx-auto space-y-8 p-4 sm:p-8 pt-0">
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto px-6 space-y-1 custom-scroll">
+            <div class="text-xs font-bold text-secondary uppercase tracking-wider mb-3 px-2">TOOLS</div>
+            
+            <button onclick="switchTab('resizer')" id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
+                <i class="fas fa-arrows-alt-h w-5 text-center text-lg transition-colors"></i>
+                <span class="text-[15px]">Resizer & Converter</span>
+            </button>
+
+            <button onclick="switchTab('compressor')" id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
+                <i class="fas fa-compress-arrows-alt w-5 text-center text-lg transition-colors"></i>
+                <span class="text-[15px]">Image Compressor</span>
+            </button>
+
+            <button onclick="switchTab('scaler')" id="nav-scaler" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
+                <i class="fas fa-expand w-5 text-center text-lg transition-colors"></i>
+                <span class="text-[15px]">SVG Icon Scaler</span>
+            </button>
+            
+            <button onclick="switchTab('formatter')" id="nav-formatter" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
+                <i class="fas fa-code w-5 text-center text-lg transition-colors"></i>
+                <span class="text-[15px]">HTML Formatter</span>
+            </button>
+        </nav>
+
+        <!-- Footer / Theme Toggle -->
+        <div class="p-6 mt-auto">
+            <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-secondary">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-moon" id="theme-icon"></i>
+                    <span class="text-sm font-medium">Dark Mode</span>
+                </div>
+                <div class="w-9 h-5 bg-gray-200 dark:bg-slate-600 rounded-full relative">
+                    <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 dark:translate-x-4 shadow-sm"></div>
+                </div>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-page">
         
-            <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('resizer-content', this)">
-                    <div>
-                        <i class="fas fa-arrows-alt-h pr-3"></i> <span>SVG Resizer & PNG Converter</span>
-                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Upload an SVG file, change the resolution, and download it as a PNG.</p>
-                    </div>
-                    <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </span>
-                </h1>
-
-                <div id="resizer-content" class="p-6 sm:p-8 space-y-8 hidden">
-                    <section class="space-y-6">
-                        <label for="svg-upload" class="block text-lg font-medium text-primary">Upload SVG File:</label>
-                        <div id="svg-display" class="rounded-lg mb-4 mx-auto">
-                            <p>Preview will appear here</p>
-                        </div>
-                        <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
-                    </section>
-                    
-                    <section id="processing-area" class="opacity-50 pointer-events-none space-y-6 text-primary">
-                        <h2 class="text-lg font-medium">Adjust Dimensions (pixels):</h2>
-                        <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
-                            <label for="width-input" class="font-semibold">Width</label>
-                            <input type="range" id="width-range" min="1" max="6000" value="500" class="w-full">
-                            <div class="flex items-center space-x-2">
-                            <input type="number" id="width-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
-                            <label for="height-input" class="font-semibold">Height</label>
-                            <input type="range" id="height-range" min="1" max="6000" value="500" class="w-full">
-                            <div class="flex items-center space-x-2">
-                            <input type="number" id="height-input" min="1" max="6000" value="500" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                            </div>
-                        </div>
-                        
-                        <h2 class="text-lg font-medium pt-4">Cropping (Experimental):</h2>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                            <!-- Crop Left -->
-                            <div class="space-y-2">
-                                <label for="crop-left-input" class="font-semibold block">Left</label>
-                                <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
-                                    <input type="range" id="crop-left-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-left-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                                </div>
-                            </div>
-                            
-                            <!-- Crop Right -->
-                            <div class="space-y-2">
-                                <label for="crop-right-input" class="font-semibold block">Right</label>
-                                <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
-                                    <input type="range" id="crop-right-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-right-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                                </div>
-                            </div>
-                            
-                            <!-- Crop Top -->
-                            <div class="space-y-2">
-                                <label for="crop-top-input" class="font-semibold block">Top</label>
-                                <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
-                                    <input type="range" id="crop-top-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-top-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                                </div>
-                            </div>
-                            
-                            <!-- Crop Bottom -->
-                            <div class="space-y-2">
-                                <label for="crop-bottom-input" class="font-semibold block">Bottom</label>
-                                <div class="grid grid-cols-[1fr,auto] gap-2 items-center">
-                                    <input type="range" id="crop-bottom-range" min="0" max="6000" value="0" class="w-full">
-                                    <input type="number" id="crop-bottom-input" min="0" max="6000" value="0" class="w-16 p-2 border border-gray-300 rounded-md text-center text-sm text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
-                            <label for="rounded-input" class="font-semibold">Rounding (px)</label>
-                            <input type="range" id="rounded-range" min="0" max="500" value="0" class="w-full">
-                            <div class="flex items-center space-x-2">
-                            <input type="number" id="rounded-input" min="0" max="500" value="0" class="w-24 p-2 border border-gray-300 rounded-md text-center text-primary bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200">
-                            </div>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-sm font-medium mr-2">Adjust:</span>
-                                <button data-target="width" data-step="-10" class="step-button-resizer p-2 rounded-md bg-gray-200 hover:bg-gray-300 w-10 h-8 flex items-center justify-center dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">-10</button>
-                                <button data-target="width" data-step="-1" class="step-button-resizer p-2 rounded-md bg-gray-200 hover:bg-gray-300 w-10 h-8 flex items-center justify-center dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">-1</button>
-                                <button data-target="width" data-step="1" class="step-button-resizer p-2 rounded-md bg-gray-200 hover:bg-gray-300 w-10 h-8 flex items-center justify-center dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">+1</button>
-                                <button data-target="width" data-step="10" class="step-button-resizer p-2 rounded-md bg-gray-200 hover:bg-gray-300 w-10 h-8 flex items-center justify-center dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600">+10</button>
-                            </div>
-                            <div class="flex items-center">
-                                <input type="checkbox" id="lock-aspect" class="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500" checked>
-                                <label for="lock-aspect" class="ml-2 block text-sm text-primary">Lock Aspect Ratio</label>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="flex flex-col sm:flex-row gap-4">
-                        <button id="copy-button" class="flex-1 px-6 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-800 transition-colors duration-150 disabled:opacity-50 dark:bg-slate-600 dark:hover:bg-slate-700" disabled>Copy to Clipboard</button>
-                        <button id="download-button" class="flex-1 px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download as PNG</button>
-                    </section>
+        <!-- Mobile Header -->
+        <header class="md:hidden bg-card border-b border-default p-4 flex justify-between items-center z-30 sticky top-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-accent rounded flex items-center justify-center text-white shadow-sm">
+                    <i class="fas fa-layer-group text-sm"></i>
                 </div>
+                <span class="font-bold text-primary text-lg">ImageTools</span>
             </div>
+            <button id="mobile-menu-btn" class="text-primary p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </header>
 
-            <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('compressor-content', this)">
-                    <div>
-                        <i class="fas fa-compress-alt pr-3"></i> <span>Image Compressor</span>
-                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Upload an image, adjust the quality, and download a smaller file.</p>
+        <!-- Tool Content Container -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll" id="main-scroll-area">
+            <div class="max-w-6xl mx-auto">
+                
+                <!-- TOOL 1: RESIZER -->
+                <div id="tool-resizer" class="tool-section hidden">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-primary mb-2">SVG Resizer & Converter</h2>
+                        <p class="text-secondary text-lg">Upload an SVG file, precisely adjust its dimensions or crop it, and download high-quality PNGs.</p>
                     </div>
-                    <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </span>
-                </h1>
 
-                <div id="compressor-content" class="p-6 sm:p-8 space-y-8 hidden">
-                    <section class="space-y-6">
-                        <label for="image-upload" class="block text-lg font-medium text-primary">Upload Image (JPG/PNG):</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <h3 class="text-center font-semibold text-primary mb-2">Original</h3>
-                                <div id="original-image-display" class="image-preview-box rounded-lg"><p class="text-secondary p-4 text-center">Upload an image to see the original</p></div>
-                            </div>
-                            <div>
-                                <h3 class="text-center font-semibold text-primary mb-2">Compressed</h3>
-                                <div id="compressed-image-display" class="image-preview-box rounded-lg"><p class="text-secondary p-4 text-center">Compressed result will appear here</p></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                        <!-- Left Column: Upload & Preview -->
+                        <div class="lg:col-span-5 space-y-6">
+                            <div class="tool-card p-6">
+                                <label class="block text-sm font-bold text-primary mb-3 uppercase tracking-wide">Source File</label>
+                                <div id="svg-display" class="mb-4 bg-dots">
+                                    <div class="text-center p-6">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-300 mb-3"></i>
+                                        <p class="text-sm text-secondary">No file selected</p>
+                                    </div>
+                                </div>
+                                <label for="svg-upload" class="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium group">
+                                    <i class="fas fa-upload mr-2 group-hover:scale-110 transition-transform"></i> Upload SVG
+                                    <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="hidden"/>
+                                </label>
                             </div>
                         </div>
-                        <input type="file" id="image-upload" accept="image/jpeg,image/png" class="w-full text-sm text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"/>
-                    </section>
 
-                    <section id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-4 text-primary">
-                        <div class="grid grid-cols-[auto,1fr,auto] gap-x-4 items-center">
-                            <label for="quality-slider" class="font-semibold">Quality</label>
-                            <input type="range" id="quality-slider" min="0" max="100" value="75" class="w-full">
-                            <span id="quality-value" class="font-mono w-12 text-center">75%</span>
+                        <!-- Right Column: Controls -->
+                        <div class="lg:col-span-7 space-y-6">
+                            <div class="tool-card p-6" id="processing-area">
+                                <div class="flex items-center justify-between mb-6 pb-4 border-b border-default">
+                                    <h3 class="text-lg font-bold text-primary flex items-center gap-2">
+                                        <i class="fas fa-sliders-h text-accent"></i> Parameters
+                                    </h3>
+                                    <div class="flex items-center gap-2 bg-gray-50 dark:bg-slate-800 px-3 py-1.5 rounded-full">
+                                        <input type="checkbox" id="lock-aspect" class="h-4 w-4 text-accent rounded border-gray-300 focus:ring-accent cursor-pointer" checked>
+                                        <label for="lock-aspect" class="text-xs font-semibold text-primary cursor-pointer uppercase tracking-wide">Lock Ratio</label>
+                                    </div>
+                                </div>
+
+                                <!-- Dimensions -->
+                                <div class="space-y-6 mb-8">
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <label class="text-sm font-bold text-primary">Width</label>
+                                            <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <input type="range" id="width-range" min="1" max="6000" value="500" class="flex-1 accent-green-500">
+                                            <input type="number" id="width-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="flex justify-between mb-2">
+                                            <label class="text-sm font-bold text-primary">Height</label>
+                                            <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <input type="range" id="height-range" min="1" max="6000" value="500" class="flex-1 accent-green-500">
+                                            <input type="number" id="height-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="500">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cropping -->
+                                <div class="border-t border-default pt-6 mb-6">
+                                    <h4 class="text-xs font-bold text-secondary uppercase tracking-wider mb-4">Cropping</h4>
+                                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-medium text-secondary">Left</label>
+                                            <div class="flex gap-2 items-center"><input type="range" id="crop-left-range" class="flex-1 h-1"><input type="number" id="crop-left-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-medium text-secondary">Right</label>
+                                            <div class="flex gap-2 items-center"><input type="range" id="crop-right-range" class="flex-1 h-1"><input type="number" id="crop-right-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-medium text-secondary">Top</label>
+                                            <div class="flex gap-2 items-center"><input type="range" id="crop-top-range" class="flex-1 h-1"><input type="number" id="crop-top-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
+                                        </div>
+                                        <div class="space-y-1">
+                                            <label class="text-xs font-medium text-secondary">Bottom</label>
+                                            <div class="flex gap-2 items-center"><input type="range" id="crop-bottom-range" class="flex-1 h-1"><input type="number" id="crop-bottom-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rounding -->
+                                <div class="border-t border-default pt-6 mb-8">
+                                    <div class="flex justify-between mb-2">
+                                        <label class="text-sm font-bold text-primary">Corner Rounding</label>
+                                        <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
+                                    </div>
+                                    <div class="flex items-center gap-4">
+                                        <input type="range" id="rounded-range" min="0" max="500" value="0" class="flex-1 accent-green-500">
+                                        <input type="number" id="rounded-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="0">
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-default">
+                                    <button id="copy-button" disabled class="py-3 px-4 rounded-xl font-bold text-sm bg-white border border-default text-secondary hover:bg-gray-50 hover:text-primary dark:bg-slate-800 dark:hover:bg-slate-700 transition-all disabled:opacity-50 shadow-sm">
+                                        <i class="far fa-copy mr-2"></i> Copy Image
+                                    </button>
+                                    <button id="download-button" disabled class="py-3 px-4 rounded-xl font-bold text-sm bg-primary text-white hover:bg-gray-800 dark:bg-slate-600 dark:hover:bg-slate-500 shadow-md transition-all disabled:opacity-50">
+                                        <i class="fas fa-download mr-2"></i> Download PNG
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="file-size-display" class="text-center text-sm font-medium text-secondary p-2 bg-gray-100 dark:bg-slate-700 rounded-md">
-                            File size info will appear here.
-                        </div>
-                    </section>
-                    
-                    <section>
-                        <button id="download-compressed-button" class="w-full px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 disabled:opacity-50" disabled>Download Compressed Image</button>
-                    </section>
+                    </div>
                 </div>
-            </div>
 
-            <div class="tool-card rounded-xl">
-                <h1 class="tool-title text-2xl font-extrabold mb-0 rounded-b-none text-accent flex justify-between items-center" onclick="toggleTool('scaler-content', this)">
-                    <div>
-                        <i class="fas fa-layer-group pr-3"></i> <span>SVG Icon Resizer</span>
-                        <p class="text-sm font-normal text-secondary mt-1 pl-6">Paste in SVG code or SVG, and you can resize your icons! Or, paste in the coordinate SVG code to visualize the icon so you can save it as an image.</p>
+                <!-- TOOL 2: COMPRESSOR -->
+                <div id="tool-compressor" class="tool-section hidden">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-primary mb-2">Image Compressor</h2>
+                        <p class="text-secondary text-lg">Optimize JPG and PNG files to reduce file size without losing visible quality.</p>
                     </div>
-                    <span class="collapse-icon transform transition-transform duration-300 rotate-90">
-                        <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </span>
-                </h1>
 
-                <div id="scaler-content" class="p-6 sm:p-8 space-y-8 hidden">
-                    
-                    <section class="mb-8">
-                        <label for="svgInputScaler" class="block text-lg font-medium mb-2 text-primary">Paste SVG Code Here:</label>
-                        <textarea id="svgInputScaler" rows="8" placeholder="<svg viewBox='0 0 32 32' ...>"
-                            class="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-accent outline-none text-primary text-sm transition duration-150 ease-in-out bg-bg-input dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"></textarea>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Original -->
+                        <div class="tool-card p-6">
+                             <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-2"><i class="far fa-image text-secondary"></i> Original</h3>
+                             <div id="original-image-display" class="image-preview-box mb-6 bg-dots">
+                                 <p class="text-sm text-secondary">Select an image</p>
+                             </div>
+                             <label for="image-upload" class="flex items-center justify-center w-full px-4 py-4 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-primary rounded-xl cursor-pointer transition-all font-medium group">
+                                <i class="fas fa-image mr-2 text-secondary group-hover:text-accent transition-colors"></i> Select Image
+                                <input type="file" id="image-upload" accept="image/jpeg,image/png" class="hidden"/>
+                            </label>
+                        </div>
+
+                        <!-- Compressed -->
+                        <div class="tool-card p-6">
+                            <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-2"><i class="fas fa-bolt text-accent"></i> Compressed Result</h3>
+                             <div id="compressed-image-display" class="image-preview-box mb-6 relative bg-dots">
+                                 <p class="text-sm text-secondary">Result preview</p>
+                             </div>
+                             
+                             <div id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-6">
+                                 <div>
+                                     <div class="flex justify-between mb-2">
+                                        <label class="text-sm font-bold text-primary">Quality Level</label>
+                                        <span id="quality-value" class="text-sm font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">75%</span>
+                                     </div>
+                                     <input type="range" id="quality-slider" min="0" max="100" value="75" class="w-full accent-green-500">
+                                 </div>
+                                 
+                                 <div id="file-size-display" class="bg-blue-50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 p-4 rounded-xl text-center text-sm text-primary">
+                                     Waiting for image...
+                                 </div>
+
+                                 <button id="download-compressed-button" disabled class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 transform active:scale-95">
+                                     Download Compressed
+                                 </button>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TOOL 3: SCALER -->
+                <div id="tool-scaler" class="tool-section hidden">
+                    <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-primary mb-2">SVG Icon Scaler</h2>
+                        <p class="text-secondary text-lg">Batch generate pixel-perfect PNGs from SVG code at multiple scales (2x, 4x, 8x, 16x).</p>
+                    </div>
+
+                    <div class="tool-card p-6 mb-8">
+                        <label class="block text-sm font-bold text-primary mb-3 uppercase tracking-wide">Input SVG Code</label>
+                        <textarea id="svgInputScaler" rows="6" class="w-full p-4 font-mono text-xs border-default bg-input rounded-xl resize-y focus:ring-2 focus:ring-accent focus:border-accent shadow-inner" placeholder="<svg ...>"></textarea>
                         
-                        <div class="mt-4 flex items-center justify-between space-x-4">
-                            <p class="text-secondary text-sm hidden sm:block"></p>
-                            <input type="file" id="svgFileUploaderScaler" accept=".svg,image/svg+xml" class="hidden">
-                            <button id="uploadButtonScaler" 
-                                class="flex-1 w-full px-4 py-2 text-primary font-bold rounded-lg border border-gray-300 dark:border-slate-600 hover:bg-[#f0f0f0] dark:hover:bg-slate-700 transition duration-150 ease-in-out">
-                                <span class="mr-2 text-lg">📁</span> Upload SVG
+                        <div class="flex gap-4 mt-6">
+                            <label for="svgFileUploaderScaler" class="px-5 py-2.5 bg-white border border-default hover:bg-gray-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-primary font-bold rounded-lg cursor-pointer transition-colors shadow-sm">
+                                <i class="fas fa-file-code mr-2 text-secondary"></i> Load File
+                                <input type="file" id="svgFileUploaderScaler" accept=".svg" class="hidden">
+                            </label>
+                            <button id="convertButtonScaler" class="px-8 py-2.5 bg-primary hover:bg-gray-800 dark:bg-slate-600 dark:hover:bg-slate-500 text-white font-bold rounded-lg shadow-md transition-colors ml-auto">
+                                Generate All Sizes
                             </button>
-                            <p class="text-secondary text-sm hidden sm:block"></p>
                         </div>
+                    </div>
 
-                        <button id="convertButtonScaler" 
-                            class="mt-4 w-full md:w-auto px-6 py-3 bg-accent text-white font-bold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150">
-                            Generate Scaled PNGs
-                        </button>
-                    </section>
-
-                    <section id="resultsSectionScaler" class="mt-8">
-                        <h2 class="text-xl font-semibold mb-6 text-primary" id="resultsTitleScaler" style="display: none;">Generated Scaled Images</h2>
+                    <div id="resultsSectionScaler" class="hidden">
+                        <h3 class="text-lg font-bold text-primary mb-4 pb-2 border-b border-default">Generated Assets</h3>
                         <div id="resultsDivScaler" class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <!-- Dynamic Content -->
                         </div>
-                    </section>
+                    </div>
                 </div>
+                
+                <!-- TOOL 4: FORMATTER -->
+                <div id="tool-formatter" class="tool-section hidden">
+                     <div class="mb-8">
+                        <h2 class="text-3xl font-bold text-primary mb-2">HTML Formatter</h2>
+                        <p class="text-secondary text-lg">Beautify messy HTML code with proper indentation and spacing.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-240px)] min-h-[500px]">
+                        <div class="tool-card flex flex-col h-full overflow-hidden shadow-md">
+                            <div class="p-4 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                <label class="text-xs font-bold text-secondary uppercase tracking-wide">Input (Messy)</label>
+                                <i class="fas fa-code text-gray-400"></i>
+                            </div>
+                            <textarea id="htmlInput" class="flex-1 w-full p-5 font-mono text-xs bg-input border-none outline-none resize-none focus:ring-0" placeholder="Paste HTML here..."></textarea>
+                        </div>
+
+                        <div class="tool-card flex flex-col h-full overflow-hidden shadow-md relative">
+                             <div class="p-4 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                <label class="text-xs font-bold text-secondary uppercase tracking-wide">Output (Clean)</label>
+                                <button id="copyHtmlButton" disabled class="text-xs font-bold text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors">
+                                    <i class="fas fa-copy"></i> Copy
+                                </button>
+                            </div>
+                            <textarea id="formattedOutput" readonly class="flex-1 w-full p-5 font-mono text-xs bg-input border-none outline-none resize-none focus:ring-0"></textarea>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </div>
+    </main>
 
-    <footer class="text-center text-secondary text-sm mt-12">
-        Made by Christopher Gammello - For any fixes or changes please contact via cgammello@cb-retail.com
-    </footer>
-
+    <!-- Hidden Elements -->
     <canvas id="conversion-canvas" class="hidden"></canvas>
     <canvas id="image-conversion-canvas" class="hidden"></canvas>
 
-    <div id="message-box" class="fixed bottom-4 left-4 p-4 rounded-lg hidden transition-opacity duration-300 z-50" 
-        style="background-color: #1f2937; color: #f3f4f6;">
-        Message...
-    </div>
-    <div id="messageBoxScaler" class="fixed bottom-4 right-4 p-4 rounded-lg hidden transition-opacity duration-300 z-50" 
-        style="background-color: #1f2937; color: #f3f4f6;">
-        Message...
+    <!-- Notifications -->
+    <div id="message-box" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform transition-all duration-300 z-50 flex items-center gap-3 border border-gray-700">
+        <i class="fas fa-info-circle text-accent text-lg"></i>
+        <span id="message-text" class="font-medium">Notification</span>
     </div>
 
-    <!-- Custom File Naming Modal -->
-    <div id="filename-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white dark:bg-slate-700 p-6 rounded-lg w-full max-w-sm">
-            <h3 class="text-xl font-bold mb-4 text-primary">Name Your Clipboard Image</h3>
-            <p class="text-sm text-secondary mb-4">Enter a name for the downloaded file (without extension).</p>
-            <input type="text" id="filename-input" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:ring-2 focus:ring-accent focus:border-accent dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200" placeholder="e.g., my_copied_image">
-            <div class="flex justify-end space-x-3">
-                <button id="filename-cancel" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors dark:bg-slate-600 dark:text-slate-200 dark:hover:bg-slate-500">Cancel</button>
-                <button id="filename-confirm" class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-[#2c8d48] transition-colors">Download</button>
+    <!-- File Name Modal -->
+    <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
+            <h3 class="text-2xl font-bold mb-2 text-primary">Save Image</h3>
+            <p class="text-sm text-secondary mb-6">Enter a filename for your clipboard image.</p>
+            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-primary font-medium" placeholder="clipboard-image">
+            <div class="flex justify-end gap-3">
+                <button id="filename-cancel" class="px-5 py-2.5 text-secondary hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg shadow-green-900/20 transition-all transform active:scale-95">Download</button>
             </div>
         </div>
     </div>
 
-    <script type="text/javascript">
-        
-        const TOOL_STORAGE_KEY = 'toolStates';
-        const TOOL_IDS = ['resizer-content', 'compressor-content', 'scaler-content'];
-        const THEME_STORAGE_KEY = 'theme';
+    <script>
+        // --- STATE & NAVIGATION ---
+        const TABS = ['resizer', 'compressor', 'scaler', 'formatter'];
+        let activeTab = 'resizer';
 
-        function saveToolState() {
-            const states = {};
-            TOOL_IDS.forEach(id => {
-                const content = document.getElementById(id);
-                if (content) {
-                    states[id] = !content.classList.contains('hidden');
-                }
+        function switchTab(tabId) {
+            activeTab = tabId;
+            localStorage.setItem('activeTab', tabId);
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                const icon = el.querySelector('i');
+                if(icon) icon.classList.remove('text-accent');
             });
-            try {
-                localStorage.setItem(TOOL_STORAGE_KEY, JSON.stringify(states));
-            } catch (e) {
-                console.warn("localStorage is blocked or full. Cannot save tool state.", e);
+            
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if(activeNav) {
+                activeNav.classList.add('active');
+                const icon = activeNav.querySelector('i');
+                if(icon) icon.classList.add('text-accent');
             }
+
+            document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
+            const activeSection = document.getElementById(`tool-${tabId}`);
+            if(activeSection) activeSection.classList.remove('hidden');
         }
 
-        function loadToolState() {
-            try {
-                const storedStates = JSON.parse(localStorage.getItem(TOOL_STORAGE_KEY));
-                if (!storedStates) return;
+        function initApp() {
+            // Load Theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            
+            if(savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                if(themeIcon) themeIcon.className = 'fas fa-sun text-yellow-400';
+            }
 
-                TOOL_IDS.forEach(id => {
-                    const content = document.getElementById(id);
-                    const titleElement = content.parentElement.querySelector('.tool-title'); 
-                    const icon = titleElement ? titleElement.querySelector('.collapse-icon') : null;
-                    
-                    if (storedStates[id] === true) {
-                        content.classList.remove('hidden');
-                        if (icon) icon.classList.remove('rotate-90');
-                    } 
-                    else if (storedStates[id] === false) {
-                        content.classList.add('hidden');
-                        if (icon) icon.classList.add('rotate-90');
-                    }
+            // Load Tab
+            const savedTab = localStorage.getItem('activeTab');
+            if(TABS.includes(savedTab)) {
+                switchTab(savedTab);
+            } else {
+                switchTab('resizer');
+            }
+
+            // Mobile Menu
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const sidebar = document.querySelector('aside');
+                sidebar.classList.toggle('hidden');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('h-full');
+                sidebar.classList.toggle('w-64');
+            });
+            
+            // Setup Theme Toggle
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    document.documentElement.classList.toggle('dark');
+                    const isDark = document.documentElement.classList.contains('dark');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    if(themeIcon) themeIcon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon';
                 });
-            } catch (e) {
-                console.error("Error loading tool state from localStorage.", e);
             }
         }
 
-        function toggleTool(contentId, titleElement) {
-            const content = document.getElementById(contentId);
-            if (content) {
-                const icon = titleElement.querySelector('.collapse-icon');
-                
-                if (content.classList.contains('hidden')) {
-                    content.classList.remove('hidden');
-                    if (icon) icon.classList.remove('rotate-90');
-                } else {
-                    content.classList.add('hidden');
-                    if (icon) icon.classList.add('rotate-90');
-                }
-                
-                saveToolState(); 
-            }
+        // --- SHARED UTILS ---
+        function showMessage(msg, isError = false) {
+            const box = document.getElementById('message-box');
+            const text = document.getElementById('message-text');
+            const icon = box.querySelector('i');
+            
+            text.textContent = msg;
+            icon.className = isError ? 'fas fa-exclamation-circle text-red-400 text-xl' : 'fas fa-check-circle text-green-400 text-xl';
+            
+            box.classList.remove('hidden', 'translate-y-10', 'opacity-0');
+            setTimeout(() => {
+                box.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => box.classList.add('hidden'), 300);
+            }, 4000);
         }
 
-        function formatFileSize(bytes) {
+        function formatBytes(bytes) {
             if (bytes === 0) return '0 Bytes';
             const k = 1024;
             const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -465,783 +557,405 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function showMessage(message, isError = false) {
-            const messageBox = document.getElementById('message-box');
-            messageBox.textContent = message;
-            messageBox.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
-            messageBox.classList.remove('hidden');
-            clearTimeout(messageBox.timeout);
-            messageBox.timeout = setTimeout(() => messageBox.classList.add('hidden'), 5000);
-        }
+        // --- TOOL 1: RESIZER LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const dom = {
+                upload: document.getElementById('svg-upload'),
+                display: document.getElementById('svg-display'),
+                controls: document.getElementById('processing-area'),
+                wRange: document.getElementById('width-range'), wInput: document.getElementById('width-input'),
+                hRange: document.getElementById('height-range'), hInput: document.getElementById('height-input'),
+                lock: document.getElementById('lock-aspect'),
+                cLeftR: document.getElementById('crop-left-range'), cLeftI: document.getElementById('crop-left-input'),
+                cRightR: document.getElementById('crop-right-range'), cRightI: document.getElementById('crop-right-input'),
+                cTopR: document.getElementById('crop-top-range'), cTopI: document.getElementById('crop-top-input'),
+                cBotR: document.getElementById('crop-bottom-range'), cBotI: document.getElementById('crop-bottom-input'),
+                rRange: document.getElementById('rounded-range'), rInput: document.getElementById('rounded-input'),
+                dlBtn: document.getElementById('download-button'), cpBtn: document.getElementById('copy-button'),
+                canvas: document.getElementById('conversion-canvas')
+            };
 
-        function showMessageScaler(message, isError = false) {
-            const messageBoxScaler = document.getElementById('messageBoxScaler');
-            messageBoxScaler.textContent = message;
-            messageBoxScaler.style.backgroundColor = isError ? '#ef4444' : '#1f2937';
-            messageBoxScaler.classList.remove('hidden');
-            setTimeout(() => messageBoxScaler.classList.add('hidden'), 3000);
-        }
+            let state = { svgContent: null, aspect: 1, name: 'image' };
+            const MAX = 6000;
 
-        function initializeThemeToggle() {
-            const themeToggle = document.getElementById('theme-toggle');
-            const htmlElement = document.documentElement;
-            const clipboardButton = document.getElementById('clipboard-download-button');
+            if (dom.upload) {
+                dom.upload.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if(!file) return;
+                    state.name = file.name.replace(/\.svg$/i, '');
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        state.svgContent = ev.target.result;
+                        dom.display.innerHTML = state.svgContent;
+                        const svg = dom.display.querySelector('svg');
+                        svg.setAttribute('width', '100%');
+                        svg.setAttribute('height', '100%');
 
-            const MOON_ICON = '<i class="fas fa-moon header-button-icon"></i>';
-            const SUN_ICON = '<i class="fas fa-sun header-button-icon"></i>';
+                        const w = svg.getAttribute('viewBox') ? svg.viewBox.baseVal.width : 500;
+                        const h = svg.getAttribute('viewBox') ? svg.viewBox.baseVal.height : 500;
+                        state.aspect = w / h;
+                        updateDim(w, h);
+                        if (dom.controls) dom.controls.classList.remove('opacity-50', 'pointer-events-none');
+                        if (dom.dlBtn) dom.dlBtn.disabled = false;
+                        if (dom.cpBtn) dom.cpBtn.disabled = false;
+                        [dom.cLeftI, dom.cRightI, dom.cTopI, dom.cBotI, dom.cLeftR, dom.cRightR, dom.cTopR, dom.cBotR].forEach(el => { if (el) el.value = 0; });
+                        updatePreview();
+                    };
+                    reader.readAsText(file);
+                });
+            }
+
+            function updateDim(w, h) {
+                w = Math.min(MAX, Math.max(1, Math.round(w)));
+                h = Math.min(MAX, Math.max(1, Math.round(h)));
+                if(dom.wInput) dom.wInput.value = w; if(dom.wRange) dom.wRange.value = w;
+                if(dom.hInput) dom.hInput.value = h; if(dom.hRange) dom.hRange.value = h;
+            }
+
+            function handleDimChange(e) {
+                let w = parseInt(dom.wInput.value), h = parseInt(dom.hInput.value);
+                const isWidth = (e.target === dom.wInput || e.target === dom.wRange);
+                if(isWidth) w = parseInt(e.target.value); else h = parseInt(e.target.value);
+                if(dom.lock && dom.lock.checked) { if(isWidth) h = Math.round(w / state.aspect); else w = Math.round(h * state.aspect); }
+                updateDim(w, h);
+                updatePreview();
+            }
+
+            function handleCropChange() {
+                if(dom.cLeftI) dom.cLeftR.value = dom.cLeftI.value = Math.min(dom.cLeftI.value, parseInt(dom.wInput.value) - 1);
+                if(dom.cRightI) dom.cRightR.value = dom.cRightI.value = Math.min(dom.cRightI.value, parseInt(dom.wInput.value) - 1);
+                if(dom.cTopI) dom.cTopR.value = dom.cTopI.value = Math.min(dom.cTopI.value, parseInt(dom.hInput.value) - 1);
+                if(dom.cBotI) dom.cBotR.value = dom.cBotI.value = Math.min(dom.cBotI.value, parseInt(dom.hInput.value) - 1);
+                updatePreview();
+            }
             
-            function applyTheme(isDark) {
-                if (isDark) {
-                    htmlElement.classList.add('dark');
-                    themeToggle.innerHTML = SUN_ICON; 
-                    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
-                } else {
-                    htmlElement.classList.remove('dark');
-                    themeToggle.innerHTML = MOON_ICON; 
-                    localStorage.setItem(THEME_STORAGE_KEY, 'light');
+            function handleRoundChange(e) {
+                if(dom.rInput) dom.rInput.value = e.target.value;
+                if(dom.rRange) dom.rRange.value = e.target.value;
+                updatePreview();
+            }
+
+            function updatePreview() {
+                if(!state.svgContent || !dom.wInput || !dom.hInput) return;
+                const w = parseInt(dom.wInput.value);
+                const h = parseInt(dom.hInput.value);
+                const cl = parseInt(dom.cLeftI.value)||0, cr = parseInt(dom.cRightI.value)||0;
+                const ct = parseInt(dom.cTopI.value)||0, cb = parseInt(dom.cBotI.value)||0;
+                const rad = parseInt(dom.rInput.value)||0;
+
+                const finalW = Math.max(1, w - cl - cr);
+                const finalH = Math.max(1, h - ct - cb);
+                const svgEl = dom.display.querySelector('svg');
+                
+                if(svgEl) {
+                    const maxPreview = 280;
+                    const scale = Math.min(1, maxPreview/finalW, maxPreview/finalH);
+                    dom.display.style.width = `${finalW * scale}px`;
+                    dom.display.style.height = `${finalH * scale}px`;
+                    dom.display.style.borderRadius = `${rad * scale}px`;
+                    svgEl.style.width = `${w * scale}px`;
+                    svgEl.style.height = `${h * scale}px`;
+                    svgEl.style.marginLeft = `-${cl * scale}px`;
+                    svgEl.style.marginTop = `-${ct * scale}px`;
+                }
+            }
+
+            async function processImage() {
+                const w = parseInt(dom.wInput.value);
+                const h = parseInt(dom.hInput.value);
+                const cl = parseInt(dom.cLeftI.value)||0, cr = parseInt(dom.cRightI.value)||0;
+                const ct = parseInt(dom.cTopI.value)||0, cb = parseInt(dom.cBotI.value)||0;
+                const rad = parseInt(dom.rInput.value)||0;
+                const finalW = w - cl - cr;
+                const finalH = h - ct - cb;
+
+                dom.canvas.width = finalW;
+                dom.canvas.height = finalH;
+                const ctx = dom.canvas.getContext('2d');
+                ctx.clearRect(0, 0, finalW, finalH);
+
+                if(rad > 0) { ctx.beginPath(); ctx.roundRect(0,0, finalW, finalH, rad); ctx.clip(); }
+
+                const img = new Image();
+                let svgStr = state.svgContent;
+                if(svgStr.includes('<svg')) {
+                    svgStr = svgStr.replace(/<svg([^>]*)>/, (match) => {
+                         let m = match.replace(/width="[^"]*"/i, '').replace(/height="[^"]*"/i, '');
+                         return m.replace('<svg', `<svg width="${w}" height="${h}"`);
+                    });
                 }
                 
-            }
-
-            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-            if (savedTheme === 'dark') {
-                applyTheme(true);
-            } else {
-                applyTheme(false); 
-            }
-
-            themeToggle.addEventListener('click', () => {
-                const isDark = !htmlElement.classList.contains('dark');
-                applyTheme(isDark);
-            });
-            
-            
-            clipboardButton.innerHTML = '<i class="fas fa-download header-button-icon"></i>';
-        }
-        
-        {
-            const clipboardDownloadButton = document.getElementById('clipboard-download-button');
-            const filenameModal = document.getElementById('filename-modal');
-            const filenameInput = document.getElementById('filename-input');
-            const filenameCancel = document.getElementById('filename-cancel');
-            const filenameConfirm = document.getElementById('filename-confirm');
-            const imageConversionCanvas = document.getElementById('image-conversion-canvas');
-
-            const ORIGINAL_ICON = '<i class="fas fa-download header-button-icon"></i>';
-            const LOADING_ICON = '<i class="fas fa-spinner fa-spin header-button-icon text-white"></i>'; 
-            
-            let clipboardBlob = null;
-            let clipboardMimeType = '';
-            
-            function resetClipboardButton() {
-                clipboardDownloadButton.disabled = false;
-                clipboardDownloadButton.innerHTML = ORIGINAL_ICON;
-            }
-
-            function hideFileNamePrompt() {
-                filenameModal.classList.add('hidden');
-                clipboardBlob = null;
-                clipboardMimeType = '';
-                resetClipboardButton();
-            }
-
-            function showFileNamePrompt(mimeType, blob) {
-                clipboardBlob = blob;
-                clipboardMimeType = mimeType;
+                const svgBlob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
                 
-                const extension = mimeType.endsWith('jpeg') ? 'jpg' : 'png';
-                
-                filenameInput.value = `clipboard-image-${new Date().getTime()}`;
-                filenameModal.classList.remove('hidden');
-                filenameInput.focus();
-                
-                const handleConfirm = () => {
-                    const filename = filenameInput.value.trim() || `clipboard-image-${new Date().getTime()}`;
-                    const finalFilename = filename.replace(/\.(png|jpg|jpeg)$/i, '') + '.' + extension;
-                    
-                    const url = URL.createObjectURL(clipboardBlob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = finalFilename;
-                    a.click();
-                    URL.revokeObjectURL(url);
-
-                    showMessage('Image downloaded successfully!');
-                    hideFileNamePrompt();
-                };
-
-                filenameConfirm.onclick = handleConfirm;
-                filenameCancel.onclick = hideFileNamePrompt;
-
-                filenameInput.onkeydown = (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleConfirm();
-                    }
-                };
-            }
-            
-            async function processImageBlobToCleanBlob(rawBlob, mimeType) {
-                return new Promise((resolve, reject) => {
-                    const img = new Image();
-                    const url = URL.createObjectURL(rawBlob);
+                return new Promise((resolve) => {
                     img.onload = () => {
-                        imageConversionCanvas.width = img.naturalWidth;
-                        imageConversionCanvas.height = img.naturalHeight;
-                        const ctx = imageConversionCanvas.getContext('2d');
-                        
-                        ctx.clearRect(0, 0, imageConversionCanvas.width, imageConversionCanvas.height); 
-                        
-                        ctx.drawImage(img, 0, 0);
-
-                        imageConversionCanvas.toBlob(cleanBlob => {
-                            URL.revokeObjectURL(url);
-                            if (cleanBlob) {
-                                resolve(cleanBlob);
-                            } else {
-                                reject(new Error("Canvas failed to create Blob."));
-                            }
-                        }, mimeType, mimeType === 'image/jpeg' ? 0.95 : undefined); 
-                    };
-                    img.onerror = () => {
+                        const tempCan = document.createElement('canvas');
+                        tempCan.width = w; tempCan.height = h;
+                        const tCtx = tempCan.getContext('2d');
+                        tCtx.drawImage(img, 0, 0, w, h);
+                        ctx.drawImage(tempCan, cl, ct, finalW, finalH, 0, 0, finalW, finalH);
                         URL.revokeObjectURL(url);
-                        reject(new Error("Failed to load image into canvas for cleaning."));
+                        resolve(dom.canvas.toDataURL('image/png'));
                     };
                     img.src = url;
                 });
             }
 
-            async function clipboardToImageDownload() {
-                clipboardDownloadButton.disabled = true;
-                clipboardDownloadButton.innerHTML = LOADING_ICON;
-
-                try {
-                    if (!navigator.clipboard || !navigator.clipboard.read) {
-                        throw new Error("Clipboard API not fully supported or accessible.");
-                    }
-
-                    const items = await navigator.clipboard.read();
-                    
-                    let imageItem = null;
-                    let mimeType = '';
-
-                    for (const item of items) {
-                        if (item.types.includes('image/png')) {
-                            imageItem = item;
-                            mimeType = 'image/png';
-                            break; 
-                        } else if (item.types.includes('image/jpeg')) {
-                            imageItem = item;
-                            mimeType = 'image/jpeg';
-                            break; 
-                        }
-                    }
-
-                    if (!imageItem) {
-                        throw new Error("Clipboard does not contain image data (PNG/JPEG).");
-                    }
-
-                    showMessage('Image data found. Processing for download...');
-                    
-                    const rawBlob = await imageItem.getType(mimeType); 
-                    
-                    const cleanBlob = await processImageBlobToCleanBlob(rawBlob, mimeType);
-                    
-                    showMessage('Image processed. Please name your file.');
-                    
-                    showFileNamePrompt(mimeType, cleanBlob);
-
-                } catch (error) {
-                    if (error.name === 'NotAllowedError') {
-                         showMessage('Permission denied. Please ensure you clicked the button immediately after copying the image.', true);
-                    } else {
-                         showMessage(`Clipboard read failed: ${error.message}`, true);
-                         console.error("Clipboard Download Error:", error);
-                    }
-                    resetClipboardButton();
-                }
-            }
-            
-            clipboardDownloadButton.addEventListener('click', clipboardToImageDownload);
-            
-            document.addEventListener('keydown', (event) => {
-                const isPasteShortcut = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v';
-                const tagName = document.activeElement.tagName;
-                const isInputOrTextarea = tagName === 'INPUT' || tagName === 'TEXTAREA';
-
-                if (isPasteShortcut && !isInputOrTextarea && filenameModal.classList.contains('hidden')) {
-                    event.preventDefault(); 
-                    clipboardToImageDownload();
-                } else if (isPasteShortcut && document.activeElement === filenameInput) {
-                    event.stopPropagation();
-                }
-            });
-
-        }
-
-        {
-            const svgUpload = document.getElementById('svg-upload');
-            const svgDisplay = document.getElementById('svg-display');
-            const widthRange = document.getElementById('width-range');
-            const heightRange = document.getElementById('height-range');
-            const widthInput = document.getElementById('width-input');
-            const heightInput = document.getElementById('height-input');
-            const lockAspect = document.getElementById('lock-aspect');
-            const downloadButton = document.getElementById('download-button');
-            const copyButton = document.getElementById('copy-button');
-            const conversionCanvas = document.getElementById('conversion-canvas');
-            const processingArea = document.getElementById('processing-area');
-            const stepButtonsResizer = document.querySelectorAll('.step-button-resizer');
-            const roundedRange = document.getElementById('rounded-range');
-            const roundedInput = document.getElementById('rounded-input');
-            
-            const cropLeftRange = document.getElementById('crop-left-range');
-            const cropRightRange = document.getElementById('crop-right-range');
-            const cropTopRange = document.getElementById('crop-top-range');
-            const cropBottomRange = document.getElementById('crop-bottom-range');
-            const cropLeftInput = document.getElementById('crop-left-input');
-            const cropRightInput = document.getElementById('crop-right-input');
-            const cropTopInput = document.getElementById('crop-top-input');
-            const cropBottomInput = document.getElementById('crop-bottom-input');
-
-
-            let svgData = { content: null, originalWidth: 0, originalHeight: 0, aspectRatio: 1, fileName: 'resized-svg' };
-            const MAX_DIMENSION = 6000;
-            const MAX_PREVIEW_DIMENSION = 300; 
-            
-            function getSvgDimensions(svgString) {
-                const widthMatch = svgString.match(/width="(\d+\.?\d*)"/i);
-                const heightMatch = svgString.match(/height="(\d+\.?\d*)"/i);
-                const viewBoxMatch = svgString.match(/viewBox="[^"]*"/i);
-                if (viewBoxMatch) {
-                    const parts = viewBoxMatch[0].slice(9, -1).split(/[,\s]+/);
-                    if (parts.length === 4) return { width: Math.max(1, Math.round(parseFloat(parts[2]))), height: Math.max(1, Math.round(parseFloat(parts[3])))};
-                }
-                if (widthMatch && heightMatch) return { width: Math.max(1, Math.round(parseFloat(widthMatch[1]))), height: Math.max(1, Math.round(parseFloat(heightMatch[1])))};
-                return { width: 500, height: 500 };
-            }
-
-            function updateDisplay(w, h) {
-                widthInput.value = w;
-                widthRange.value = w;
-                heightInput.value = h;
-                heightRange.value = h;
-            }
-
-            function getCropValues() {
-                return {
-                    left: Math.max(0, parseInt(cropLeftInput.value) || 0),
-                    right: Math.max(0, parseInt(cropRightInput.value) || 0),
-                    top: Math.max(0, parseInt(cropTopInput.value) || 0),
-                    bottom: Math.max(0, parseInt(cropBottomInput.value) || 0)
-                };
-            }
-
-            function updateCropUI(w, h, crop) {
-                const maxLeft = w - crop.right - 1;
-                const maxRight = w - crop.left - 1;
-                const maxTop = h - crop.bottom - 1;
-                const maxBottom = h - crop.top - 1;
-
-                cropLeftRange.max = cropLeftInput.max = Math.max(0, maxLeft);
-                cropRightRange.max = cropRightInput.max = Math.max(0, maxRight);
-                cropTopRange.max = cropTopInput.max = Math.max(0, maxTop);
-                cropBottomRange.max = cropBottomInput.max = Math.max(0, maxBottom);
-                
-                crop.left = Math.min(crop.left, Math.max(0, maxLeft));
-                cropLeftRange.value = crop.left;
-                cropLeftInput.value = crop.left;
-
-                crop.right = Math.min(crop.right, Math.max(0, maxRight));
-                cropRightRange.value = crop.right;
-                cropRightInput.value = crop.right;
-
-                crop.top = Math.min(crop.top, Math.max(0, maxTop));
-                cropTopRange.value = crop.top;
-                cropTopInput.value = crop.top;
-
-                crop.bottom = Math.min(crop.bottom, Math.max(0, maxBottom));
-                cropBottomRange.value = crop.bottom;
-                cropBottomInput.value = crop.bottom;
-            }
-
-            function updatePreviewStyles() {
-                if (!svgData.content) return;
-                
-                const targetWidth = parseInt(widthInput.value) || 500;
-                const targetHeight = parseInt(heightInput.value) || 500;
-                const crop = getCropValues();
-                
-                const finalWidth = Math.max(1, targetWidth - crop.left - crop.right);
-                const finalHeight = Math.max(1, targetHeight - crop.top - crop.bottom);
-
-                // Calculate preview size constrained by MAX_PREVIEW_DIMENSION (300px)
-                const scaleFactor = Math.min(1, MAX_PREVIEW_DIMENSION / finalWidth, MAX_PREVIEW_DIMENSION / finalHeight);
-                const previewWidth = finalWidth * scaleFactor;
-                const previewHeight = finalHeight * scaleFactor;
-
-                // Calculate the corresponding offset scale for the margins
-                const offsetScale = previewWidth / finalWidth;
-                
-                // 1. Rounding
-                const radiusValue = parseInt(roundedInput.value) || 0;
-                svgDisplay.style.borderRadius = `${radiusValue}px`;
-
-                const svgEl = svgDisplay.querySelector('svg');
-                
-                if (svgEl) {
-                    // 2. SVG element keeps its true dimensions (for correct margin-based cropping)
-                    // The SVG element must be scaled to the preview size PLUS the cropped amount
-                    svgEl.style.width = `${targetWidth * offsetScale}px`;
-                    svgEl.style.height = `${targetHeight * offsetScale}px`;
-
-                    // 3. Cropping offsets (margins) scaled down for the preview
-                    svgEl.style.marginLeft = `-${crop.left * offsetScale}px`;
-                    svgEl.style.marginTop = `-${crop.top * offsetScale}px`;
-
-                    // 4. Preview container is set to the constrained size, maintaining aspect ratio.
-                    svgDisplay.style.width = `${previewWidth}px`;
-                    svgDisplay.style.height = `${previewHeight}px`;
-                } else {
-                    svgDisplay.style.width = '100%'; 
-                    svgDisplay.style.height = 'auto';
-                }
-                
-                // Ensure visibility (in case the element was replaced)
-                svgDisplay.classList.remove('hidden');
-                // Ensure centering
-                svgDisplay.classList.add('mx-auto');
-            }
-
-            async function performConversion() {
-                if (!svgData.content) return null;
-                
-                let targetWidth = parseInt(widthInput.value) || 500;
-                let targetHeight = parseInt(heightInput.value) || 500;
-                targetWidth = Math.min(MAX_DIMENSION, Math.max(1, targetWidth));
-                targetHeight = Math.min(MAX_DIMENSION, Math.max(1, targetHeight));
-                updateDisplay(targetWidth, targetHeight);
-
-                const crop = getCropValues();
-                updateCropUI(targetWidth, targetHeight, crop); 
-                
-                const finalWidth = targetWidth - crop.left - crop.right;
-                const finalHeight = targetHeight - crop.top - crop.bottom;
-
-                if (finalWidth <= 0 || finalHeight <= 0) {
-                     showMessage('Cropping is too aggressive. Final dimensions must be greater than zero.', true);
-                     return null;
-                }
-
-                conversionCanvas.width = finalWidth;
-                conversionCanvas.height = finalHeight;
-                const ctx = conversionCanvas.getContext('2d');
-                ctx.clearRect(0, 0, finalWidth, finalHeight);
-
-                let radius = parseInt(roundedInput.value) || 0;
-                radius = Math.min(radius, Math.min(finalWidth, finalHeight) / 2);
-
-                if (radius > 0) {
-                    ctx.beginPath();
-                    ctx.moveTo(radius, 0);
-                    ctx.arcTo(finalWidth, 0, finalWidth, finalHeight, radius);
-                    ctx.arcTo(finalWidth, finalHeight, 0, finalHeight, radius);
-                    ctx.arcTo(0, finalHeight, 0, 0, radius);
-                    ctx.arcTo(0, 0, finalWidth, 0, radius);
-                    ctx.closePath();
-                    ctx.clip();
-                }
-                
-                let svgContentForCanvas = svgData.content.replace(/<svg[^>]*>/, (match) => {
-                    const xmlnsAttr = match.includes('xmlns') ? '' : ' xmlns="http://www.w3.org/2000/svg"';
-                    return match.replace(/width="[^"]*"/, '').replace(/height="[^"]*"/, '').replace('>', `${xmlnsAttr} width="${targetWidth}" height="${targetHeight}">`);
-                });
-                
-                const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgContentForCanvas)));
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-
-                return new Promise((resolve) => {
-                    img.onload = () => {
-                        ctx.drawImage(
-                            img, 
-                            crop.left, crop.top,                           
-                            finalWidth, finalHeight,                       
-                            0, 0,                                          
-                            finalWidth, finalHeight                        
-                        );
-                        resolve(conversionCanvas.toDataURL('image/png'));
-                    };
-                    img.onerror = () => { showMessage('Failed to load SVG into image object.', true); resolve(null); };
-                    img.src = svgDataUrl;
-                });
-            }
-
-            svgUpload.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (!file || !file.type.includes('svg')) { showMessage('Please select a valid SVG file.', true); return; }
-
-                svgData.fileName = file.name.replace(/\.svg$/i, '');
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    svgData.content = e.target.result;
-                    const { width, height } = getSvgDimensions(svgData.content);
-                    svgData.originalWidth = width;
-                    svgData.originalHeight = height;
-                    svgData.aspectRatio = width / height;
-                    svgDisplay.innerHTML = svgData.content;
-                    
-                    roundedInput.value = 0;
-                    roundedRange.value = 0;
-                    cropLeftInput.value = cropRightInput.value = cropTopInput.value = cropBottomInput.value = 0;
-
-                    const initialSize = Math.min(MAX_DIMENSION, Math.max(500, width)); 
-                    updateDisplay(initialSize, Math.round(initialSize / svgData.aspectRatio));
-                    updateCropUI(initialSize, Math.round(initialSize / svgData.aspectRatio), getCropValues());
-                    updatePreviewStyles();
-
-                    processingArea.classList.remove('opacity-50', 'pointer-events-none');
-                    downloadButton.disabled = false;
-                    copyButton.disabled = false;
-                    showMessage(`SVG "${svgData.fileName}" loaded!`);
-                };
-                reader.readAsText(file);
-            });
-
-            function handleResizeInput(e) {
-                if (!svgData.content) return;
-                
-                let w = parseInt(widthInput.value) || 500;
-                let h = parseInt(heightInput.value) || 500;
-                let crop = getCropValues();
-                
-                if (e.target === widthRange || e.target === widthInput || e.target === heightRange || e.target === heightInput) {
-                    const isWidthEvent = e.target === widthRange || e.target === widthInput;
-                    let val = parseInt(e.target.value) || 1;
-                    val = Math.min(MAX_DIMENSION, Math.max(1, val));
-                    
-                    if (isWidthEvent) w = val; else h = val;
-                    
-                    if (lockAspect.checked) {
-                        if (isWidthEvent) h = Math.round(w / svgData.aspectRatio);
-                        else w = Math.round(h * svgData.aspectRatio);
-                    }
-                    updateDisplay(w, h);
-                } else if (e.target.id.includes('crop')) {
-                    const idPrefix = e.target.id.replace(/-range|-input/, '');
-                    const inputField = document.getElementById(`${idPrefix}-input`);
-                    const rangeField = document.getElementById(`${idPrefix}-range`);
-
-                    let val = parseInt(e.target.value) || 0;
-                    
-                    let maxVal;
-                    if (idPrefix === 'crop-left') maxVal = w - crop.right - 1;
-                    else if (idPrefix === 'crop-right') maxVal = w - crop.left - 1;
-                    else if (idPrefix === 'crop-top') maxVal = h - crop.bottom - 1;
-                    else if (idPrefix === 'crop-bottom') maxVal = h - crop.top - 1;
-                    
-                    val = Math.max(0, Math.min(val, maxVal));
-                    
-                    inputField.value = val;
-                    rangeField.value = val;
-                    // Update the local crop variable based on the input that changed, respecting constraints
-                    if (idPrefix === 'crop-left') crop.left = val;
-                    else if (idPrefix === 'crop-right') crop.right = val;
-                    else if (idPrefix === 'crop-top') crop.top = val;
-                    else if (idPrefix === 'crop-bottom') crop.bottom = val;
-                }
-
-                updateCropUI(w, h, crop);
-                updatePreviewStyles();
-            }
-            
-            function handleStepResizer(e) {
-                if (!svgData.content) { showMessage('Upload an SVG first.', true); return; }
-                const targetId = e.currentTarget.dataset.target + '-input';
-                const input = document.getElementById(targetId);
-                
-                input.value = Math.min(MAX_DIMENSION, Math.max(1, (parseInt(input.value) || 1) + parseInt(e.currentTarget.dataset.step)));
-                
-                handleResizeInput({ target: input });
-            }
-            
-            async function triggerAction(isCopy) {
-                const button = isCopy ? copyButton : downloadButton;
-                const originalText = button.textContent;
-                downloadButton.disabled = true; copyButton.disabled = true;
-                button.textContent = 'Processing...';
-                showMessage('Converting SVG to PNG...');
-                const pngDataUrl = await performConversion();
-                if (pngDataUrl) {
-                    if (isCopy) {
-                        try {
-                            const blob = await (await fetch(pngDataUrl)).blob();
-                            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-                            showMessage('PNG copied to clipboard!');
-                        } catch (err) { 
-                            showMessage('Copy failed. Please try the "Download" button and copy the resulting image manually.', true); 
-                        }
-                    } else {
-                        const crop = getCropValues();
-                        const finalWidth = parseInt(widthInput.value) - crop.left - crop.right;
-                        const finalHeight = parseInt(heightInput.value) - crop.top - crop.bottom;
-                        const a = document.createElement('a');
-                        a.href = pngDataUrl;
-                        a.download = `${svgData.fileName}-${finalWidth}x${finalHeight}-cropped.png`;
-                        a.click();
-                        showMessage('PNG downloaded successfully!');
-                    }
-                }
-                downloadButton.disabled = false; copyButton.disabled = false;
-                button.textContent = originalText;
-            }
-
-            function handleRoundingInput(e) {
-                let value = parseInt(e.target.value) || 0;
-                roundedInput.value = value;
-                roundedRange.value = value;
-                updatePreviewStyles();
-            }
-
-            const allResizeInputs = [
-                widthRange, heightRange, widthInput, heightInput,
-                cropLeftRange, cropRightRange, cropTopRange, cropBottomRange,
-                cropLeftInput, cropRightInput, cropTopInput, cropBottomInput
-            ];
-
-            ['input', 'change'].forEach(evt => {
-                allResizeInputs.forEach(el => el.addEventListener(evt, handleResizeInput));
-                roundedRange.addEventListener(evt, handleRoundingInput);
-                roundedInput.addEventListener(evt, handleRoundingInput);
-            });
-            lockAspect.addEventListener('change', handleResizeInput);
-            stepButtonsResizer.forEach(b => b.addEventListener('click', handleStepResizer));
-            downloadButton.addEventListener('click', () => triggerAction(false));
-            copyButton.addEventListener('click', () => triggerAction(true));
-        }
-
-        {
-            const imageUpload = document.getElementById('image-upload');
-            const originalImageDisplay = document.getElementById('original-image-display');
-            const compressedImageDisplay = document.getElementById('compressed-image-display');
-            const qualitySlider = document.getElementById('quality-slider');
-            const qualityValue = document.getElementById('quality-value');
-            const fileSizeDisplay = document.getElementById('file-size-display');
-            const downloadCompressedButton = document.getElementById('download-compressed-button');
-            const compressorProcessingArea = document.getElementById('compressor-processing-area');
-            const imageConversionCanvas = document.getElementById('image-conversion-canvas');
-
-            let imageData = {
-                originalUrl: null,
-                compressedUrl: null,
-                originalSize: 0,
-                fileName: 'image'
-            };
-
-            
-            async function updateCompression() {
-                if (!imageData.originalUrl) return;
-
-                const quality = parseInt(qualitySlider.value) / 100;
-                qualityValue.textContent = `${qualitySlider.value}%`;
-
-                const img = new Image();
-                img.src = imageData.originalUrl;
-                
-                await new Promise(resolve => {
-                    img.onload = () => {
-                        imageConversionCanvas.width = img.naturalWidth;
-                        imageConversionCanvas.height = img.naturalHeight;
-                        const ctx = imageConversionCanvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        
-                        imageData.compressedUrl = imageConversionCanvas.toDataURL('image/jpeg', quality);
-                        compressedImageDisplay.innerHTML = `<img src="${imageData.compressedUrl}" alt="Compressed Preview">`;
-
-                        const compressedSizeBytes = atob(imageData.compressedUrl.split(',')[1]).length;
-                        const reduction = imageData.originalSize > 0 ? (1 - compressedSizeBytes / imageData.originalSize) * 100 : 0;
-                        
-                        fileSizeDisplay.innerHTML = `
-                            Original: <strong>${formatFileSize(imageData.originalSize)}</strong> | 
-                            Compressed: <strong>${formatFileSize(compressedSizeBytes)}</strong> 
-                            <span class="text-green-600 font-bold">(${reduction.toFixed(1)}% smaller)</span>
-                        `;
-                        resolve();
-                    };
-                });
-            }
-
-            imageUpload.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (!file || !file.type.startsWith('image/')) {
-                    showMessage('Please select a valid image file (JPG/PNG).', true);
-                    return;
-                }
-                imageData.fileName = file.name.replace(/\.[^/.]+$/, "");
-                imageData.originalSize = file.size;
-                
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imageData.originalUrl = e.target.result;
-                    originalImageDisplay.innerHTML = `<img src="${imageData.originalUrl}" alt="Original Preview">`;
-                    
-                    compressorProcessingArea.classList.remove('opacity-50', 'pointer-events-none');
-                    downloadCompressedButton.disabled = false;
-                    
-                    showMessage(`Image "${file.name}" loaded!`);
-                    updateCompression();
-                };
-                 reader.readAsDataURL(file);
-            });
-            
-            qualitySlider.addEventListener('input', updateCompression);
-
-            downloadCompressedButton.addEventListener('click', () => {
-                if (!imageData.compressedUrl) {
-                    showMessage('No compressed image to download.', true);
-                    return;
-                }
+            if(dom.dlBtn) dom.dlBtn.addEventListener('click', async () => {
+                dom.dlBtn.innerText = "Processing...";
+                const dataUrl = await processImage();
                 const a = document.createElement('a');
-                a.href = imageData.compressedUrl;
-                a.download = `${imageData.fileName}-compressed.jpg`;
+                a.href = dataUrl;
+                a.download = `${state.name}-processed.png`;
                 a.click();
-                showMessage('Compressed image downloaded!');
+                dom.dlBtn.innerText = "Download PNG";
+                showMessage("Image downloaded!");
             });
-        }
-
-        {
-            const DEFAULT_BASE_SIZE_SCALER = 32;
-            const SCALES_SCALER = [2, 4, 8, 16];
-            const svgInputScaler = document.getElementById('svgInputScaler');
-            const convertButtonScaler = document.getElementById('convertButtonScaler');
-            const resultsDivScaler = document.getElementById('resultsDivScaler');
-            const resultsTitleScaler = document.getElementById('resultsTitleScaler');
-            const messageBoxScaler = document.getElementById('messageBoxScaler');
-            const svgFileUploaderScaler = document.getElementById('svgFileUploaderScaler');
-            const uploadButtonScaler = document.getElementById('uploadButtonScaler');
-
             
-            async function copyImageToClipboardScaler(dataUrl) {
+            if(dom.cpBtn) dom.cpBtn.addEventListener('click', async () => {
+                dom.cpBtn.innerText = "...";
                 try {
-                    const blob = await(await fetch(dataUrl)).blob();
+                    const dataUrl = await processImage();
+                    const blob = await (await fetch(dataUrl)).blob();
                     await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-                    showMessageScaler('Image copied successfully!');
-                } catch (error) {
-                    showMessageScaler('Copy failed. Please right-click to copy manually.', true);
+                    showMessage("Copied to clipboard!");
+                } catch(e) {
+                    showMessage("Manual copy required. Right-click download instead.", true);
                 }
-            }
-            
-            async function generateScaledImages() {
-                const svgText = svgInputScaler.value.trim();
-                resultsDivScaler.innerHTML = '';
-                resultsTitleScaler.style.display = 'none';
-                if (!svgText) { showMessageScaler('Please paste or upload SVG code.', true); return; }
+                dom.cpBtn.innerText = "Copy Image";
+            });
 
-                convertButtonScaler.disabled = true;
-                convertButtonScaler.textContent = 'Generating...';
+            [dom.wRange, dom.wInput, dom.hRange, dom.hInput].forEach(el => {if(el) el.addEventListener('input', handleDimChange)});
+            [dom.cLeftR, dom.cLeftI, dom.cRightR, dom.cRightI, dom.cTopR, dom.cTopI, dom.cBotR, dom.cBotI]
+                .forEach(el => {if(el) el.addEventListener('input', handleCropChange)});
+            [dom.rRange, dom.rInput].forEach(el => {if(el) el.addEventListener('input', handleRoundChange)});
+        });
 
-                try {
-                    const { width: baseWidth, height: baseHeight } = (function() {
-                        const viewBoxMatch = svgText.match(/viewBox="[^"]*"/i);
-                        if (viewBoxMatch) {
-                            const parts = viewBoxMatch[0].slice(9, -1).split(/[,\s]+/);
-                            if (parts.length === 4) return { width: Math.max(1, Math.round(parseFloat(parts[2]))), height: Math.max(1, Math.round(parseFloat(parts[3])))};
-                        }
-                        return { width: DEFAULT_BASE_SIZE_SCALER, height: DEFAULT_BASE_SIZE_SCALER };
-                    })();
-                    
-                    const svgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgText)))}`;
+        // --- TOOL 2: COMPRESSOR LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const up = document.getElementById('image-upload');
+            const slider = document.getElementById('quality-slider');
+            const btn = document.getElementById('download-compressed-button');
+            const cvs = document.getElementById('image-conversion-canvas');
+            let currentFile = null;
 
-                    for (const scale of SCALES_SCALER) {
-                        const width = baseWidth * scale;
-                        const height = baseHeight * scale;
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        
-                        ctx.imageSmoothingEnabled = false;
-                        if (ctx.mozImageSmoothingEnabled !== undefined) ctx.mozImageSmoothingEnabled = false;
-                        if (ctx.webkitImageSmoothingEnabled !== undefined) ctx.webkitImageSmoothingEnabled = false;
-                        if (ctx.msImageSmoothingEnabled !== undefined) ctx.msImageSmoothingEnabled = false;
-                        
-                        const img = new Image();
-                        const dataUrl = await new Promise((resolve) => {
-                            img.onload = () => { ctx.drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/png')); };
-                            img.onerror = () => resolve(null);
-                            img.src = svgDataUrl;
-                        });
-                        if(!dataUrl) continue;
-
-                        const container = document.createElement('div');
-                        container.className = 'flex flex-col items-center p-4 bg-[#f0f0f0] rounded-xl dark:bg-slate-700';
-                        container.innerHTML = `
-                            <img src="${dataUrl}" alt="${scale}x Scaled Image" class="scaled-image w-full h-auto bg-white dark:bg-slate-800 p-2 rounded-lg mb-3">
-                            <p class="text-sm font-semibold text-primary mb-3">${scale}x (${width}x${height} px)</p>
-                            <button class="copy-btn-scaler w-full px-4 py-2 bg-accent text-white font-semibold rounded-lg hover:bg-[#2c8d48] transition-colors duration-150 text-sm">Copy Image (PNG)</button>
-                        `;
-                        container.querySelector('.copy-btn-scaler').onclick = () => copyImageToClipboardScaler(dataUrl);
-                        resultsDivScaler.appendChild(container);
-                    }
-                    resultsTitleScaler.style.display = 'block';
-                } catch (error) {
-                    showMessageScaler(`Error: ${error.message}`, true);
-                } finally {
-                    convertButtonScaler.disabled = false;
-                    convertButtonScaler.textContent = 'Generate Scaled PNGs';
-                }
-            }
-
-            convertButtonScaler.addEventListener('click', generateScaledImages);
-            uploadButtonScaler.addEventListener('click', () => svgFileUploaderScaler.click());
-            svgFileUploaderScaler.addEventListener('change', (event) => {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => { svgInputScaler.value = e.target.result; generateScaledImages(); };
-                    reader.readAsText(file);
+            if (up) up.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if(file) {
+                    currentFile = file;
+                    const url = URL.createObjectURL(file);
+                    document.getElementById('original-image-display').innerHTML = `<img src="${url}">`;
+                    document.getElementById('compressor-processing-area').classList.remove('opacity-50', 'pointer-events-none');
+                    compress();
                 }
             });
 
-            svgInputScaler.value = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 472 89.9" width="472" height="89.9">
-  <defs>
-    <linearGradient id="a" x1="3.2173" y1="15" x2="44.7812" y2="15" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
-      <stop offset="0" stop-color="#d93025"/>
-      <stop offset="1" stop-color="#ea4335"/>
-    </linearGradient>
-    <linearGradient id="b" x1="20.7219" y1="47.6791" x2="41.5039" y2="11.6837" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
-      <stop offset="0" stop-color="#fcc934"/>
-      <stop offset="1" stop-color="#fbbc04"/>
-    </linearGradient>
-    <linearGradient id="c" x1="26.5981" y1="46.5015" x2="5.8161" y2="10.506" gradientUnits="userSpaceOnUse" gradientTransform="matrix(1, 0, 0, 1, 25.241314, 190.959395)">
-      <stop offset="0" stop-color="#1e8e3e"/>
-      <stop offset="1" stop-color="#34a853"/>
-    </linearGradient>
-  </defs>
-  <path d="M 50.917 68.547 C 60.155 84.547 83.249 84.547 92.486 68.547 C 101.724 52.547 90.177 32.547 71.702 32.547 C 67.489 32.547 63.35 33.656 59.702 35.762 C 48.223 42.389 44.29 57.068 50.917 68.547 Z M 82.094 50.547 C 86.713 58.547 80.939 68.547 71.702 68.547 C 62.464 68.547 56.691 58.547 61.309 50.547 C 62.363 48.722 63.878 47.208 65.702 46.154 C 71.441 42.841 78.78 44.807 82.094 50.547 Z" style="fill: none; transform-origin: 236.379px 44.997px;"/>
-  <circle cx="49.242" cy="214.954" r="12" style="fill: rgb(255, 255, 255);" transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)"/>
-  <g transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)">
-    <path d="M 49.242 202.96 L 70.023 202.96 C 60.79 186.962 37.702 186.959 28.464 202.953 C 28.463 202.956 28.461 202.96 28.459 202.963 L 38.85 220.96 L 38.859 220.957 C 34.231 212.976 39.978 202.977 49.204 202.96 C 49.217 202.96 49.229 202.96 49.242 202.96 Z" style="fill: url('#a');"/>
-    <path d="M 59.633 220.963 L 49.242 238.96 C 67.713 238.962 79.26 218.969 70.027 202.971 C 70.025 202.969 70.023 202.966 70.022 202.963 L 49.241 202.963 L 49.238 202.972 C 58.464 202.954 64.25 212.931 59.652 220.929 C 59.646 220.941 59.639 220.952 59.633 220.963 Z" style="fill: url('#b');"/>
-    <path d="M 38.85 220.963 L 28.46 202.966 C 19.222 218.96 30.763 238.957 49.234 238.96 C 49.237 238.96 49.241 238.96 49.244 238.96 L 59.635 220.963 L 59.628 220.956 C 55.03 228.955 43.498 228.977 38.869 220.995 C 38.863 220.985 38.857 220.974 38.85 220.963 Z" style="fill: url('#c');"/>
-  </g>
-  <circle cx="49.242" cy="214.96" r="9.5" style="fill: rgb(26, 115, 232);" transform="matrix(1.8772200345993042, 0, 0, 1.8717880249023438, -47.30881760358431, -357.42641295052454)"/>
-  <path d="M 132.438 64.099 Q 127.788 64.099 124.161 61.898 Q 120.534 59.697 118.488 55.884 Q 116.442 52.071 116.442 47.297 Q 116.442 42.461 118.488 38.679 Q 120.534 34.897 124.161 32.696 Q 127.788 30.495 132.438 30.495 Q 137.77 30.495 141.211 32.944 Q 144.652 35.393 146.078 39.237 L 141.304 41.221 Q 140.126 38.307 137.801 36.788 Q 135.476 35.269 132.19 35.269 Q 129.4 35.269 127.013 36.757 Q 124.626 38.245 123.138 40.942 Q 121.65 43.639 121.65 47.297 Q 121.65 50.893 123.138 53.621 Q 124.626 56.349 127.013 57.837 Q 129.4 59.325 132.19 59.325 Q 135.538 59.325 137.956 57.775 Q 140.374 56.225 141.552 53.373 L 146.264 55.357 Q 144.714 59.015 141.242 61.557 Q 137.77 64.099 132.438 64.099 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 151.403 63.069 L 151.403 18.677 L 156.673 18.677 L 156.673 31.759 L 156.425 36.099 L 156.673 36.099 Q 157.913 33.743 160.734 32.1 Q 163.555 30.457 166.965 30.457 Q 172.979 30.457 175.893 33.96 Q 178.807 37.463 178.807 42.795 L 178.807 63.069 L 173.537 63.069 L 173.537 43.601 Q 173.537 39.013 171.212 37.122 Q 168.887 35.231 165.725 35.231 Q 163.121 35.231 161.075 36.719 Q 159.029 38.207 157.851 40.563 Q 156.673 42.919 156.673 45.461 L 156.673 63.069 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 186.462 63.069 L 186.462 31.449 L 191.484 31.449 L 191.484 36.533 L 191.732 36.533 Q 192.352 34.735 193.809 33.402 Q 195.266 32.069 197.157 31.294 Q 199.048 30.519 200.908 30.519 Q 202.334 30.519 203.14 30.674 Q 203.946 30.829 204.628 31.139 L 204.628 36.843 Q 203.636 36.347 202.489 36.099 Q 201.342 35.851 200.164 35.851 Q 197.87 35.851 195.948 37.153 Q 194.026 38.455 192.879 40.625 Q 191.732 42.795 191.732 45.399 L 191.732 63.069 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 223.426 64.061 Q 218.652 64.061 214.994 61.829 Q 211.336 59.597 209.259 55.784 Q 207.182 51.971 207.182 47.259 Q 207.182 42.547 209.259 38.734 Q 211.336 34.921 214.994 32.689 Q 218.652 30.457 223.426 30.457 Q 228.2 30.457 231.858 32.72 Q 235.516 34.983 237.593 38.796 Q 239.67 42.609 239.67 47.259 Q 239.67 51.971 237.593 55.784 Q 235.516 59.597 231.858 61.829 Q 228.2 64.061 223.426 64.061 Z M 223.426 59.287 Q 226.278 59.287 228.789 57.861 Q 231.3 56.435 232.85 53.738 Q 234.4 51.041 234.4 47.259 Q 234.4 43.477 232.85 40.78 Q 231.3 38.083 228.789 36.657 Q 226.278 35.231 223.426 35.231 Q 220.574 35.231 218.032 36.657 Q 215.49 38.083 213.94 40.78 Q 212.39 43.477 212.39 47.259 Q 212.39 51.041 213.94 53.738 Q 215.49 56.435 218.032 57.861 Q 220.574 59.287 223.426 59.287 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 259.628 237.415 L 259.628 205.795 L 264.65 205.795 L 264.65 210.445 L 264.898 210.445 Q 266.2 208.089 268.928 206.446 Q 271.656 204.803 274.756 204.803 Q 278.29 204.803 280.832 206.508 Q 283.374 208.213 284.49 210.941 Q 286.102 208.275 288.83 206.539 Q 291.558 204.803 295.34 204.803 Q 300.982 204.803 303.648 208.213 Q 306.314 211.623 306.314 217.141 L 306.314 237.415 L 301.106 237.415 L 301.106 217.947 Q 301.106 213.359 299.246 211.468 Q 297.386 209.577 293.976 209.577 Q 291.558 209.577 289.667 210.972 Q 287.776 212.367 286.691 214.63 Q 285.606 216.893 285.606 219.559 L 285.606 237.415 L 280.336 237.415 L 280.336 218.009 Q 280.336 213.421 278.476 211.499 Q 276.616 209.577 273.268 209.577 Q 270.85 209.577 268.959 211.003 Q 267.068 212.429 265.983 214.723 Q 264.898 217.017 264.898 219.683 L 264.898 237.415 Z" transform="matrix(1.127905, 0, 0, 1, -48.816004, -174.288341)" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 314.256 64.061 Q 309.668 64.061 306.103 61.891 Q 302.538 59.721 300.523 55.939 Q 298.508 52.157 298.508 47.321 Q 298.508 42.795 300.399 38.951 Q 302.29 35.107 305.731 32.782 Q 309.172 30.457 313.822 30.457 Q 318.534 30.457 321.913 32.534 Q 325.292 34.611 327.121 38.269 Q 328.95 41.927 328.95 46.639 Q 328.95 47.073 328.919 47.507 Q 328.888 47.941 328.826 48.251 L 302.786 48.251 L 303.096 43.911 L 323.37 43.911 Q 323.308 42.113 322.347 40.098 Q 321.386 38.083 319.34 36.657 Q 317.294 35.231 313.822 35.231 Q 310.722 35.231 308.459 36.812 Q 306.196 38.393 304.987 41.121 Q 303.778 43.849 303.778 47.321 Q 303.778 51.351 305.328 54.017 Q 306.878 56.683 309.327 57.985 Q 311.776 59.287 314.442 59.287 Q 317.914 59.287 320.177 57.644 Q 322.44 56.001 323.804 53.583 L 328.268 55.753 Q 326.408 59.349 322.936 61.705 Q 319.464 64.061 314.256 64.061 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 364.447 238.824 Q 360.665 238.824 357.813 237.088 Q 354.961 235.352 353.659 233.182 L 353.411 233.182 L 353.411 237.832 L 348.389 237.832 L 348.389 193.44 L 353.659 193.44 L 353.659 206.522 L 353.411 210.924 L 353.659 210.924 Q 354.961 208.692 357.813 206.956 Q 360.665 205.22 364.447 205.22 Q 368.787 205.22 372.197 207.39 Q 375.607 209.56 377.591 213.342 Q 379.575 217.124 379.575 222.022 Q 379.575 226.92 377.591 230.702 Q 375.607 234.484 372.197 236.654 Q 368.787 238.824 364.447 238.824 Z M 363.889 234.05 Q 366.617 234.05 369.004 232.593 Q 371.391 231.136 372.848 228.408 Q 374.305 225.68 374.305 222.022 Q 374.305 218.302 372.848 215.605 Q 371.391 212.908 369.004 211.451 Q 366.617 209.994 363.889 209.994 Q 361.161 209.994 358.774 211.451 Q 356.387 212.908 354.899 215.605 Q 353.411 218.302 353.411 222.022 Q 353.411 225.742 354.899 228.439 Q 356.387 231.136 358.774 232.593 Q 361.161 234.05 363.889 234.05 Z" transform="matrix(1.043222, 0, 0, 1, -29.175147, -174.647746)" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 387.023 64.061 Q 382.249 64.061 378.591 61.829 Q 374.933 59.597 372.856 55.784 Q 370.779 51.971 370.779 47.259 Q 370.779 42.547 372.856 38.734 Q 374.933 34.921 378.591 32.689 Q 382.249 30.457 387.023 30.457 Q 391.797 30.457 395.455 32.72 Q 399.113 34.983 401.19 38.796 Q 403.267 42.609 403.267 47.259 Q 403.267 51.971 401.19 55.784 Q 399.113 59.597 395.455 61.829 Q 391.797 64.061 387.023 64.061 Z M 387.023 59.287 Q 389.875 59.287 392.386 57.861 Q 394.897 56.435 396.447 53.738 Q 397.997 51.041 397.997 47.259 Q 397.997 43.477 396.447 40.78 Q 394.897 38.083 392.386 36.657 Q 389.875 35.231 387.023 35.231 Q 384.171 35.231 381.629 36.657 Q 379.087 38.083 377.537 40.78 Q 375.987 43.477 375.987 47.259 Q 375.987 51.041 377.537 53.738 Q 379.087 56.435 381.629 57.861 Q 384.171 59.287 387.023 59.287 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 423.539 64.061 Q 418.765 64.061 415.107 61.829 Q 411.449 59.597 409.372 55.784 Q 407.295 51.971 407.295 47.259 Q 407.295 42.547 409.372 38.734 Q 411.449 34.921 415.107 32.689 Q 418.765 30.457 423.539 30.457 Q 428.313 30.457 431.971 32.72 Q 435.629 34.983 437.706 38.796 Q 439.783 42.609 439.783 47.259 Q 439.783 51.971 437.706 55.784 Q 435.629 59.597 431.971 61.829 Q 428.313 64.061 423.539 64.061 Z M 423.539 59.287 Q 426.391 59.287 428.902 57.861 Q 431.413 56.435 432.963 53.738 Q 434.513 51.041 434.513 47.259 Q 434.513 43.477 432.963 40.78 Q 431.413 38.083 428.902 36.657 Q 426.391 35.231 423.539 35.231 Q 420.687 35.231 418.145 36.657 Q 415.603 38.083 414.053 40.78 Q 412.503 43.477 412.503 47.259 Q 412.503 51.041 414.053 53.738 Q 415.603 56.435 418.145 57.861 Q 420.687 59.287 423.539 59.287 Z" style="fill: rgb(94, 98, 104);"/>
-  <path d="M 458.996 238.541 L 458.996 194.149 L 464.266 194.149 L 464.266 222.049 L 464.266 222.049 L 479.146 206.921 L 485.842 206.921 L 485.842 207.169 L 464.266 228.807 L 464.266 238.541 Z M 479.89 238.541 L 469.164 222.545 L 472.884 218.887 L 486.214 238.293 L 486.214 238.541 Z" transform="matrix(1.029387, 0, 0, 1, -27.626916, -175.466533)" style="fill: rgb(94, 98, 104);"/>
-</svg>`;
-        }
+            if (slider) slider.addEventListener('input', (e) => {
+                document.getElementById('quality-value').innerText = `${e.target.value}%`;
+                compress();
+            });
+
+            async function compress() {
+                if(!currentFile) return;
+                const q = parseInt(slider.value) / 100;
+                const img = new Image();
+                img.src = URL.createObjectURL(currentFile);
+                await new Promise(r => img.onload = r);
+                
+                cvs.width = img.naturalWidth;
+                cvs.height = img.naturalHeight;
+                const ctx = cvs.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                const dataUrl = cvs.toDataURL('image/jpeg', q);
+                document.getElementById('compressed-image-display').innerHTML = `<img src="${dataUrl}">`;
+                
+                const size = Math.round(dataUrl.length * 0.75); 
+                const saved = ((1 - (size/currentFile.size)) * 100).toFixed(1);
+                
+                document.getElementById('file-size-display').innerHTML = 
+                    `Original: <b>${formatBytes(currentFile.size)}</b> <i class="fas fa-arrow-right mx-2 text-gray-400"></i> Result: <b>${formatBytes(size)}</b> <span class="ml-2 text-accent">(-${saved}%)</span>`;
+                    
+                if (btn) btn.addEventListener('click', () => {
+                    const a = document.createElement('a');
+                    a.href = dataUrl;
+                    a.download = `compressed-${currentFile.name.split('.')[0]}.jpg`;
+                    a.click();
+                }, {once: true});
+                if (btn) btn.disabled = false;
+            }
+        });
+
+        // --- TOOL 3: SCALER LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('convertButtonScaler');
+            const input = document.getElementById('svgInputScaler');
+            const container = document.getElementById('resultsDivScaler');
+            
+            const uploadBtn = document.getElementById('uploadButtonScaler');
+            const fileInput = document.getElementById('svgFileUploaderScaler');
+
+            if (uploadBtn) uploadBtn.addEventListener('click', () => { if (fileInput) fileInput.click(); });
+            
+            if (fileInput) fileInput.addEventListener('change', (e) => {
+                const r = new FileReader();
+                r.onload = ev => { if (input) input.value = ev.target.result; };
+                if (e.target.files[0]) r.readAsText(e.target.files[0]);
+            });
+
+            if (btn) btn.addEventListener('click', async () => {
+                container.innerHTML = '';
+                const svg = input.value;
+                if(!svg.trim()) return;
+                
+                document.getElementById('resultsSectionScaler').classList.remove('hidden');
+                
+                const scales = [2, 4, 8, 16];
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svg, 'image/svg+xml');
+                const baseW = parseFloat(doc.documentElement.getAttribute('width') || 32);
+                const baseH = parseFloat(doc.documentElement.getAttribute('height') || 32);
+
+                for(let s of scales) {
+                    const w = baseW * s;
+                    const h = baseH * s;
+                    const cvs = document.createElement('canvas');
+                    cvs.width = w; cvs.height = h;
+                    const ctx = cvs.getContext('2d');
+                    
+                    const img = new Image();
+                    const blob = new Blob([svg], {type: 'image/svg+xml'});
+                    img.src = URL.createObjectURL(blob);
+                    
+                    await new Promise(r => img.onload = r);
+                    
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const url = cvs.toDataURL('image/png');
+                    
+                    const div = document.createElement('div');
+                    div.className = 'flex flex-col items-center p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-default';
+                    div.innerHTML = `
+                        <div class="h-32 flex items-center justify-center mb-3"><img src="${url}" class="max-h-full shadow-sm"></div>
+                        <div class="text-xs font-bold text-primary mb-2">${s}x (${w}x${h})</div>
+                        <button class="copy-btn-scaler text-xs bg-white dark:bg-slate-600 border border-default px-3 py-1 rounded hover:bg-gray-50 transition-colors text-primary">Copy PNG</button>
+                    `;
+                    
+                    div.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
+                         try {
+                            const b = await (await fetch(url)).blob();
+                            await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
+                            showMessage("Copied!");
+                         } catch(e) {
+                            showMessage("Copy failed.", true);
+                         }
+                    });
+                    container.appendChild(div);
+                }
+            });
+        });
+
+        // --- TOOL 4: FORMATTER LOGIC ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('copyHtmlButton');
+            const input = document.getElementById('htmlInput');
+            const output = document.getElementById('formattedOutput');
+            
+            if(btn && input && output) {
+                input.addEventListener('input', () => {
+                    function formatHTML(html) {
+                        let formatted = '';
+                        const reg = /(>)(<)(\/*)/g;
+                        html = html.replace(reg, '$1\r\n$2$3');
+                        let pad = 0;
+                        html.split('\r\n').forEach(function(node) {
+                            let indent = 0;
+                            if (node.match(/.+<\/\w[^>]*>$/)) indent = 0;
+                            else if (node.match(/^<\/\w/)) { if (pad !== 0) pad -= 1; }
+                            else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1;
+                            else indent = 0;
+
+                            let padding = '';
+                            for (let i = 0; i < pad; i++) { padding += '  '; }
+                            formatted += padding + node + '\r\n';
+                            pad += indent;
+                        });
+                        return formatted;
+                    }
+                    output.value = formatHTML(input.value);
+                    btn.disabled = false;
+                });
+                
+                btn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(output.value);
+                    showMessage("HTML Copied!");
+                });
+            }
+        });
+
+        // --- CLIPBOARD FEATURE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('filename-modal');
+            let clipBlob = null;
+            const clipBtn = document.getElementById('clipboard-download-button');
+            const cancelBtn = document.getElementById('filename-cancel');
+            const confirmBtn = document.getElementById('filename-confirm');
+
+            if (clipBtn) {
+                clipBtn.addEventListener('click', async () => {
+                    try {
+                        const items = await navigator.clipboard.read();
+                        let found = false;
+                        for (let item of items) {
+                            if (item.types.includes("image/png")) {
+                                clipBlob = await item.getType("image/png");
+                                found = true;
+                                break;
+                            }
+                        }
+                        if(found) {
+                            const img = new Image();
+                            img.src = URL.createObjectURL(clipBlob);
+                            await new Promise(r => img.onload = r);
+                            const cvs = document.createElement('canvas');
+                            cvs.width = img.width; cvs.height = img.height;
+                            cvs.getContext('2d').drawImage(img, 0, 0);
+                            
+                            cvs.toBlob(b => {
+                                clipBlob = b;
+                                modal.classList.remove('hidden');
+                                document.getElementById('filename-input').focus();
+                            }, 'image/png');
+                        } else {
+                            showMessage("No image found in clipboard", true);
+                        }
+                    } catch (e) {
+                        showMessage("Clipboard access denied (Click Button to enable)", true);
+                    }
+                });
+            }
+            
+            if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            if (confirmBtn) confirmBtn.addEventListener('click', () => {
+                const name = document.getElementById('filename-input').value || 'clipboard';
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(clipBlob);
+                a.download = name + '.png';
+                a.click();
+                modal.classList.add('hidden');
+                showMessage("Downloaded!");
+            });
+
+            // Shortcuts
+            document.addEventListener('keydown', (e) => {
+                if((e.ctrlKey || e.metaKey) && e.key === 'v' && e.target.tagName === 'BODY') {
+                    e.preventDefault();
+                    if(clipBtn) clipBtn.click();
+                }
+            });
+        });
         
-        initializeThemeToggle();
-        loadToolState();
-        
+        initApp();
     </script>
 </body>
 </html>
