@@ -11,6 +11,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     
+    <!-- FIX: Temporarily disable transitions on load to prevent flicker -->
+    <style id="initial-transition-disabler">
+        * { transition: none !important; }
+    </style>
+    
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -19,16 +24,18 @@
                     colors: {
                         'accent': '#34A853',
                         'accent-hover': '#2c8d48',
-                        'text-primary': 'var(--text-primary-dark)',
-                        'text-secondary': 'var(--text-secondary-subtle)',
-                        'bg-page': 'var(--bg-page)',
-                        'bg-sidebar': 'var(--bg-sidebar)',
-                        'bg-card': 'var(--bg-card)',
-                        'border-default': 'var(--border-default)',
-                        'bg-input': 'var(--bg-input)',
-                        'hover-item': 'var(--hover-item)',
+                        // RENAMED variables to use underscores for safer parsing
+                        'text-primary': 'var(--text_primary_dark)',
+                        'text-secondary': 'var(--text_secondary_subtle)',
+                        'bg-page': 'var(--bg_page)',
+                        'bg-sidebar': 'var(--bg_sidebar)',
+                        'bg-card': 'var(--bg_card)',
+                        'border-default': 'var(--border_default)',
+                        'bg-input': 'var(--bg_input)',
+                        'hover-item': 'var(--hover_item)',
                     },
-                    font-family: 'Google Sans', sans-serif; 
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
                     }
                 }
             }
@@ -38,61 +45,63 @@
     <style>
         /* --- CENTRALIZED COLOR VARIABLES --- */
         :root {
-            --text-primary-dark: #1b1c1f;
-            --text-secondary-subtle: #18181a;
-            --bg-page: #f8f9fa; /* Lighter page background */
-            --bg-sidebar: #ffffff;
-            --bg-card: #ffffff;
-            --border-default: #e5e7eb;
-            --bg-input: #f9fafb;
-            --hover-item: #f0fdf4;
+            /* Renamed variables */
+            --text_primary_dark: #1b1c1f;
+            --text_secondary_subtle: #18181a;
+            --bg_page: #f8f9fa; 
+            --bg_sidebar: #ffffff;
+            --bg_card: #ffffff;
+            --border_default: #e5e7eb;
+            --bg_input: #f9fafb;
+            --hover_item: #f0fdf4;
         }
 
         html.dark {
-            --text-primary-dark: #f1f5f9;
-            --text-secondary-subtle: #94a3b8;
-            --bg-page: #0f172a;
-            --bg-sidebar: #1e293b;
-            --bg-card: #1e293b;
-            --border-default: #334155;
-            --bg-input: #0f172a;
-            --hover-item: #334155;
+            /* Renamed variables */
+            --text_primary_dark: #f1f5f9;
+            --text_secondary_subtle: #94a3b8;
+            --bg_page: #0f172a;
+            --bg_sidebar: #1e293b;
+            --bg_card: #1e293b;
+            --border_default: #334155;
+            --bg_input: #0f172a;
+            --hover_item: #334155;
         }
 
         body {
-            font-family: 'Google Sans', sans-serif;  
-            background-color: var(--bg-page);
-            color: var(--text-primary-dark);
+            font-family: 'Poppins', sans-serif; 
+            background-color: var(--bg_page);
+            color: var(--text_primary_dark);
             transition: background-color 0.3s, color 0.3s;
             overflow: hidden; 
         }
         
         .sidebar {
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-default);
+            background-color: var(--bg_sidebar);
+            border-right: 1px solid var(--border_default);
             transition: background-color 0.3s, border-color 0.3s;
         }
         
         .nav-item {
-            color: var(--text-primary-dark); /* Default text color */
+            color: var(--text_primary_dark); 
             transition: all 0.2s;
-            font-weight: 500; /* Medium weight for items */
+            font-weight: 500; 
         }
         /* Hover state for inactive items */
         .nav-item:hover:not(.active) {
-            background-color: var(--hover-item);
+            background-color: var(--hover_item);
             color: #34A853;
         }
         /* Active state (Reference style: only color change) */
         .nav-item.active {
             color: #34A853; /* Green text */
-            background-color: var(--hover-item); /* Subtle background on active */
+            background-color: var(--hover_item); /* Subtle background on active */
             font-weight: 600; /* Semi-bold weight for active */
         }
 
         .tool-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-default);
+            background-color: var(--bg_card);
+            border: 1px solid var(--border_default);
             border-radius: 0.75rem;
             box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
             transition: background-color 0.3s, border-color 0.3s;
@@ -105,9 +114,9 @@
 
         #svg-display, .image-preview-box {
             min-height: 240px; 
-            border: 2px dashed var(--border-default);
+            border: 2px dashed var(--border_default);
             display: flex; align-items: center; justify-content: center;
-            background-color: var(--bg-input);
+            background-color: var(--bg_input);
             overflow: hidden;
             border-radius: 0.5rem;
             position: relative;
@@ -118,9 +127,9 @@
         }
         
         input[type="text"], input[type="number"], textarea {
-            background-color: var(--bg-input);
-            border: 1px solid var(--border-default);
-            color: var(--text-primary-dark);
+            background-color: var(--bg_input);
+            border: 1px solid var(--border_default);
+            color: var(--text_primary_dark);
             border-radius: 0.5rem;
         }
         input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
@@ -134,11 +143,12 @@
         input[type=range]::-webkit-slider-thumb { 
             -webkit-appearance: none; height: 18px; width: 18px; 
             border-radius: 50%; background: #34A853; margin-top: -6px; cursor: pointer;
-            box-shadow: 0 0 0 2px var(--bg-card);
+            box-shadow: 0 0 0 2px var(--bg_card);
         }
         
-        .text-primary { color: var(--text-primary-dark) !important; }
-        .text-secondary { color: var(--text-secondary-subtle) !important; }
+        /* Ensure these custom classes use the new variable names */
+        .text-primary { color: var(--text_primary_dark) !important; }
+        .text-secondary { color: var(--text_secondary_subtle) !important; }
         
     </style>
 </head>
@@ -153,7 +163,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="text-xl font-bold leading-none text-primary">ImageTools</h1>
-                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1.1</p>
+                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1</p>
             </div>
         </div>
 
@@ -499,10 +509,20 @@
             const savedTheme = localStorage.getItem('theme') || 'light';
             const themeToggle = document.getElementById('theme-toggle');
             const themeIcon = document.getElementById('theme-icon');
+            const disabler = document.getElementById('initial-transition-disabler'); // Reference to the temporary style tag
             
+            // 1. Immediately apply the stored theme without transition
             if(savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
                 if(themeIcon) themeIcon.className = 'fas fa-sun text-yellow-400';
+            }
+
+            // 2. Remove the transition disabler after a short delay (or immediately after setup)
+            if (disabler) {
+                 // Use a small delay to ensure theme is applied before re-enabling transitions
+                setTimeout(() => {
+                    disabler.remove();
+                }, 100); 
             }
 
             // Load Tab
@@ -674,7 +694,17 @@
                 const ctx = dom.canvas.getContext('2d');
                 ctx.clearRect(0, 0, finalW, finalH);
 
-                if(rad > 0) { ctx.beginPath(); ctx.roundRect(0,0, finalW, finalH, rad); ctx.clip(); }
+                if(rad > 0) { 
+                    // ctx.roundRect is not universally supported, using simplified path
+                    ctx.beginPath();
+                    ctx.moveTo(rad, 0);
+                    ctx.arcTo(finalW, 0, finalW, finalH, rad);
+                    ctx.arcTo(finalW, finalH, 0, finalH, rad);
+                    ctx.arcTo(0, finalH, 0, 0, rad);
+                    ctx.arcTo(0, 0, finalW, 0, rad);
+                    ctx.closePath();
+                    ctx.clip();
+                }
 
                 const img = new Image();
                 let svgStr = state.svgContent;
