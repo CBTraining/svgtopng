@@ -35,7 +35,7 @@
                         'hover-item': 'var(--hover_item)',
                     },
                     fontFamily: {
-                        sans: ['Google Sans', 'sans-serif'],
+                        sans: ['Poppins', 'sans-serif'],
                     }
                 }
             }
@@ -69,7 +69,7 @@
         }
 
         body {
-            font-family: 'Google Sans', sans-serif; 
+            font-family: 'Poppins', sans-serif; 
             background-color: var(--bg_page);
             color: var(--text_primary_dark);
             transition: background-color 0.3s, color 0.3s;
@@ -89,13 +89,13 @@
         }
         /* Hover state for inactive items */
         .nav-item:hover:not(.active) {
-            background-color: var(--hover_item);
+            background-color: var(--hover-item);
             color: #34A853;
         }
         /* Active state (Reference style: only color change) */
         .nav-item.active {
             color: #34A853; /* Green text */
-            background-color: var(--hover_item); /* Subtle background on active */
+            background-color: var(--hover-item); /* Subtle background on active */
             font-weight: 600; /* Semi-bold weight for active */
         }
 
@@ -163,7 +163,7 @@
             </div>
             <div class="flex flex-col justify-center">
                 <h1 class="text-xl font-bold leading-none text-primary">ImageTools</h1>
-                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1.1</p>
+                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1</p>
             </div>
         </div>
 
@@ -217,7 +217,18 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-page">
         
-        <!-- REMOVED MOBILE HEADER HERE -->
+        <!-- Mobile Header -->
+        <header class="md:hidden bg-card border-b border-default p-4 flex justify-between items-center z-30 sticky top-0 shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-accent rounded flex items-center justify-center text-white shadow-sm">
+                    <i class="fas fa-layer-group text-sm"></i>
+                </div>
+                <span class="font-bold text-primary text-lg">ImageTools</span>
+            </div>
+            <button id="mobile-menu-btn" class="text-primary p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </header>
 
         <!-- Tool Content Container -->
         <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll" id="main-scroll-area">
@@ -398,6 +409,7 @@
                                 <i class="fas fa-file-code mr-2 text-secondary"></i> Load File
                                 <input type="file" id="svgFileUploaderScaler" accept=".svg" class="hidden">
                             </label>
+                            <!-- FIX: Changed bg-primary to bg-accent to ensure visibility in light mode -->
                             <button id="convertButtonScaler" class="px-8 py-2.5 bg-accent hover:bg-accent-hover text-white font-bold rounded-lg shadow-md transition-colors ml-auto">
                                 Generate All Sizes
                             </button>
@@ -475,8 +487,11 @@
         function switchTab(tabId) {
             activeTab = tabId;
             localStorage.setItem('activeTab', tabId);
+
+            // Update Nav
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('active');
+                // Reset icons
                 const icon = el.querySelector('i');
                 if(icon) icon.classList.remove('text-accent');
             });
@@ -488,6 +503,7 @@
                 if(icon) icon.classList.add('text-accent');
             }
 
+            // Update Content
             document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
             const activeSection = document.getElementById(`tool-${tabId}`);
             if(activeSection) activeSection.classList.remove('hidden');
@@ -521,8 +537,15 @@
             } else {
                 switchTab('resizer');
             }
-            
-            // NOTE: Mobile Menu JS removed as the button/header was removed.
+
+            // Mobile Menu
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const sidebar = document.querySelector('aside');
+                sidebar.classList.toggle('hidden');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('h-full');
+                sidebar.classList.toggle('w-64');
+            });
             
             // Setup Theme Toggle
             if (themeToggle) {
@@ -826,8 +849,15 @@
                 const scales = [2, 4, 8, 16];
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(svg, 'image/svg+xml');
-                const baseW = parseFloat(doc.documentElement.getAttribute('width') || 32);
-                const baseH = parseFloat(doc.documentElement.getAttribute('height') || 32);
+                
+                let baseW = 32, baseH = 32;
+                if (doc.documentElement.hasAttribute('viewBox')) {
+                     const vb = doc.documentElement.getAttribute('viewBox').split(/[\s,]+/).filter(n => n.trim() !== '').map(Number);
+                     if (vb.length === 4) { baseW = vb[2]; baseH = vb[3]; }
+                } else {
+                     baseW = parseFloat(doc.documentElement.getAttribute('width')) || 32;
+                     baseH = parseFloat(doc.documentElement.getAttribute('height')) || 32;
+                }
 
                 for(let s of scales) {
                     const w = baseW * s;
@@ -837,25 +867,31 @@
                     const ctx = cvs.getContext('2d');
                     
                     const img = new Image();
-                    const blob = new Blob([svg], {type: 'image/svg+xml'});
-                    img.src = URL.createObjectURL(blob);
+                    const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+                    const blobUrl = URL.createObjectURL(blob);
+                    img.src = blobUrl;
                     
                     await new Promise(r => img.onload = r);
                     
                     ctx.drawImage(img, 0, 0, w, h);
-                    const url = cvs.toDataURL('image/png');
+                    URL.revokeObjectURL(blobUrl);
+                    const pngUrl = cvs.toDataURL('image/png');
                     
                     const div = document.createElement('div');
-                    div.className = 'flex flex-col items-center p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-default';
+                    div.className = 'flex flex-col items-center p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-default transition-transform hover:scale-[1.02]';
                     div.innerHTML = `
-                        <div class="h-32 flex items-center justify-center mb-3"><img src="${url}" class="max-h-full shadow-sm"></div>
-                        <div class="text-xs font-bold text-primary mb-2">${s}x (${w}x${h})</div>
-                        <button class="copy-btn-scaler text-xs bg-white dark:bg-slate-600 border border-default px-3 py-1 rounded hover:bg-gray-50 transition-colors text-primary">Copy PNG</button>
+                        <div class="h-32 w-full flex items-center justify-center mb-4 bg-white dark:bg-slate-800 rounded-lg border border-default overflow-hidden p-2">
+                            <img src="${pngUrl}" class="max-h-full max-w-full object-contain">
+                        </div>
+                        <div class="text-xs font-bold text-primary mb-3">${s}x (${w}x${h})</div>
+                        <button class="copy-btn-scaler text-xs bg-white dark:bg-slate-600 border border-default px-3 py-2 rounded-lg hover:bg-accent hover:text-white hover:border-accent transition-colors text-primary font-semibold shadow-sm flex justify-center items-center gap-2">
+                            <i class="far fa-copy"></i> Copy PNG
+                        </button>
                     `;
                     
                     div.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
                          try {
-                            const b = await (await fetch(url)).blob();
+                            const b = await (await fetch(pngUrl)).blob();
                             await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
                             showMessage("Copied!");
                          } catch(e) {
