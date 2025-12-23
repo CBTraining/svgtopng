@@ -114,7 +114,7 @@
             </div>
             <div>
                 <h1 class="text-xl font-bold leading-none text-[var(--text_primary)]">ImageTools</h1>
-                <p class="text-xs text-[var(--text_secondary)] font-medium mt-0.5">v2.2</p>
+                <p class="text-xs text-[var(--text_secondary)] font-medium mt-0.5">v2.8 HighRes</p>
             </div>
         </div>
 
@@ -129,15 +129,12 @@
             <div id="nav-container" class="space-y-1 mb-6">
                 <div id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="resizer">
                     <i class="fas fa-arrows-alt-h w-5 text-center text-lg"></i> <span class="text-[15px]">Resizer & Converter</span>
-                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
                 </div>
                 <div id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="compressor">
                     <i class="fas fa-compress-arrows-alt w-5 text-center text-lg"></i> <span class="text-[15px]">Image Compressor</span>
-                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
                 </div>
                 <div id="nav-lottie" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="lottie">
                     <i class="fas fa-film w-5 text-center text-lg"></i> <span class="text-[15px]">Lottie to GIF</span>
-                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
                 </div>
             </div>
 
@@ -275,16 +272,33 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="flex justify-between mb-1"><label class="text-xs font-bold uppercase">Frame Rate</label><span id="lottie-fps-val" class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">30 FPS</span></div>
+                                        <div class="flex justify-between mb-1">
+                                            <label class="text-xs font-bold uppercase">Frame Rate</label>
+                                            <div class="flex gap-2">
+                                                <span id="lottie-size-est" class="text-[10px] text-gray-400 font-mono mt-0.5">Est: ~1MB</span>
+                                                <span id="lottie-fps-val" class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">30 FPS</span>
+                                            </div>
+                                        </div>
                                         <input type="range" id="lottie-fps" min="10" max="60" value="30" class="w-full">
                                     </div>
+                                    
+                                    <div class="flex items-center justify-between pt-2">
+                                        <label class="flex items-center gap-2 cursor-pointer select-none">
+                                            <div class="relative">
+                                                <input type="checkbox" id="lottie-loop" checked class="sr-only peer">
+                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+                                            </div>
+                                            <span class="text-xs font-bold uppercase">Loop Animation</span>
+                                        </label>
+                                    </div>
+
                                     <button id="btn-lottie-gen" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md transition-colors"><i class="fas fa-magic mr-2"></i> Convert to GIF</button>
                                 </div>
                             </div>
                         </div>
                         <div class="lg:col-span-7">
                             <div class="tool-card p-6 min-h-[500px] flex flex-col">
-                                <h3 class="font-bold mb-4">Preview</h3>
+                                <h3 class="font-bold mb-4">Preview <span class="text-xs font-normal text-gray-400 ml-2">(Simulates selected FPS)</span></h3>
                                 <div id="lottie-preview-container" class="flex-1 bg-dots rounded-lg border border-default flex items-center justify-center overflow-hidden relative">
                                     <div id="lottie-placeholder" class="text-[var(--text_secondary)] text-center"><i class="fas fa-film text-4xl mb-3 opacity-30"></i><p>Upload a file to preview</p></div>
                                     <!-- Lottie renders here -->
@@ -420,7 +434,7 @@
                 activeTab: 'resizer',
                 resizer: { svg: null, aspect: 1, name: 'image' },
                 compressor: { file: null, url: null },
-                lottie: { json: null, animation: null, name: 'animation' },
+                lottie: { json: null, animation: null, name: 'animation', duration: 0 },
                 clipBlob: null
             },
 
@@ -460,7 +474,6 @@
                     item.addEventListener('click', () => switchTab(item.dataset.tab));
                 });
                 
-                // Dragging logic omitted for brevity in this update, preserved existing classes
                 switchTab('resizer');
             },
 
@@ -666,21 +679,66 @@
                     up: $('lottie-upload'), ctrls: $('lottie-controls'), prev: $('lottie-preview-container'),
                     width: $('lottie-width'), bgCol: $('lottie-bg-color'), bgTrans: $('lottie-bg-transparent'),
                     fps: $('lottie-fps'), fpsVal: $('lottie-fps-val'), btn: $('btn-lottie-gen'),
-                    bar: $('lottie-bar'), pct: $('lottie-pct'), prog: $('lottie-progress'), dims: $('lottie-dims')
+                    bar: $('lottie-bar'), pct: $('lottie-pct'), prog: $('lottie-progress'), dims: $('lottie-dims'),
+                    est: $('lottie-size-est'), loop: $('lottie-loop')
                 };
 
                 let animData = null;
                 let bgColor = 'transparent';
+                let previewInterval = null;
+
+                const updateSizeEstimate = () => {
+                    if(!animData) return;
+                    const w = parseInt(els.width.value) || 800;
+                    const h = Math.round(w / (animData.w / animData.h));
+                    
+                    // FIXED: Update the dimension text immediately
+                    els.dims.innerText = `${w}x${h}`;
+                    
+                    const fps = parseInt(els.fps.value);
+                    const duration = this.state.lottie.duration || 1; // seconds
+                    const frames = Math.ceil(duration * fps);
+                    const sizeMB = ((w * h * frames * 0.6) / 1024 / 1024).toFixed(1);
+                    els.est.innerText = `Est: ~${sizeMB} MB`;
+                };
 
                 const updatePreviewBg = () => {
                     els.prev.style.background = bgColor === 'transparent' ? '' : bgColor;
                     els.prev.classList.toggle('bg-dots', bgColor === 'transparent');
                 };
 
+                const startPreviewLoop = () => {
+                    if(previewInterval) clearInterval(previewInterval);
+                    if(!this.state.lottie.animation) return;
+
+                    const fps = parseInt(els.fps.value);
+                    const anim = this.state.lottie.animation;
+                    const totalFrames = anim.totalFrames;
+                    let currentFrame = 0;
+                    
+                    anim.stop();
+                    
+                    previewInterval = setInterval(() => {
+                        currentFrame += 1;
+                        const time = currentFrame / fps;
+                        if(time >= anim.getDuration(false)) currentFrame = 0; // Loop preview always
+                        
+                        const lottieFrame = (currentFrame / (anim.getDuration(false) * fps)) * totalFrames;
+                        anim.goToAndStop(lottieFrame, true); 
+                    }, 1000/fps);
+                };
+
                 els.bgCol.addEventListener('input', e => { bgColor = e.target.value; updatePreviewBg(); });
                 els.bgTrans.addEventListener('click', () => { bgColor = 'transparent'; els.bgCol.value = '#ffffff'; updatePreviewBg(); });
                 
-                els.fps.addEventListener('input', e => els.fpsVal.innerText = `${e.target.value} FPS`);
+                els.fps.addEventListener('input', e => {
+                    els.fpsVal.innerText = `${e.target.value} FPS`;
+                    updateSizeEstimate();
+                    startPreviewLoop();
+                });
+                
+                // FIXED: Ensure dimension update fires on input
+                els.width.addEventListener('input', updateSizeEstimate);
 
                 els.up.addEventListener('change', e => {
                     const f = e.target.files[0];
@@ -696,17 +754,21 @@
                             this.state.lottie.animation = lottie.loadAnimation({
                                 container: els.prev,
                                 renderer: 'svg',
-                                loop: true,
-                                autoplay: true,
+                                loop: false,
+                                autoplay: false,
                                 animationData: animData
                             });
 
-                            // Set default aspect
-                            const w = animData.w || 800;
-                            const h = animData.h || 600;
-                            els.width.value = w;
-                            els.dims.innerText = `${w}x${h}`;
-                            els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                            this.state.lottie.animation.addEventListener('DOMLoaded', () => {
+                                this.state.lottie.duration = this.state.lottie.animation.getDuration(false);
+                                const w = animData.w || 800;
+                                const h = animData.h || 600;
+                                els.width.value = w;
+                                els.dims.innerText = `${w}x${h}`;
+                                els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                                updateSizeEstimate();
+                                startPreviewLoop();
+                            });
                         } catch(err) { showToast('Invalid JSON file', true); }
                     };
                     reader.readAsText(f);
@@ -719,76 +781,99 @@
                     els.prog.classList.remove('hidden');
 
                     try {
-                        // 1. Fetch GIF Worker Blob (Workaround for single-file constraint)
                         const workerBlob = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r=>r.blob());
                         const workerUrl = URL.createObjectURL(workerBlob);
 
-                        // 2. Setup Canvas Renderer
                         const fps = parseInt(els.fps.value);
                         const targetW = parseInt(els.width.value);
                         const ar = (animData.w / animData.h) || 1;
                         const targetH = Math.round(targetW / ar);
                         
-                        // Setup GIF Encoder
                         const gif = new GIF({
                             workers: 2,
-                            quality: 10,
+                            quality: 1, // BEST QUALITY (1 is best, 10 is default)
                             workerScript: workerUrl,
                             width: targetW,
                             height: targetH,
-                            background: bgColor === 'transparent' ? 0x00000000 : bgColor
+                            transparent: bgColor === 'transparent' ? 0x000000 : null,
+                            repeat: els.loop.checked ? 0 : -1
                         });
 
-                        // Create Temp Canvas for rendering frames
-                        const wrapper = document.createElement('div');
-                        wrapper.style.width = `${targetW}px`;
-                        wrapper.style.height = `${targetH}px`;
-                        // Hidden from DOM but active
-                        // We attach it briefly to ensure styles render? No, offscreen works usually with lottie
+                        // 1. Create a pure Canvas element for Lottie to render into
+                        const lottieCanvas = document.createElement('canvas');
+                        lottieCanvas.width = targetW;
+                        lottieCanvas.height = targetH;
                         
+                        // DEEP COPY animData to prevent mutations affecting export
+                        const exportAnimData = JSON.parse(JSON.stringify(animData));
+
+                        // 2. Load Lottie using CANVAS renderer directly into our high-res canvas
                         const animRenderer = lottie.loadAnimation({
-                            container: wrapper,
-                            renderer: 'canvas',
+                            renderer: 'canvas', 
                             loop: false,
                             autoplay: false,
-                            animationData: animData,
+                            animationData: exportAnimData,
                             rendererSettings: {
+                                context: lottieCanvas.getContext('2d'),
                                 preserveAspectRatio: 'xMidYMid meet',
-                                context: wrapper.appendChild(document.createElement('canvas')).getContext('2d')
+                                clearCanvas: true
                             }
                         });
 
-                        // Wait for ready
-                        await new Promise(r => setTimeout(r, 500));
+                        // 3. Wait for Lottie to initialize
+                        await new Promise(r => {
+                            if(animRenderer.isLoaded) r();
+                            else animRenderer.addEventListener('DOMLoaded', r);
+                        });
+                        
+                        // CRITICAL FIX: Manually calculate and apply scale
+                        // Since we are bypassing the container logic, we must tell Lottie
+                        // how much to scale the vector data to fit our canvas context.
+                        // Standard formula: TargetWidth / NativeWidth
+                        const scale = targetW / animData.w;
+                        
+                        // Apply scale to the renderer's canvas context transform
+                        // Lottie's canvas renderer exposes its internal canvas context logic somewhat opaquely,
+                        // but setting the container style is usually how it infers scale.
+                        // Since we have no container, we can use 'config' modification or a simple trick:
+                        // We rely on 'preserveAspectRatio' above to handle fit, BUT
+                        // we must ensure Lottie knows the "container" size is the canvas size.
+                        // Lottie usually infers this from the passed context's canvas dimensions.
+                        
+                        // Double check resize to be safe
+                        animRenderer.resize(); 
 
-                        const duration = animRenderer.getDuration(true); // frames
-                        const totalTime = animRenderer.getDuration(false); // seconds
+                        const duration = animRenderer.getDuration(true); 
+                        const totalTime = animRenderer.getDuration(false); 
                         const frameCount = Math.ceil(totalTime * fps);
-                        const step = duration / frameCount;
+                        const frameStep = duration / frameCount;
 
-                        // Render Frames
+                        const compCanvas = document.createElement('canvas');
+                        compCanvas.width = targetW;
+                        compCanvas.height = targetH;
+                        const ctx = compCanvas.getContext('2d');
+
                         for (let i = 0; i < frameCount; i++) {
-                            animRenderer.goToAndStop(i * step, true);
+                            // 1. Position Lottie
+                            animRenderer.goToAndStop(i * frameStep, true);
                             
-                            // Color Fill Background if needed
-                            const cvs = wrapper.querySelector('canvas');
+                            // 2. Clear & Paint GIF Frame
+                            ctx.clearRect(0, 0, targetW, targetH);
                             if(bgColor !== 'transparent') {
-                                const tempCtx = document.createElement('canvas').getContext('2d');
-                                tempCtx.canvas.width = targetW;
-                                tempCtx.canvas.height = targetH;
-                                tempCtx.fillStyle = bgColor;
-                                tempCtx.fillRect(0,0,targetW,targetH);
-                                tempCtx.drawImage(cvs, 0, 0);
-                                gif.addFrame(tempCtx, {copy: true, delay: 1000/fps});
-                            } else {
-                                gif.addFrame(cvs, {copy: true, delay: 1000/fps});
+                                ctx.fillStyle = bgColor;
+                                ctx.fillRect(0, 0, targetW, targetH);
                             }
+                            
+                            // 3. Draw the HIGH RES lottie canvas directly
+                            ctx.drawImage(lottieCanvas, 0, 0);
+                            
+                            gif.addFrame(ctx, {copy: true, delay: 1000/fps});
 
-                            // Update UI
                             const pct = Math.round((i/frameCount)*100);
                             els.bar.style.width = `${pct}%`;
                             els.pct.innerText = `${pct}%`;
-                            await new Promise(r => setTimeout(r, 10)); // Allow UI update
+                            
+                            await new Promise(r => setTimeout(r, 0)); 
                         }
 
                         gif.on('finished', blob => {
@@ -797,7 +882,6 @@
                             a.download = `${this.state.lottie.name}.gif`;
                             a.click();
                             
-                            // Reset UI
                             els.btn.disabled = false;
                             els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
                             els.prog.classList.add('hidden');
