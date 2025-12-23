@@ -1,20 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImageTools v1</title>
+    <title>ImageTools v2 (Optimized)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- FIX: Temporarily disable transitions on load to prevent flicker -->
-    <style id="initial-transition-disabler">
-        * { transition: none !important; }
-    </style>
     
     <script>
         tailwind.config = {
@@ -24,188 +18,122 @@
                     colors: {
                         'accent': '#34A853',
                         'accent-hover': '#2c8d48',
-                        // RENAMED variables to use underscores for safer parsing
-                        'text-primary': 'var(--text_primary_dark)',
-                        'text-secondary': 'var(--text_secondary_subtle)',
                         'bg-page': 'var(--bg_page)',
                         'bg-sidebar': 'var(--bg_sidebar)',
                         'bg-card': 'var(--bg_card)',
                         'border-default': 'var(--border_default)',
                         'bg-input': 'var(--bg_input)',
-                        'hover-item': 'var(--hover_item)',
                     },
-                    fontFamily: {
-                        sans: ['Poppins', 'sans-serif'],
-                    }
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] }
                 }
             }
         }
     </script>
 
     <style>
-        /* --- CENTRALIZED COLOR VARIABLES --- */
         :root {
-            /* Renamed variables */
-            --text_primary_dark: #1b1c1f;
-            --text_secondary_subtle: #18181a;
-            --bg_page: #f8f9fa; 
+            --text_primary: #1b1c1f;
+            --text_secondary: #5f6368;
+            --bg_page: #f8f9fa;
             --bg_sidebar: #ffffff;
             --bg_card: #ffffff;
-            --border_default: #e5e7eb;
+            --border_default: #e0e0e0;
             --bg_input: #f9fafb;
             --hover_item: #f0fdf4;
         }
 
         html.dark {
-            /* Renamed variables */
-            --text_primary_dark: #f1f5f9;
-            --text_secondary_subtle: #94a3b8;
-            --bg_page: #0f172a;
-            --bg_sidebar: #1e293b;
-            --bg_card: #1e293b;
-            --border_default: #334155;
-            --bg_input: #0f172a;
-            --hover_item: #334155;
+            --text_primary: #f1f5f9;
+            --text_secondary: #94a3b8;
+            --bg_page: #131314;
+            --bg_sidebar: #1e1f20;
+            --bg_card: #1e1f20;
+            --border_default: #2d2e30;
+            --bg_input: #131314;
+            --hover_item: #131314;
         }
 
-        body {
-            font-family: 'Poppins', sans-serif; 
-            background-color: var(--bg_page);
-            color: var(--text_primary_dark);
-            transition: background-color 0.3s, color 0.3s;
-            overflow: hidden; 
-        }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg_page); color: var(--text_primary); transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+        .sidebar { background-color: var(--bg_sidebar); border-right: 1px solid var(--border_default); transition: background-color 0.3s, border-color 0.3s; }
         
-        .sidebar {
-            background-color: var(--bg_sidebar);
-            border-right: 1px solid var(--border_default);
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-        
-        .nav-item {
-            color: var(--text_primary_dark); 
-            transition: all 0.2s;
-            font-weight: 500; 
-        }
-        /* Hover state for inactive items */
-        .nav-item:hover:not(.active) {
-            background-color: var(--hover-item);
-            color: #34A853;
-        }
-        /* Active state (Reference style: only color change) */
-        .nav-item.active {
-            color: #34A853; /* Green text */
-            background-color: var(--hover-item); /* Subtle background on active */
-            font-weight: 600; /* Semi-bold weight for active */
-        }
+        /* Navigation */
+        .nav-item { color: var(--text_secondary); transition: all 0.2s; font-weight: 500; cursor: pointer; user-select: none; }
+        .nav-item:hover:not(.active) { background-color: var(--hover_item); color: #34A853; }
+        .nav-item.active { color: #34A853; background-color: var(--hover_item); font-weight: 600; border-right: 3px solid #34A853; }
+        .nav-item.dragging { opacity: 0.4; border: 2px dashed #34A853; background: var(--bg_input); }
 
-        .tool-card {
-            background-color: var(--bg_card);
-            border: 1px solid var(--border_default);
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
-            transition: background-color 0.3s, border-color 0.3s;
-        }
-
+        /* Tools & Cards */
+        .tool-card { background-color: var(--bg_card); border: 1px solid var(--border_default); border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); }
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
         html.dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #475569; }
 
-        #svg-display, .image-preview-box {
-            min-height: 240px; 
-            border: 2px dashed var(--border_default);
-            display: flex; align-items: center; justify-content: center;
-            background-color: var(--bg_input);
-            overflow: hidden;
-            border-radius: 0.5rem;
-            position: relative;
-        }
-        
-        #svg-display > svg, .image-preview-box img {
-            max-width: 100%; max-height: 100%; object-fit: contain;
-        }
-        
-        input[type="text"], input[type="number"], textarea {
-            background-color: var(--bg_input);
-            border: 1px solid var(--border_default);
-            color: var(--text_primary_dark);
-            border-radius: 0.5rem;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
-            outline: none;
-            border-color: #34A853;
-            ring: 2px solid #34A853;
-        }
+        /* Inputs */
+        input[type="text"], input[type="number"], textarea { background-color: var(--bg_input); border: 1px solid var(--border_default); color: var(--text_primary); border-radius: 0.5rem; transition: border 0.2s; }
+        input:focus, textarea:focus { outline: none; border-color: #34A853; ring: 2px solid #34A853; }
 
+        /* Range Slider */
         input[type=range]::-webkit-slider-runnable-track { background: #e5e7eb; border-radius: 4px; height: 6px; }
-        html.dark input[type=range]::-webkit-slider-runnable-track { background: #334155; }
-        input[type=range]::-webkit-slider-thumb { 
-            -webkit-appearance: none; height: 18px; width: 18px; 
-            border-radius: 50%; background: #34A853; margin-top: -6px; cursor: pointer;
-            box-shadow: 0 0 0 2px var(--bg_card);
+        html.dark input[type=range]::-webkit-slider-runnable-track { background: #2f3031; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: #34A853; margin-top: -6px; cursor: pointer; box-shadow: 0 0 0 2px var(--bg_card); }
+
+        /* Preview Areas */
+        .bg-dots {
+            background-color: var(--bg_input);
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
         }
+        html.dark .bg-dots { background-image: radial-gradient(#334155 1px, transparent 1px); }
         
-        /* Ensure these custom classes use the new variable names */
-        .text-primary { color: var(--text_primary_dark) !important; }
-        .text-secondary { color: var(--text_secondary_subtle) !important; }
-        
+        #svg-display, .image-preview-box { min-height: 240px; border: 2px dashed var(--border_default); display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 0.5rem; position: relative; }
+        #svg-display > svg, .image-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
     </style>
 </head>
-<body class="flex h-screen w-full text-primary">
+<body class="flex h-screen w-full">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar w-72 flex-shrink-0 flex flex-col hidden md:flex z-20 h-full">
-        <!-- Logo Area -->
         <div class="px-6 pt-8 pb-6 flex items-center gap-3">
             <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white text-xl shadow-md flex-shrink-0">
                 <i class="fas fa-layer-group"></i>
             </div>
-            <div class="flex flex-col justify-center">
-                <h1 class="text-xl font-bold leading-none text-primary">ImageTools</h1>
-                <p class="text-xs text-secondary font-medium mt-0.5">Toolkit v1</p>
+            <div>
+                <h1 class="text-xl font-bold leading-none text-[var(--text_primary)]">ImageTools</h1>
+                <p class="text-xs text-[var(--text_secondary)] font-medium mt-0.5">Optimized v2</p>
             </div>
         </div>
 
-        <!-- Big Green Action Button -->
         <div class="px-6 mb-8">
-            <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group transform active:scale-95">
-                <i class="fas fa-clipboard text-lg"></i>
-                <span>Clipboard to PNG</span>
+            <button id="btn-clipboard-dl" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
+                <i class="fas fa-clipboard text-lg"></i> <span>Clipboard to PNG</span>
             </button>
         </div>
 
-        <!-- Navigation -->
-        <nav class="flex-1 overflow-y-auto px-6 space-y-1 custom-scroll">
-            <div class="text-xs font-bold text-secondary uppercase tracking-wider mb-3 px-2">TOOLS</div>
-            
-            <button onclick="switchTab('resizer')" id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
-                <i class="fas fa-arrows-alt-h w-5 text-center text-lg transition-colors"></i>
-                <span class="text-[15px]">Resizer & Converter</span>
-            </button>
-
-            <button onclick="switchTab('compressor')" id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
-                <i class="fas fa-compress-arrows-alt w-5 text-center text-lg transition-colors"></i>
-                <span class="text-[15px]">Image Compressor</span>
-            </button>
-
-            <button onclick="switchTab('scaler')" id="nav-scaler" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
-                <i class="fas fa-expand w-5 text-center text-lg transition-colors"></i>
-                <span class="text-[15px]">SVG Icon Scaler</span>
-            </button>
-            
-            <button onclick="switchTab('formatter')" id="nav-formatter" class="nav-item w-full flex items-center gap-4 px-2 py-3 rounded-lg text-left font-medium group">
-                <i class="fas fa-code w-5 text-center text-lg transition-colors"></i>
-                <span class="text-[15px]">HTML Formatter</span>
-            </button>
+        <nav class="flex-1 overflow-y-auto px-6 custom-scroll">
+            <div class="text-xs font-bold text-[var(--text_secondary)] uppercase tracking-wider mb-3 px-2">TOOLS</div>
+            <div id="nav-container" class="space-y-1">
+                <div id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="resizer">
+                    <i class="fas fa-arrows-alt-h w-5 text-center text-lg"></i> <span class="text-[15px]">Resizer & Converter</span>
+                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
+                </div>
+                <div id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="compressor">
+                    <i class="fas fa-compress-arrows-alt w-5 text-center text-lg"></i> <span class="text-[15px]">Image Compressor</span>
+                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
+                </div>
+                <div id="nav-scaler" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="scaler">
+                    <i class="fas fa-expand w-5 text-center text-lg"></i> <span class="text-[15px]">SVG Icon Scaler</span>
+                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
+                </div>
+                <div id="nav-formatter" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="formatter">
+                    <i class="fas fa-code w-5 text-center text-lg"></i> <span class="text-[15px]">HTML Formatter</span>
+                    <i class="fas fa-grip-lines ml-auto text-gray-300 opacity-0 group-hover:opacity-50 text-xs"></i>
+                </div>
+            </div>
         </nav>
 
-        <!-- Footer / Theme Toggle -->
         <div class="p-6 mt-auto">
-            <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-secondary">
+            <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-[var(--text_secondary)]">
                 <div class="flex items-center gap-2">
-                    <i class="fas fa-moon" id="theme-icon"></i>
-                    <span class="text-sm font-medium">Dark Mode</span>
+                    <i class="fas fa-moon" id="theme-icon"></i> <span class="text-sm font-medium">Dark Mode</span>
                 </div>
                 <div class="w-9 h-5 bg-gray-200 dark:bg-slate-600 rounded-full relative">
                     <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 dark:translate-x-4 shadow-sm"></div>
@@ -214,796 +142,500 @@
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-page">
-        
-        <!-- Mobile Header -->
-        <header class="md:hidden bg-card border-b border-default p-4 flex justify-between items-center z-30 sticky top-0 shadow-sm">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-accent rounded flex items-center justify-center text-white shadow-sm">
-                    <i class="fas fa-layer-group text-sm"></i>
-                </div>
-                <span class="font-bold text-primary text-lg">ImageTools</span>
-            </div>
-            <button id="mobile-menu-btn" class="text-primary p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </header>
-
-        <!-- Tool Content Container -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll" id="main-scroll-area">
+        <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll">
             <div class="max-w-6xl mx-auto">
                 
-                <!-- TOOL 1: RESIZER -->
-                <div id="tool-resizer" class="tool-section hidden">
-                    <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-primary mb-2">SVG Resizer & Converter</h2>
-                        <p class="text-secondary text-lg">Upload an SVG file, precisely adjust its dimensions or crop it, and download high-quality PNGs.</p>
-                    </div>
-
+                <section id="tool-resizer" class="tool-section hidden">
+                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Resizer & Converter</h2><p class="text-[var(--text_secondary)]">Precise dimension adjustment and PNG conversion.</p></div>
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <!-- Left Column: Upload & Preview -->
                         <div class="lg:col-span-5 space-y-6">
                             <div class="tool-card p-6">
-                                <label class="block text-sm font-bold text-primary mb-3 uppercase tracking-wide">Source File</label>
-                                <div id="svg-display" class="mb-4 bg-dots">
-                                    <div class="text-center p-6">
-                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-300 mb-3"></i>
-                                        <p class="text-sm text-secondary">No file selected</p>
-                                    </div>
-                                </div>
-                                <label for="svg-upload" class="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium group">
-                                    <i class="fas fa-upload mr-2 group-hover:scale-110 transition-transform"></i> Upload SVG
-                                    <input type="file" id="svg-upload" accept=".svg,image/svg+xml" class="hidden"/>
+                                <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Source File</label>
+                                <div id="resizer-display" class="mb-4 bg-dots"><div class="text-center p-6 text-[var(--text_secondary)]"><i class="fas fa-cloud-upload-alt text-4xl mb-3 opacity-30"></i><p>No file selected</p></div></div>
+                                <label class="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium group">
+                                    <i class="fas fa-upload mr-2"></i> Upload SVG
+                                    <input type="file" id="resizer-upload" accept=".svg,image/svg+xml" class="hidden"/>
                                 </label>
                             </div>
                         </div>
-
-                        <!-- Right Column: Controls -->
                         <div class="lg:col-span-7 space-y-6">
-                            <div class="tool-card p-6" id="processing-area">
-                                <div class="flex items-center justify-between mb-6 pb-4 border-b border-default">
-                                    <h3 class="text-lg font-bold text-primary flex items-center gap-2">
-                                        <i class="fas fa-sliders-h text-accent"></i> Parameters
-                                    </h3>
-                                    <div class="flex items-center gap-2 bg-gray-50 dark:bg-slate-800 px-3 py-1.5 rounded-full">
-                                        <input type="checkbox" id="lock-aspect" class="h-4 w-4 text-accent rounded border-gray-300 focus:ring-accent cursor-pointer" checked>
-                                        <label for="lock-aspect" class="text-xs font-semibold text-primary cursor-pointer uppercase tracking-wide">Lock Ratio</label>
-                                    </div>
-                                </div>
-
-                                <!-- Dimensions -->
-                                <div class="space-y-6 mb-8">
-                                    <div>
-                                        <div class="flex justify-between mb-2">
-                                            <label class="text-sm font-bold text-primary">Width</label>
-                                            <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <input type="range" id="width-range" min="1" max="6000" value="500" class="flex-1 accent-green-500">
-                                            <input type="number" id="width-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="500">
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between mb-2">
-                                            <label class="text-sm font-bold text-primary">Height</label>
-                                            <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
-                                        </div>
-                                        <div class="flex items-center gap-4">
-                                            <input type="range" id="height-range" min="1" max="6000" value="500" class="flex-1 accent-green-500">
-                                            <input type="number" id="height-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="500">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Cropping -->
-                                <div class="border-t border-default pt-6 mb-6">
-                                    <h4 class="text-xs font-bold text-secondary uppercase tracking-wider mb-4">Cropping</h4>
-                                    <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-                                        <div class="space-y-1">
-                                            <label class="text-xs font-medium text-secondary">Left</label>
-                                            <div class="flex gap-2 items-center"><input type="range" id="crop-left-range" class="flex-1 h-1"><input type="number" id="crop-left-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <label class="text-xs font-medium text-secondary">Right</label>
-                                            <div class="flex gap-2 items-center"><input type="range" id="crop-right-range" class="flex-1 h-1"><input type="number" id="crop-right-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <label class="text-xs font-medium text-secondary">Top</label>
-                                            <div class="flex gap-2 items-center"><input type="range" id="crop-top-range" class="flex-1 h-1"><input type="number" id="crop-top-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
-                                        </div>
-                                        <div class="space-y-1">
-                                            <label class="text-xs font-medium text-secondary">Bottom</label>
-                                            <div class="flex gap-2 items-center"><input type="range" id="crop-bottom-range" class="flex-1 h-1"><input type="number" id="crop-bottom-input" class="w-16 text-xs p-1.5 text-center border-default rounded"></div>
-                                        </div>
-                                    </div>
+                            <div id="resizer-controls" class="tool-card p-6 opacity-50 pointer-events-none transition-opacity">
+                                <div class="flex justify-between mb-6 pb-4 border-b border-default">
+                                    <h3 class="text-lg font-bold flex gap-2"><i class="fas fa-sliders-h text-accent"></i> Parameters</h3>
+                                    <label class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full cursor-pointer">
+                                        <input type="checkbox" id="resizer-lock" class="accent-green-500" checked> <span class="text-xs font-bold uppercase">Lock Ratio</span>
+                                    </label>
                                 </div>
                                 
-                                <!-- Rounding -->
-                                <div class="border-t border-default pt-6 mb-8">
-                                    <div class="flex justify-between mb-2">
-                                        <label class="text-sm font-bold text-primary">Corner Rounding</label>
-                                        <span class="text-xs font-mono text-secondary bg-gray-100 dark:bg-slate-800 px-2 py-0.5 rounded">px</span>
-                                    </div>
-                                    <div class="flex items-center gap-4">
-                                        <input type="range" id="rounded-range" min="0" max="500" value="0" class="flex-1 accent-green-500">
-                                        <input type="number" id="rounded-input" class="w-24 p-2 text-center text-sm font-semibold border-default rounded-lg shadow-sm" value="0">
+                                <div class="space-y-4 mb-6">
+                                    <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Width</label><input type="range" id="w-range" min="1" max="4000" class="flex-1"><input type="number" id="w-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
+                                    <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Height</label><input type="range" id="h-range" min="1" max="4000" class="flex-1"><input type="number" id="h-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
+                                </div>
+
+                                <div class="border-t border-default pt-4 mb-4">
+                                    <h4 class="text-xs font-bold text-[var(--text_secondary)] uppercase mb-3">Cropping (px)</h4>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Left</span><input type="number" id="crop-l" value="0" class="w-full p-1 text-xs text-center"></div>
+                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Right</span><input type="number" id="crop-r" value="0" class="w-full p-1 text-xs text-center"></div>
+                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Top</span><input type="number" id="crop-t" value="0" class="w-full p-1 text-xs text-center"></div>
+                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Bot</span><input type="number" id="crop-b" value="0" class="w-full p-1 text-xs text-center"></div>
                                     </div>
                                 </div>
 
-                                <!-- Actions -->
-                                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-default">
-                                    <button id="copy-button" disabled class="py-3 px-4 rounded-xl font-bold text-sm bg-white border border-default text-secondary hover:bg-gray-50 hover:text-primary dark:bg-slate-800 dark:hover:bg-slate-700 transition-all disabled:opacity-50 shadow-sm">
-                                        <i class="far fa-copy mr-2"></i> Copy Image
-                                    </button>
-                                    <button id="download-button" disabled class="py-3 px-4 rounded-xl font-bold text-sm bg-accent text-white hover:bg-accent-hover transition-all disabled:opacity-50 shadow-md transform active:scale-95">
-                                        <i class="fas fa-download mr-2"></i> Download PNG
-                                    </button>
+                                <div class="flex items-center gap-4 border-t border-default pt-4 mb-6">
+                                    <label class="font-bold text-sm">Rounding</label>
+                                    <input type="range" id="r-range" min="0" max="200" value="0" class="flex-1">
+                                    <input type="number" id="r-input" value="0" class="w-20 p-1.5 text-center text-sm font-bold">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <button id="btn-resizer-copy" class="py-3 rounded-xl font-bold text-sm border border-default hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"><i class="far fa-copy mr-2"></i> Copy Image</button>
+                                    <button id="btn-resizer-dl" class="py-3 rounded-xl font-bold text-sm bg-accent text-white hover:bg-accent-hover transition-colors shadow-md"><i class="fas fa-download mr-2"></i> Download PNG</button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- TOOL 2: COMPRESSOR -->
-                <div id="tool-compressor" class="tool-section hidden">
-                    <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-primary mb-2">Image Compressor</h2>
-                        <p class="text-secondary text-lg">Optimize JPG and PNG files to reduce file size without losing visible quality.</p>
-                    </div>
-
+                <section id="tool-compressor" class="tool-section hidden">
+                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">Image Compressor</h2><p class="text-[var(--text_secondary)]">Optimize JPG/PNG size significantly.</p></div>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Original -->
                         <div class="tool-card p-6">
-                             <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-2"><i class="far fa-image text-secondary"></i> Original</h3>
-                             <div id="original-image-display" class="image-preview-box mb-6 bg-dots">
-                                 <p class="text-sm text-secondary">Select an image</p>
-                             </div>
-                             <label for="image-upload" class="flex items-center justify-center w-full px-4 py-4 bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300 dark:bg-slate-800/50 dark:hover:bg-slate-800 text-primary rounded-xl cursor-pointer transition-all font-medium group">
-                                <i class="fas fa-image mr-2 text-secondary group-hover:text-accent transition-colors"></i> Select Image
-                                <input type="file" id="image-upload" accept="image/jpeg,image/png" class="hidden"/>
+                            <h3 class="font-bold mb-4">Original</h3>
+                            <div id="comp-preview-orig" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Select an image</div>
+                            <label class="flex items-center justify-center w-full px-4 py-4 bg-gray-50 border-2 border-dashed border-gray-300 hover:border-accent rounded-xl cursor-pointer transition-all font-medium">
+                                <i class="fas fa-image mr-2"></i> Select Image
+                                <input type="file" id="comp-upload" accept="image/jpeg,image/png" class="hidden"/>
                             </label>
                         </div>
-
-                        <!-- Compressed -->
                         <div class="tool-card p-6">
-                            <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-2"><i class="fas fa-bolt text-accent"></i> Compressed Result</h3>
-                             <div id="compressed-image-display" class="image-preview-box mb-6 relative bg-dots">
-                                 <p class="text-sm text-secondary">Result preview</p>
-                             </div>
-                             
-                             <div id="compressor-processing-area" class="opacity-50 pointer-events-none space-y-6">
-                                 <div>
-                                     <div class="flex justify-between mb-2">
-                                        <label class="text-sm font-bold text-primary">Quality Level</label>
-                                        <span id="quality-value" class="text-sm font-mono bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">75%</span>
-                                     </div>
-                                     <input type="range" id="quality-slider" min="0" max="100" value="75" class="w-full accent-green-500">
-                                 </div>
-                                 
-                                 <div id="file-size-display" class="bg-blue-50 dark:bg-slate-800/50 border border-blue-100 dark:border-slate-700 p-4 rounded-xl text-center text-sm text-primary">
-                                     Waiting for image...
-                                 </div>
-
-                                 <button id="download-compressed-button" disabled class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-lg transition-all disabled:opacity-50 transform active:scale-95">
-                                     Download Compressed
-                                 </button>
-                             </div>
+                            <h3 class="font-bold mb-4">Result</h3>
+                            <div id="comp-preview-res" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Preview</div>
+                            <div id="comp-controls" class="opacity-50 pointer-events-none transition-opacity space-y-4">
+                                <div class="flex justify-between items-center"><label class="font-bold text-sm">Quality</label><span id="comp-quality-val" class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">75%</span></div>
+                                <input type="range" id="comp-slider" min="1" max="100" value="75" class="w-full">
+                                <div id="comp-stats" class="text-center text-sm p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">Waiting...</div>
+                                <button id="btn-comp-dl" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md">Download Compressed</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
-                <!-- TOOL 3: SCALER -->
-                <div id="tool-scaler" class="tool-section hidden">
-                    <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-primary mb-2">SVG Icon Scaler</h2>
-                        <p class="text-secondary text-lg">Batch generate pixel-perfect PNGs from SVG code at multiple scales (2x, 4x, 8x, 16x).</p>
-                    </div>
-
+                <section id="tool-scaler" class="tool-section hidden">
+                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Icon Scaler</h2><p class="text-[var(--text_secondary)]">Batch generate pixel-perfect PNGs from SVG code.</p></div>
                     <div class="tool-card p-6 mb-8">
-                        <label class="block text-sm font-bold text-primary mb-3 uppercase tracking-wide">Input SVG Code</label>
-                        <textarea id="svgInputScaler" rows="6" class="w-full p-4 font-mono text-xs border-default bg-input rounded-xl resize-y focus:ring-2 focus:ring-accent focus:border-accent shadow-inner" placeholder="<svg ...>"></textarea>
-                        
-                        <div class="flex gap-4 mt-6">
-                            <label for="svgFileUploaderScaler" class="px-5 py-2.5 bg-white border border-default hover:bg-gray-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-primary font-bold rounded-lg cursor-pointer transition-colors shadow-sm">
-                                <i class="fas fa-file-code mr-2 text-secondary"></i> Load File
-                                <input type="file" id="svgFileUploaderScaler" accept=".svg" class="hidden">
+                        <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Input SVG Code</label>
+                        <textarea id="scaler-input" rows="6" class="w-full p-4 font-mono text-xs bg-input rounded-xl resize-y" placeholder="<svg ...>"></textarea>
+                        <div class="flex flex-wrap gap-4 mt-6 items-end">
+                            <label class="px-5 py-3 border border-default hover:bg-gray-50 dark:hover:bg-slate-800 font-bold rounded-lg cursor-pointer flex items-center h-[46px]">
+                                <i class="fas fa-file-code mr-2"></i> Load File <input type="file" id="scaler-file" accept=".svg" class="hidden">
                             </label>
-                            <!-- FIX: Changed bg-primary to bg-accent to ensure visibility in light mode -->
-                            <button id="convertButtonScaler" class="px-8 py-2.5 bg-accent hover:bg-accent-hover text-white font-bold rounded-lg shadow-md transition-colors ml-auto">
-                                Generate All Sizes
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="resultsSectionScaler" class="hidden">
-                        <h3 class="text-lg font-bold text-primary mb-4 pb-2 border-b border-default">Generated Assets</h3>
-                        <div id="resultsDivScaler" class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                            <!-- Dynamic Content -->
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- TOOL 4: FORMATTER -->
-                <div id="tool-formatter" class="tool-section hidden">
-                     <div class="mb-8">
-                        <h2 class="text-3xl font-bold text-primary mb-2">HTML Formatter</h2>
-                        <p class="text-secondary text-lg">Beautify messy HTML code with proper indentation and spacing.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-240px)] min-h-[500px]">
-                        <div class="tool-card flex flex-col h-full overflow-hidden shadow-md">
-                            <div class="p-4 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
-                                <label class="text-xs font-bold text-secondary uppercase tracking-wide">Input (Messy)</label>
-                                <i class="fas fa-code text-gray-400"></i>
+                            <div class="flex-1 min-w-[120px]">
+                                <label class="block text-xs font-bold uppercase mb-1">Target Width (px)</label>
+                                <input type="number" id="scaler-width" value="800" class="w-full p-2.5 h-[46px] font-mono text-sm">
                             </div>
-                            <textarea id="htmlInput" class="flex-1 w-full p-5 font-mono text-xs bg-input border-none outline-none resize-none focus:ring-0" placeholder="Paste HTML here..."></textarea>
-                        </div>
-
-                        <div class="tool-card flex flex-col h-full overflow-hidden shadow-md relative">
-                             <div class="p-4 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
-                                <label class="text-xs font-bold text-secondary uppercase tracking-wide">Output (Clean)</label>
-                                <button id="copyHtmlButton" disabled class="text-xs font-bold text-accent hover:text-accent-hover disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 transition-colors">
-                                    <i class="fas fa-copy"></i> Copy
-                                </button>
-                            </div>
-                            <textarea id="formattedOutput" readonly class="flex-1 w-full p-5 font-mono text-xs bg-input border-none outline-none resize-none focus:ring-0"></textarea>
+                            <button id="btn-scaler-gen" class="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-lg h-[46px]">Generate PNG</button>
                         </div>
                     </div>
-                </div>
+                    <div id="scaler-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </section>
 
+                <section id="tool-formatter" class="tool-section hidden">
+                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">HTML Formatter</h2></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[600px]">
+                        <div class="tool-card flex flex-col h-full overflow-hidden">
+                            <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 font-bold text-xs uppercase">Input</div>
+                            <textarea id="fmt-input" class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none" placeholder="Paste messy HTML..."></textarea>
+                        </div>
+                        <div class="tool-card flex flex-col h-full overflow-hidden">
+                            <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                <span class="font-bold text-xs uppercase">Output</span>
+                                <button id="btn-fmt-copy" class="text-accent font-bold text-xs hover:underline"><i class="fas fa-copy"></i> Copy</button>
+                            </div>
+                            <textarea id="fmt-output" readonly class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none"></textarea>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
 
-    <!-- Hidden Elements -->
-    <canvas id="conversion-canvas" class="hidden"></canvas>
-    <canvas id="image-conversion-canvas" class="hidden"></canvas>
+    <canvas id="proc-canvas" class="hidden"></canvas>
 
-    <!-- Notifications -->
-    <div id="message-box" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform transition-all duration-300 z-50 flex items-center gap-3 border border-gray-700">
-        <i class="fas fa-info-circle text-accent text-lg"></i>
-        <span id="message-text" class="font-medium">Notification</span>
+    <div id="toast" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform translate-y-10 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+        <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
-    <!-- File Name Modal -->
-    <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
-            <h3 class="text-2xl font-bold mb-2 text-primary">Save Image</h3>
-            <p class="text-sm text-secondary mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-primary font-medium" placeholder="clipboard-image">
+    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl">
+            <h3 class="text-2xl font-bold mb-2">Save Image</h3>
+            <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
+            <input type="text" id="modal-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 text-secondary hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
-                <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg shadow-green-900/20 transition-all transform active:scale-95">Download</button>
+                <button id="btn-modal-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- STATE & NAVIGATION ---
-        const TABS = ['resizer', 'compressor', 'scaler', 'formatter'];
-        let activeTab = 'resizer';
-
-        function switchTab(tabId) {
-            activeTab = tabId;
-            localStorage.setItem('activeTab', tabId);
-
-            // Update Nav
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active');
-                // Reset icons
-                const icon = el.querySelector('i');
-                if(icon) icon.classList.remove('text-accent');
-            });
-            
-            const activeNav = document.getElementById(`nav-${tabId}`);
-            if(activeNav) {
-                activeNav.classList.add('active');
-                const icon = activeNav.querySelector('i');
-                if(icon) icon.classList.add('text-accent');
-            }
-
-            // Update Content
-            document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
-            const activeSection = document.getElementById(`tool-${tabId}`);
-            if(activeSection) activeSection.classList.remove('hidden');
-        }
-
-        function initApp() {
-            // Load Theme
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            const themeToggle = document.getElementById('theme-toggle');
-            const themeIcon = document.getElementById('theme-icon');
-            const disabler = document.getElementById('initial-transition-disabler'); // Reference to the temporary style tag
-            
-            // 1. Immediately apply the stored theme without transition
-            if(savedTheme === 'dark') {
-                document.documentElement.classList.add('dark');
-                if(themeIcon) themeIcon.className = 'fas fa-sun text-yellow-400';
-            }
-
-            // 2. Remove the transition disabler after a short delay (or immediately after setup)
-            if (disabler) {
-                 // Use a small delay to ensure theme is applied before re-enabling transitions
-                setTimeout(() => {
-                    disabler.remove();
-                }, 100); 
-            }
-
-            // Load Tab
-            const savedTab = localStorage.getItem('activeTab');
-            if(TABS.includes(savedTab)) {
-                switchTab(savedTab);
-            } else {
-                switchTab('resizer');
-            }
-
-            // Mobile Menu
-            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-                const sidebar = document.querySelector('aside');
-                sidebar.classList.toggle('hidden');
-                sidebar.classList.toggle('absolute');
-                sidebar.classList.toggle('h-full');
-                sidebar.classList.toggle('w-64');
-            });
-            
-            // Setup Theme Toggle
-            if (themeToggle) {
-                themeToggle.addEventListener('click', () => {
-                    document.documentElement.classList.toggle('dark');
-                    const isDark = document.documentElement.classList.contains('dark');
-                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-                    if(themeIcon) themeIcon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon';
-                });
-            }
-        }
-
-        // --- SHARED UTILS ---
-        function showMessage(msg, isError = false) {
-            const box = document.getElementById('message-box');
-            const text = document.getElementById('message-text');
-            const icon = box.querySelector('i');
-            
-            text.textContent = msg;
-            icon.className = isError ? 'fas fa-exclamation-circle text-red-400 text-xl' : 'fas fa-check-circle text-green-400 text-xl';
-            
-            box.classList.remove('hidden', 'translate-y-10', 'opacity-0');
-            setTimeout(() => {
-                box.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => box.classList.add('hidden'), 300);
-            }, 4000);
-        }
-
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        // --- TOOL 1: RESIZER LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const dom = {
-                upload: document.getElementById('svg-upload'),
-                display: document.getElementById('svg-display'),
-                controls: document.getElementById('processing-area'),
-                wRange: document.getElementById('width-range'), wInput: document.getElementById('width-input'),
-                hRange: document.getElementById('height-range'), hInput: document.getElementById('height-input'),
-                lock: document.getElementById('lock-aspect'),
-                cLeftR: document.getElementById('crop-left-range'), cLeftI: document.getElementById('crop-left-input'),
-                cRightR: document.getElementById('crop-right-range'), cRightI: document.getElementById('crop-right-input'),
-                cTopR: document.getElementById('crop-top-range'), cTopI: document.getElementById('crop-top-input'),
-                cBotR: document.getElementById('crop-bottom-range'), cBotI: document.getElementById('crop-bottom-input'),
-                rRange: document.getElementById('rounded-range'), rInput: document.getElementById('rounded-input'),
-                dlBtn: document.getElementById('download-button'), cpBtn: document.getElementById('copy-button'),
-                canvas: document.getElementById('conversion-canvas')
+        // --- UTILITIES ---
+        const $ = (id) => document.getElementById(id);
+        
+        // Debounce: Prevents functions from firing too often (crucial for sliders)
+        const debounce = (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => { clearTimeout(timeout); func(...args); };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
             };
+        };
 
-            let state = { svgContent: null, aspect: 1, name: 'image' };
-            const MAX = 6000;
+        const showToast = (msg, isError = false) => {
+            const t = $('toast'), m = $('toast-msg'), i = t.querySelector('i');
+            m.textContent = msg;
+            i.className = isError ? 'fas fa-exclamation-circle text-red-400 text-xl' : 'fas fa-check-circle text-green-400 text-xl';
+            t.classList.remove('hidden');
+            // Small delay to allow display:block to apply before transition
+            setTimeout(() => t.classList.remove('translate-y-10', 'opacity-0'), 10);
+            setTimeout(() => {
+                t.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => t.classList.add('hidden'), 300);
+            }, 3000);
+        };
 
-            if (dom.upload) {
-                dom.upload.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if(!file) return;
-                    state.name = file.name.replace(/\.svg$/i, '');
-                    const reader = new FileReader();
-                    reader.onload = (ev) => {
-                        state.svgContent = ev.target.result;
-                        dom.display.innerHTML = state.svgContent;
-                        const svg = dom.display.querySelector('svg');
-                        svg.setAttribute('width', '100%');
-                        svg.setAttribute('height', '100%');
+        const copyToClipboard = async (blob) => {
+            try {
+                await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+                showToast("Copied to clipboard!");
+            } catch(e) { showToast("Copy failed. Use download instead.", true); }
+        };
 
-                        const w = svg.getAttribute('viewBox') ? svg.viewBox.baseVal.width : 500;
-                        const h = svg.getAttribute('viewBox') ? svg.viewBox.baseVal.height : 500;
-                        state.aspect = w / h;
-                        updateDim(w, h);
-                        if (dom.controls) dom.controls.classList.remove('opacity-50', 'pointer-events-none');
-                        if (dom.dlBtn) dom.dlBtn.disabled = false;
-                        if (dom.cpBtn) dom.cpBtn.disabled = false;
-                        [dom.cLeftI, dom.cRightI, dom.cTopI, dom.cBotI, dom.cLeftR, dom.cRightR, dom.cTopR, dom.cBotR].forEach(el => { if (el) el.value = 0; });
-                        updatePreview();
-                    };
-                    reader.readAsText(file);
+        const syncInputs = (rangeId, inputId, callback) => {
+            const r = $(rangeId), i = $(inputId);
+            if(!r || !i) return;
+            r.addEventListener('input', () => { i.value = r.value; callback(); });
+            i.addEventListener('input', () => { r.value = i.value; callback(); });
+        };
+
+        // --- APP LOGIC ---
+        const App = {
+            state: {
+                activeTab: 'resizer',
+                toolOrder: ['resizer', 'compressor', 'scaler', 'formatter'],
+                resizer: { svg: null, aspect: 1, name: 'image' },
+                compressor: { file: null, url: null },
+                clipBlob: null
+            },
+
+            init() {
+                this.setupTheme();
+                this.setupNav();
+                this.setupResizer();
+                this.setupCompressor();
+                this.setupScaler();
+                this.setupFormatter();
+                this.setupClipboard();
+            },
+
+            setupTheme() {
+                const toggle = $('theme-toggle');
+                if(localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark');
+                toggle.addEventListener('click', () => {
+                    document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
                 });
-            }
+            },
 
-            function updateDim(w, h) {
-                w = Math.min(MAX, Math.max(1, Math.round(w)));
-                h = Math.min(MAX, Math.max(1, Math.round(h)));
-                if(dom.wInput) dom.wInput.value = w; if(dom.wRange) dom.wRange.value = w;
-                if(dom.hInput) dom.hInput.value = h; if(dom.hRange) dom.hRange.value = h;
-            }
+            setupNav() {
+                const container = $('nav-container');
+                const switchTab = (id) => {
+                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                    document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
+                    $(`nav-${id}`).classList.add('active');
+                    $(`tool-${id}`).classList.remove('hidden');
+                    this.state.activeTab = id;
+                };
 
-            function handleDimChange(e) {
-                let w = parseInt(dom.wInput.value), h = parseInt(dom.hInput.value);
-                const isWidth = (e.target === dom.wInput || e.target === dom.wRange);
-                if(isWidth) w = parseInt(e.target.value); else h = parseInt(e.target.value);
-                if(dom.lock && dom.lock.checked) { if(isWidth) h = Math.round(w / state.aspect); else w = Math.round(h * state.aspect); }
-                updateDim(w, h);
-                updatePreview();
-            }
-
-            function handleCropChange() {
-                if(dom.cLeftI) dom.cLeftR.value = dom.cLeftI.value = Math.min(dom.cLeftI.value, parseInt(dom.wInput.value) - 1);
-                if(dom.cRightI) dom.cRightR.value = dom.cRightI.value = Math.min(dom.cRightI.value, parseInt(dom.wInput.value) - 1);
-                if(dom.cTopI) dom.cTopR.value = dom.cTopI.value = Math.min(dom.cTopI.value, parseInt(dom.hInput.value) - 1);
-                if(dom.cBotI) dom.cBotR.value = dom.cBotI.value = Math.min(dom.cBotI.value, parseInt(dom.hInput.value) - 1);
-                updatePreview();
-            }
-            
-            function handleRoundChange(e) {
-                if(dom.rInput) dom.rInput.value = e.target.value;
-                if(dom.rRange) dom.rRange.value = e.target.value;
-                updatePreview();
-            }
-
-            function updatePreview() {
-                if(!state.svgContent || !dom.wInput || !dom.hInput) return;
-                const w = parseInt(dom.wInput.value);
-                const h = parseInt(dom.hInput.value);
-                const cl = parseInt(dom.cLeftI.value)||0, cr = parseInt(dom.cRightI.value)||0;
-                const ct = parseInt(dom.cTopI.value)||0, cb = parseInt(dom.cBotI.value)||0;
-                const rad = parseInt(dom.rInput.value)||0;
-
-                const finalW = Math.max(1, w - cl - cr);
-                const finalH = Math.max(1, h - ct - cb);
-                const svgEl = dom.display.querySelector('svg');
-                
-                if(svgEl) {
-                    const maxPreview = 280;
-                    const scale = Math.min(1, maxPreview/finalW, maxPreview/finalH);
-                    dom.display.style.width = `${finalW * scale}px`;
-                    dom.display.style.height = `${finalH * scale}px`;
-                    dom.display.style.borderRadius = `${rad * scale}px`;
-                    svgEl.style.width = `${w * scale}px`;
-                    svgEl.style.height = `${h * scale}px`;
-                    svgEl.style.marginLeft = `-${cl * scale}px`;
-                    svgEl.style.marginTop = `-${ct * scale}px`;
-                }
-            }
-
-            async function processImage() {
-                const w = parseInt(dom.wInput.value);
-                const h = parseInt(dom.hInput.value);
-                const cl = parseInt(dom.cLeftI.value)||0, cr = parseInt(dom.cRightI.value)||0;
-                const ct = parseInt(dom.cTopI.value)||0, cb = parseInt(dom.cBotI.value)||0;
-                const rad = parseInt(dom.rInput.value)||0;
-                const finalW = w - cl - cr;
-                const finalH = h - ct - cb;
-
-                dom.canvas.width = finalW;
-                dom.canvas.height = finalH;
-                const ctx = dom.canvas.getContext('2d');
-                ctx.clearRect(0, 0, finalW, finalH);
-
-                if(rad > 0) { 
-                    // ctx.roundRect is not universally supported, using simplified path
-                    ctx.beginPath();
-                    ctx.moveTo(rad, 0);
-                    ctx.arcTo(finalW, 0, finalW, finalH, rad);
-                    ctx.arcTo(finalW, finalH, 0, finalH, rad);
-                    ctx.arcTo(0, finalH, 0, 0, rad);
-                    ctx.arcTo(0, 0, finalW, 0, rad);
-                    ctx.closePath();
-                    ctx.clip();
-                }
-
-                const img = new Image();
-                let svgStr = state.svgContent;
-                if(svgStr.includes('<svg')) {
-                    svgStr = svgStr.replace(/<svg([^>]*)>/, (match) => {
-                         let m = match.replace(/width="[^"]*"/i, '').replace(/height="[^"]*"/i, '');
-                         return m.replace('<svg', `<svg width="${w}" height="${h}"`);
-                    });
-                }
-                
-                const svgBlob = new Blob([svgStr], {type: 'image/svg+xml;charset=utf-8'});
-                const url = URL.createObjectURL(svgBlob);
-                
-                return new Promise((resolve) => {
-                    img.onload = () => {
-                        const tempCan = document.createElement('canvas');
-                        tempCan.width = w; tempCan.height = h;
-                        const tCtx = tempCan.getContext('2d');
-                        tCtx.drawImage(img, 0, 0, w, h);
-                        ctx.drawImage(tempCan, cl, ct, finalW, finalH, 0, 0, finalW, finalH);
-                        URL.revokeObjectURL(url);
-                        resolve(dom.canvas.toDataURL('image/png'));
-                    };
-                    img.src = url;
+                // Drag & Drop Logic
+                let draggedItem = null;
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => switchTab(item.dataset.tab));
+                    item.addEventListener('dragstart', () => { draggedItem = item; item.classList.add('dragging'); });
+                    item.addEventListener('dragend', () => { item.classList.remove('dragging'); draggedItem = null; });
                 });
-            }
-
-            if(dom.dlBtn) dom.dlBtn.addEventListener('click', async () => {
-                dom.dlBtn.innerText = "Processing...";
-                const dataUrl = await processImage();
-                const a = document.createElement('a');
-                a.href = dataUrl;
-                a.download = `${state.name}-processed.png`;
-                a.click();
-                dom.dlBtn.innerText = "Download PNG";
-                showMessage("Image downloaded!");
-            });
-            
-            if(dom.cpBtn) dom.cpBtn.addEventListener('click', async () => {
-                dom.cpBtn.innerText = "...";
-                try {
-                    const dataUrl = await processImage();
-                    const blob = await (await fetch(dataUrl)).blob();
-                    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-                    showMessage("Copied to clipboard!");
-                } catch(e) {
-                    showMessage("Manual copy required. Right-click download instead.", true);
-                }
-                dom.cpBtn.innerText = "Copy Image";
-            });
-
-            [dom.wRange, dom.wInput, dom.hRange, dom.hInput].forEach(el => {if(el) el.addEventListener('input', handleDimChange)});
-            [dom.cLeftR, dom.cLeftI, dom.cRightR, dom.cRightI, dom.cTopR, dom.cTopI, dom.cBotR, dom.cBotI]
-                .forEach(el => {if(el) el.addEventListener('input', handleCropChange)});
-            [dom.rRange, dom.rInput].forEach(el => {if(el) el.addEventListener('input', handleRoundChange)});
-        });
-
-        // --- TOOL 2: COMPRESSOR LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const up = document.getElementById('image-upload');
-            const slider = document.getElementById('quality-slider');
-            const btn = document.getElementById('download-compressed-button');
-            const cvs = document.getElementById('image-conversion-canvas');
-            let currentFile = null;
-
-            if (up) up.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if(file) {
-                    currentFile = file;
-                    const url = URL.createObjectURL(file);
-                    document.getElementById('original-image-display').innerHTML = `<img src="${url}">`;
-                    document.getElementById('compressor-processing-area').classList.remove('opacity-50', 'pointer-events-none');
-                    compress();
-                }
-            });
-
-            if (slider) slider.addEventListener('input', (e) => {
-                document.getElementById('quality-value').innerText = `${e.target.value}%`;
-                compress();
-            });
-
-            async function compress() {
-                if(!currentFile) return;
-                const q = parseInt(slider.value) / 100;
-                const img = new Image();
-                img.src = URL.createObjectURL(currentFile);
-                await new Promise(r => img.onload = r);
                 
-                cvs.width = img.naturalWidth;
-                cvs.height = img.naturalHeight;
-                const ctx = cvs.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                
-                const dataUrl = cvs.toDataURL('image/jpeg', q);
-                document.getElementById('compressed-image-display').innerHTML = `<img src="${dataUrl}">`;
-                
-                const size = Math.round(dataUrl.length * 0.75); 
-                const saved = ((1 - (size/currentFile.size)) * 100).toFixed(1);
-                
-                document.getElementById('file-size-display').innerHTML = 
-                    `Original: <b>${formatBytes(currentFile.size)}</b> <i class="fas fa-arrow-right mx-2 text-gray-400"></i> Result: <b>${formatBytes(size)}</b> <span class="ml-2 text-accent">(-${saved}%)</span>`;
+                container.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    const afterElement = [...container.querySelectorAll('.nav-item:not(.dragging)')]
+                        .reduce((closest, child) => {
+                            const box = child.getBoundingClientRect();
+                            const offset = e.clientY - box.top - box.height / 2;
+                            return (offset < 0 && offset > closest.offset) ? { offset: offset, element: child } : closest;
+                        }, { offset: Number.NEGATIVE_INFINITY }).element;
+                    if (afterElement == null) container.appendChild(draggedItem);
+                    else container.insertBefore(draggedItem, afterElement);
+                });
+
+                // Set initial tab
+                switchTab('resizer');
+            },
+
+            setupResizer() {
+                const els = {
+                    up: $('resizer-upload'), disp: $('resizer-display'), ctrls: $('resizer-controls'),
+                    wR: $('w-range'), wI: $('w-input'), hR: $('h-range'), hI: $('h-input'),
+                    lock: $('resizer-lock'), rR: $('r-range'), rI: $('r-input')
+                };
+
+                const updatePreview = debounce(async () => {
+                    if(!this.state.resizer.svg) return;
+                    const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
+                    const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
+                    const rad = parseInt(els.rI.value)||0;
+
+                    // Visual CSS Update
+                    const svgEl = els.disp.querySelector('svg');
+                    const fw = Math.max(1, w - crop.l - crop.r), fh = Math.max(1, h - crop.t - crop.b);
+                    const scale = Math.min(1, 280/fw, 280/fh);
                     
-                if (btn) btn.addEventListener('click', () => {
-                    const a = document.createElement('a');
-                    a.href = dataUrl;
-                    a.download = `compressed-${currentFile.name.split('.')[0]}.jpg`;
-                    a.click();
-                }, {once: true});
-                if (btn) btn.disabled = false;
-            }
-        });
+                    els.disp.style.width = `${fw * scale}px`; els.disp.style.height = `${fh * scale}px`;
+                    els.disp.style.borderRadius = `${rad * scale}px`;
+                    
+                    if(svgEl) {
+                        svgEl.style.width = `${w * scale}px`; svgEl.style.height = `${h * scale}px`;
+                        svgEl.style.marginLeft = `-${crop.l * scale}px`; svgEl.style.marginTop = `-${crop.t * scale}px`;
+                    }
+                }, 10); // Short debounce for responsive feel
 
-        // --- TOOL 3: SCALER LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('convertButtonScaler');
-            const input = document.getElementById('svgInputScaler');
-            const container = document.getElementById('resultsDivScaler');
-            
-            const uploadBtn = document.getElementById('uploadButtonScaler');
-            const fileInput = document.getElementById('svgFileUploaderScaler');
+                // Sync Inputs
+                syncInputs('w-range', 'w-input', () => {
+                     if(els.lock.checked) {
+                        const h = Math.round(parseInt(els.wI.value) / this.state.resizer.aspect);
+                        els.hI.value = els.hR.value = h;
+                     }
+                     updatePreview();
+                });
+                syncInputs('h-range', 'h-input', () => {
+                     if(els.lock.checked) {
+                        const w = Math.round(parseInt(els.hI.value) * this.state.resizer.aspect);
+                        els.wI.value = els.wR.value = w;
+                     }
+                     updatePreview();
+                });
+                syncInputs('r-range', 'r-input', updatePreview);
+                ['crop-l','crop-r','crop-t','crop-b'].forEach(id => $(id).addEventListener('input', updatePreview));
 
-            if (uploadBtn) uploadBtn.addEventListener('click', () => { if (fileInput) fileInput.click(); });
-            
-            if (fileInput) fileInput.addEventListener('change', (e) => {
-                const r = new FileReader();
-                r.onload = ev => { if (input) input.value = ev.target.result; };
-                if (e.target.files[0]) r.readAsText(e.target.files[0]);
-            });
+                // Process Logic
+                const generateBlob = async () => {
+                    const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
+                    const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
+                    const rad = parseInt(els.rI.value)||0;
+                    const fw = w - crop.l - crop.r, fh = h - crop.t - crop.b;
 
-            if (btn) btn.addEventListener('click', async () => {
-                container.innerHTML = '';
-                const svg = input.value;
-                if(!svg.trim()) return;
-                
-                document.getElementById('resultsSectionScaler').classList.remove('hidden');
-                
-                const scales = [2, 4, 8, 16];
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(svg, 'image/svg+xml');
-                
-                let baseW = 32, baseH = 32;
-                if (doc.documentElement.hasAttribute('viewBox')) {
-                     const vb = doc.documentElement.getAttribute('viewBox').split(/[\s,]+/).filter(n => n.trim() !== '').map(Number);
-                     if (vb.length === 4) { baseW = vb[2]; baseH = vb[3]; }
-                } else {
-                     baseW = parseFloat(doc.documentElement.getAttribute('width')) || 32;
-                     baseH = parseFloat(doc.documentElement.getAttribute('height')) || 32;
-                }
-
-                for(let s of scales) {
-                    const w = baseW * s;
-                    const h = baseH * s;
-                    const cvs = document.createElement('canvas');
-                    cvs.width = w; cvs.height = h;
+                    const cvs = $('proc-canvas');
+                    cvs.width = fw; cvs.height = fh;
                     const ctx = cvs.getContext('2d');
                     
+                    // Rounded Clipping
+                    if(rad > 0) {
+                        ctx.beginPath(); ctx.moveTo(rad, 0);
+                        ctx.arcTo(fw, 0, fw, fh, rad); ctx.arcTo(fw, fh, 0, fh, rad);
+                        ctx.arcTo(0, fh, 0, 0, rad); ctx.arcTo(0, 0, fw, 0, rad);
+                        ctx.closePath(); ctx.clip();
+                    }
+
+                    // Render SVG
+                    let svgStr = this.state.resizer.svg;
+                    if(svgStr.includes('<svg')) {
+                        svgStr = svgStr.replace(/<svg([^>]*)>/, (m) => m.replace(/width="[^"]*"/i, '').replace(/height="[^"]*"/i, '') + ` width="${w}" height="${h}"`);
+                    }
                     const img = new Image();
-                    const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-                    const blobUrl = URL.createObjectURL(blob);
-                    img.src = blobUrl;
+                    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+                    await new Promise(r => img.onload = r);
+                    ctx.drawImage(img, -crop.l, -crop.t, w, h);
                     
+                    return new Promise(r => cvs.toBlob(r, 'image/png'));
+                };
+
+                // File Upload
+                els.up.addEventListener('change', e => {
+                    const f = e.target.files[0];
+                    if(!f) return;
+                    this.state.resizer.name = f.name.replace('.svg','');
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        this.state.resizer.svg = ev.target.result;
+                        els.disp.innerHTML = this.state.resizer.svg;
+                        const svg = els.disp.querySelector('svg');
+                        const viewbox = svg.viewBox.baseVal || {width: 500, height: 500};
+                        const w = Math.round(viewbox.width), h = Math.round(viewbox.height);
+                        
+                        this.state.resizer.aspect = w / h;
+                        els.wI.value = els.wR.value = w; els.hI.value = els.hR.value = h;
+                        els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                        updatePreview();
+                    };
+                    reader.readAsText(f);
+                });
+
+                $('btn-resizer-dl').addEventListener('click', async () => {
+                    const blob = await generateBlob();
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${this.state.resizer.name}-resized.png`;
+                    a.click();
+                });
+
+                $('btn-resizer-copy').addEventListener('click', async () => {
+                    const blob = await generateBlob();
+                    copyToClipboard(blob);
+                });
+            },
+
+            setupCompressor() {
+                const els = { up: $('comp-upload'), prevOrig: $('comp-preview-orig'), prevRes: $('comp-preview-res'), ctrls: $('comp-controls'), sl: $('comp-slider'), val: $('comp-quality-val'), stats: $('comp-stats'), dl: $('btn-comp-dl') };
+
+                const process = debounce(async () => {
+                    if(!this.state.compressor.file) return;
+                    const q = parseInt(els.sl.value) / 100;
+                    els.val.innerText = `${parseInt(els.sl.value)}%`;
+                    
+                    const img = new Image();
+                    img.src = URL.createObjectURL(this.state.compressor.file);
                     await new Promise(r => img.onload = r);
                     
-                    ctx.drawImage(img, 0, 0, w, h);
-                    URL.revokeObjectURL(blobUrl);
-                    const pngUrl = cvs.toDataURL('image/png');
+                    const cvs = $('proc-canvas');
+                    cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
+                    cvs.getContext('2d').drawImage(img, 0, 0);
                     
-                    const div = document.createElement('div');
-                    div.className = 'flex flex-col items-center p-4 bg-gray-50 dark:bg-slate-700 rounded-lg border border-default transition-transform hover:scale-[1.02]';
-                    div.innerHTML = `
-                        <div class="h-32 w-full flex items-center justify-center mb-4 bg-white dark:bg-slate-800 rounded-lg border border-default overflow-hidden p-2">
-                            <img src="${pngUrl}" class="max-h-full max-w-full object-contain">
-                        </div>
-                        <div class="text-xs font-bold text-primary mb-3">${s}x (${w}x${h})</div>
-                        <button class="copy-btn-scaler text-xs bg-white dark:bg-slate-600 border border-default px-3 py-2 rounded-lg hover:bg-accent hover:text-white hover:border-accent transition-colors text-primary font-semibold shadow-sm flex justify-center items-center gap-2">
-                            <i class="far fa-copy"></i> Copy PNG
-                        </button>
-                    `;
-                    
-                    div.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
-                         try {
-                            const b = await (await fetch(pngUrl)).blob();
-                            await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
-                            showMessage("Copied!");
-                         } catch(e) {
-                            showMessage("Copy failed.", true);
-                         }
-                    });
-                    container.appendChild(div);
-                }
-            });
-        });
+                    cvs.toBlob(blob => {
+                        if(this.state.compressor.url) URL.revokeObjectURL(this.state.compressor.url);
+                        this.state.compressor.url = URL.createObjectURL(blob);
+                        els.prevRes.innerHTML = `<img src="${this.state.compressor.url}">`;
+                        
+                        const saved = ((1 - (blob.size / this.state.compressor.file.size)) * 100).toFixed(1);
+                        els.stats.innerHTML = `Orig: <b>${(this.state.compressor.file.size/1024).toFixed(0)}KB</b> <i class="fas fa-arrow-right mx-2"></i> New: <b>${(blob.size/1024).toFixed(0)}KB</b> <span class="text-accent">(-${saved}%)</span>`;
+                        
+                        els.dl.onclick = () => {
+                            const a = document.createElement('a');
+                            a.href = this.state.compressor.url;
+                            a.download = `min-${this.state.compressor.file.name.split('.')[0]}.jpg`;
+                            a.click();
+                        };
+                    }, 'image/jpeg', q);
+                }, 100);
 
-        // --- TOOL 4: FORMATTER LOGIC ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('copyHtmlButton');
-            const input = document.getElementById('htmlInput');
-            const output = document.getElementById('formattedOutput');
-            
-            if(btn && input && output) {
-                input.addEventListener('input', () => {
-                    function formatHTML(html) {
-                        let formatted = '';
-                        const reg = /(>)(<)(\/*)/g;
-                        html = html.replace(reg, '$1\r\n$2$3');
-                        let pad = 0;
-                        html.split('\r\n').forEach(function(node) {
-                            let indent = 0;
-                            if (node.match(/.+<\/\w[^>]*>$/)) indent = 0;
-                            else if (node.match(/^<\/\w/)) { if (pad !== 0) pad -= 1; }
-                            else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1;
-                            else indent = 0;
+                els.up.addEventListener('change', e => {
+                    const f = e.target.files[0];
+                    if(!f) return;
+                    this.state.compressor.file = f;
+                    els.prevOrig.innerHTML = `<img src="${URL.createObjectURL(f)}">`;
+                    els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                    process();
+                });
 
-                            let padding = '';
-                            for (let i = 0; i < pad; i++) { padding += '  '; }
-                            formatted += padding + node + '\r\n';
-                            pad += indent;
-                        });
-                        return formatted;
+                els.sl.addEventListener('input', process);
+            },
+
+            setupScaler() {
+                const els = { in: $('scaler-input'), width: $('scaler-width'), btn: $('btn-scaler-gen'), file: $('scaler-file'), res: $('scaler-results') };
+
+                els.file.addEventListener('change', e => {
+                    const f = e.target.files[0];
+                    if(f) { const r = new FileReader(); r.onload = ev => els.in.value = ev.target.result; r.readAsText(f); }
+                });
+
+                els.btn.addEventListener('click', async () => {
+                    const svg = els.in.value.trim();
+                    if(!svg) return showToast('Paste SVG code first', true);
+                    const targetW = parseInt(els.width.value) || 800;
+
+                    // Parse Aspect Ratio
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(svg, 'image/svg+xml');
+                    let iw = 32, ih = 32;
+                    if(doc.documentElement.hasAttribute('viewBox')) {
+                        const vb = doc.documentElement.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+                        if(vb.length===4) { iw = vb[2]; ih = vb[3]; }
                     }
-                    output.value = formatHTML(input.value);
-                    btn.disabled = false;
-                });
-                
-                btn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(output.value);
-                    showMessage("HTML Copied!");
-                });
-            }
-        });
+                    const th = Math.round(targetW / (iw/ih));
 
-        // --- CLIPBOARD FEATURE ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('filename-modal');
-            let clipBlob = null;
-            const clipBtn = document.getElementById('clipboard-download-button');
-            const cancelBtn = document.getElementById('filename-cancel');
-            const confirmBtn = document.getElementById('filename-confirm');
+                    // Render
+                    const cvs = document.createElement('canvas'); // Clean canvas
+                    cvs.width = targetW; cvs.height = th;
+                    const img = new Image();
+                    const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+                    img.src = URL.createObjectURL(blob);
+                    await new Promise(r => img.onload = r);
+                    cvs.getContext('2d').drawImage(img, 0, 0, targetW, th);
+                    
+                    cvs.toBlob(b => {
+                        const url = URL.createObjectURL(b);
+                        const card = document.createElement('div');
+                        card.className = "tool-card p-4 flex flex-col items-center bg-gray-50 dark:bg-slate-800";
+                        card.innerHTML = `
+                            <div class="h-32 w-full flex items-center justify-center bg-dots rounded border border-default mb-3 p-2"><img src="${url}" class="max-h-full"></div>
+                            <div class="text-xs font-bold mb-3">${targetW} x ${th} px</div>
+                            <button class="w-full py-2 bg-white dark:bg-slate-700 border border-default rounded-lg text-xs font-bold shadow-sm hover:text-accent">Copy Image</button>
+                        `;
+                        card.querySelector('button').onclick = () => copyToClipboard(b);
+                        els.res.prepend(card);
+                    });
+                });
+            },
 
-            if (clipBtn) {
-                clipBtn.addEventListener('click', async () => {
+            setupFormatter() {
+                const fmt = (html) => {
+                    let formatted = '', pad = 0;
+                    html.replace(/(>)(<)(\/*)/g, '$1\r\n$2$3').split('\r\n').forEach(node => {
+                        let indent = 0;
+                        if (node.match(/.+<\/\w[^>]*>$/)) indent = 0;
+                        else if (node.match(/^<\/\w/)) { if (pad != 0) pad -= 1; }
+                        else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1;
+                        formatted += '  '.repeat(pad) + node + '\r\n';
+                        pad += indent;
+                    });
+                    return formatted;
+                };
+                $('fmt-input').addEventListener('input', e => $('fmt-output').value = fmt(e.target.value));
+                $('btn-fmt-copy').addEventListener('click', () => {
+                    navigator.clipboard.writeText($('fmt-output').value);
+                    showToast('HTML Copied');
+                });
+            },
+
+            setupClipboard() {
+                $('btn-clipboard-dl').addEventListener('click', async () => {
                     try {
                         const items = await navigator.clipboard.read();
-                        let found = false;
                         for (let item of items) {
                             if (item.types.includes("image/png")) {
-                                clipBlob = await item.getType("image/png");
-                                found = true;
-                                break;
+                                this.state.clipBlob = await item.getType("image/png");
+                                $('modal').classList.remove('hidden');
+                                $('modal-input').focus();
+                                return;
                             }
                         }
-                        if(found) {
-                            const img = new Image();
-                            img.src = URL.createObjectURL(clipBlob);
-                            await new Promise(r => img.onload = r);
-                            const cvs = document.createElement('canvas');
-                            cvs.width = img.width; cvs.height = img.height;
-                            cvs.getContext('2d').drawImage(img, 0, 0);
-                            
-                            cvs.toBlob(b => {
-                                clipBlob = b;
-                                modal.classList.remove('hidden');
-                                document.getElementById('filename-input').focus();
-                            }, 'image/png');
-                        } else {
-                            showMessage("No image found in clipboard", true);
-                        }
-                    } catch (e) {
-                        showMessage("Clipboard access denied (Click Button to enable)", true);
-                    }
+                        showToast("No PNG in clipboard", true);
+                    } catch(e) { showToast("Clipboard access denied", true); }
+                });
+
+                $('btn-modal-cancel').addEventListener('click', () => $('modal').classList.add('hidden'));
+                $('btn-modal-confirm').addEventListener('click', () => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(this.state.clipBlob);
+                    a.download = ($('modal-input').value || 'clipboard') + '.png';
+                    a.click();
+                    $('modal').classList.add('hidden');
                 });
             }
-            
-            if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
-            if (confirmBtn) confirmBtn.addEventListener('click', () => {
-                const name = document.getElementById('filename-input').value || 'clipboard';
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(clipBlob);
-                a.download = name + '.png';
-                a.click();
-                modal.classList.add('hidden');
-                showMessage("Downloaded!");
-            });
+        };
 
-            // Shortcuts
-            document.addEventListener('keydown', (e) => {
-                if((e.ctrlKey || e.metaKey) && e.key === 'v' && e.target.tagName === 'BODY') {
-                    e.preventDefault();
-                    if(clipBtn) clipBtn.click();
-                }
-            });
-        });
-        
-        initApp();
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => App.init());
     </script>
 </body>
 </html>
