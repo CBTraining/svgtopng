@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ImageTools v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -379,14 +379,14 @@
         <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
-    <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl">
             <h3 class="text-2xl font-bold mb-2">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
+            <input type="text" id="modal-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
-                <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
+                <button id="btn-modal-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
     </div>
@@ -944,9 +944,9 @@
                     });
                 }
 
-                $('filename-cancel').addEventListener('click', () => modal.classList.add('hidden'));
-                $('filename-confirm').addEventListener('click', () => {
-                    const name = $('filename-input').value || 'clipboard';
+                $('btn-modal-cancel').addEventListener('click', () => modal.classList.add('hidden'));
+                $('btn-modal-confirm').addEventListener('click', () => {
+                    const name = $('modal-input').value || 'clipboard';
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(this.state.clipBlob);
                     a.download = name + '.png';
