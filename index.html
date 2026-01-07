@@ -123,6 +123,10 @@
             <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
                 <i class="fas fa-clipboard text-lg"></i> <span>Clipboard to PNG</span>
             </button>
+            <div class="mt-3 text-[10px] text-center text-[var(--text_secondary)] font-medium opacity-80 leading-relaxed tracking-wide">
+                <span class="block">CTRL+V to Save Named</span>
+                <span class="block">ALT+V to Skip Naming File</span>
+            </div>
         </div>
 
         <nav class="flex-1 overflow-y-auto px-6 custom-scroll">
@@ -379,13 +383,14 @@
         <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
+    <!-- File Name Modal -->
     <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl">
-            <h3 class="text-2xl font-bold mb-2">Save Image</h3>
+        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
+            <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
+            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-[var(--text_primary)] font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="filename-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
                 <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
@@ -598,7 +603,8 @@
                     await new Promise(r => img.onload = r);
                     const cvs = $('proc-canvas');
                     cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
-                    cvs.getContext('2d').drawImage(img, 0, 0);
+                    const ctx = cvs.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
                     cvs.toBlob(blob => {
                         if(this.state.compressor.url) URL.revokeObjectURL(this.state.compressor.url);
                         this.state.compressor.url = URL.createObjectURL(blob);
@@ -647,15 +653,22 @@
                     cvs.width = targetW; cvs.height = th;
                     const img = new Image();
                     const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-                    img.src = URL.createObjectURL(blob);
+                    const blobUrl = URL.createObjectURL(blob);
+                    img.src = blobUrl;
                     await new Promise(r => img.onload = r);
                     cvs.getContext('2d').drawImage(img, 0, 0, targetW, th);
+                    URL.revokeObjectURL(blobUrl);
                     cvs.toBlob(b => {
                         const url = URL.createObjectURL(b);
                         const card = document.createElement('div');
                         card.className = "tool-card p-4 flex flex-col items-center bg-gray-50 dark:bg-slate-800";
-                        card.innerHTML = `<div class="h-32 w-full flex items-center justify-center bg-dots rounded border border-default mb-3 p-2"><img src="${url}" class="max-h-full"></div><div class="text-xs font-bold mb-3">${targetW} x ${th} px</div><button class="w-full py-2 bg-white dark:bg-slate-700 border border-default rounded-lg text-xs font-bold shadow-sm hover:text-accent">Copy Image</button>`;
-                        card.querySelector('button').onclick = () => copyToClipboard(b);
+                        card.innerHTML = `<div class="h-32 w-full flex items-center justify-center bg-dots rounded border border-default mb-3 p-2"><img src="${url}" class="max-h-full"></div><div class="text-xs font-bold mb-3">${targetW} x ${th} px</div><button class="copy-btn-scaler text-xs bg-white dark:bg-slate-700 border border-default rounded-lg text-xs font-bold shadow-sm hover:text-accent w-full py-2">Copy Image</button>`;
+                        card.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
+                             try {
+                                await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
+                                showToast("Copied to clipboard!");
+                             } catch(e) { showToast("Copy failed.", true); }
+                        });
                         els.res.prepend(card);
                     });
                 });
@@ -695,12 +708,9 @@
                     if(!animData) return;
                     const w = parseInt(els.width.value) || 800;
                     const h = Math.round(w / (animData.w / animData.h));
-                    
-                    // FIXED: Update the dimension text immediately
                     els.dims.innerText = `${w}x${h}`;
-                    
                     const fps = parseInt(els.fps.value);
-                    const duration = this.state.lottie.duration || 1; // seconds
+                    const duration = this.state.lottie.duration || 1;
                     const frames = Math.ceil(duration * fps);
                     const sizeMB = ((w * h * frames * 0.6) / 1024 / 1024).toFixed(1);
                     els.est.innerText = `Est: ~${sizeMB} MB`;
@@ -719,14 +729,11 @@
                     const anim = this.state.lottie.animation;
                     const totalFrames = anim.totalFrames;
                     let currentFrame = 0;
-                    
                     anim.stop();
-                    
                     previewInterval = setInterval(() => {
                         currentFrame += 1;
                         const time = currentFrame / fps;
-                        if(time >= anim.getDuration(false)) currentFrame = 0; // Loop preview always
-                        
+                        if(time >= anim.getDuration(false)) currentFrame = 0;
                         const lottieFrame = (currentFrame / (anim.getDuration(false) * fps)) * totalFrames;
                         anim.goToAndStop(lottieFrame, true); 
                     }, 1000/fps);
@@ -740,8 +747,6 @@
                     updateSizeEstimate();
                     startPreviewLoop();
                 });
-                
-                // FIXED: Ensure dimension update fires on input
                 els.width.addEventListener('input', updateSizeEstimate);
 
                 els.up.addEventListener('change', e => {
@@ -754,24 +759,15 @@
                             animData = JSON.parse(ev.target.result);
                             $('lottie-placeholder').classList.add('hidden');
                             if(this.state.lottie.animation) this.state.lottie.animation.destroy();
-                            
                             this.state.lottie.animation = lottie.loadAnimation({
-                                container: els.prev,
-                                renderer: 'svg',
-                                loop: false,
-                                autoplay: false,
-                                animationData: animData
+                                container: els.prev, renderer: 'svg', loop: false, autoplay: false, animationData: animData
                             });
-
                             this.state.lottie.animation.addEventListener('DOMLoaded', () => {
                                 this.state.lottie.duration = this.state.lottie.animation.getDuration(false);
-                                const w = animData.w || 800;
-                                const h = animData.h || 600;
-                                els.width.value = w;
-                                els.dims.innerText = `${w}x${h}`;
+                                const w = animData.w || 800; const h = animData.h || 600;
+                                els.width.value = w; els.dims.innerText = `${w}x${h}`;
                                 els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
-                                updateSizeEstimate();
-                                startPreviewLoop();
+                                updateSizeEstimate(); startPreviewLoop();
                             });
                         } catch(err) { showToast('Invalid JSON file', true); }
                     };
@@ -780,8 +776,7 @@
 
                 els.btn.addEventListener('click', async () => {
                     if(!animData) return;
-                    els.btn.disabled = true;
-                    els.btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
+                    els.btn.disabled = true; els.btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
                     els.prog.classList.remove('hidden');
 
                     try {
@@ -794,57 +789,20 @@
                         const targetH = Math.round(targetW / ar);
                         
                         const gif = new GIF({
-                            workers: 2,
-                            quality: 1, // BEST QUALITY (1 is best, 10 is default)
-                            workerScript: workerUrl,
-                            width: targetW,
-                            height: targetH,
+                            workers: 2, quality: 1, workerScript: workerUrl, width: targetW, height: targetH,
                             transparent: bgColor === 'transparent' ? 0x000000 : null,
                             repeat: els.loop.checked ? 0 : -1
                         });
 
-                        // 1. Create a pure Canvas element for Lottie to render into
                         const lottieCanvas = document.createElement('canvas');
-                        lottieCanvas.width = targetW;
-                        lottieCanvas.height = targetH;
-                        
-                        // DEEP COPY animData to prevent mutations affecting export
+                        lottieCanvas.width = targetW; lottieCanvas.height = targetH;
                         const exportAnimData = JSON.parse(JSON.stringify(animData));
-
-                        // 2. Load Lottie using CANVAS renderer directly into our high-res canvas
                         const animRenderer = lottie.loadAnimation({
-                            renderer: 'canvas', 
-                            loop: false,
-                            autoplay: false,
-                            animationData: exportAnimData,
-                            rendererSettings: {
-                                context: lottieCanvas.getContext('2d'),
-                                preserveAspectRatio: 'xMidYMid meet',
-                                clearCanvas: true
-                            }
+                            renderer: 'canvas', loop: false, autoplay: false, animationData: exportAnimData,
+                            rendererSettings: { context: lottieCanvas.getContext('2d'), preserveAspectRatio: 'xMidYMid meet', clearCanvas: true }
                         });
 
-                        // 3. Wait for Lottie to initialize
-                        await new Promise(r => {
-                            if(animRenderer.isLoaded) r();
-                            else animRenderer.addEventListener('DOMLoaded', r);
-                        });
-                        
-                        // CRITICAL FIX: Manually calculate and apply scale
-                        // Since we are bypassing the container logic, we must tell Lottie
-                        // how much to scale the vector data to fit our canvas context.
-                        // Standard formula: TargetWidth / NativeWidth
-                        const scale = targetW / animData.w;
-                        
-                        // Apply scale to the renderer's canvas context transform
-                        // Lottie's canvas renderer exposes its internal canvas context logic somewhat opaquely,
-                        // but setting the container style is usually how it infers scale.
-                        // Since we have no container, we can use 'config' modification or a simple trick:
-                        // We rely on 'preserveAspectRatio' above to handle fit, BUT
-                        // we must ensure Lottie knows the "container" size is the canvas size.
-                        // Lottie usually infers this from the passed context's canvas dimensions.
-                        
-                        // Double check resize to be safe
+                        await new Promise(r => { if(animRenderer.isLoaded) r(); else animRenderer.addEventListener('DOMLoaded', r); });
                         animRenderer.resize(); 
 
                         const duration = animRenderer.getDuration(true); 
@@ -853,52 +811,30 @@
                         const frameStep = duration / frameCount;
 
                         const compCanvas = document.createElement('canvas');
-                        compCanvas.width = targetW;
-                        compCanvas.height = targetH;
+                        compCanvas.width = targetW; compCanvas.height = targetH;
                         const ctx = compCanvas.getContext('2d');
 
                         for (let i = 0; i < frameCount; i++) {
-                            // 1. Position Lottie
                             animRenderer.goToAndStop(i * frameStep, true);
-                            
-                            // 2. Clear & Paint GIF Frame
                             ctx.clearRect(0, 0, targetW, targetH);
-                            if(bgColor !== 'transparent') {
-                                ctx.fillStyle = bgColor;
-                                ctx.fillRect(0, 0, targetW, targetH);
-                            }
-                            
-                            // 3. Draw the HIGH RES lottie canvas directly
+                            if(bgColor !== 'transparent') { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, targetW, targetH); }
                             ctx.drawImage(lottieCanvas, 0, 0);
-                            
                             gif.addFrame(ctx, {copy: true, delay: 1000/fps});
-
                             const pct = Math.round((i/frameCount)*100);
-                            els.bar.style.width = `${pct}%`;
-                            els.pct.innerText = `${pct}%`;
-                            
+                            els.bar.style.width = `${pct}%`; els.pct.innerText = `${pct}%`;
                             await new Promise(r => setTimeout(r, 0)); 
                         }
 
                         gif.on('finished', blob => {
                             const a = document.createElement('a');
-                            a.href = URL.createObjectURL(blob);
-                            a.download = `${this.state.lottie.name}.gif`;
-                            a.click();
-                            
-                            els.btn.disabled = false;
-                            els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
-                            els.prog.classList.add('hidden');
-                            els.bar.style.width = '0%';
+                            a.href = URL.createObjectURL(blob); a.download = `${this.state.lottie.name}.gif`; a.click();
+                            els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
+                            els.prog.classList.add('hidden'); els.bar.style.width = '0%';
                         });
-
                         gif.render();
-
                     } catch(e) {
-                        console.error(e);
-                        showToast('Generation Failed', true);
-                        els.btn.disabled = false;
-                        els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
+                        console.error(e); showToast('Generation Failed', true);
+                        els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
                     }
                 });
             },
@@ -926,27 +862,90 @@
             setupClipboard() {
                 const btn = $('clipboard-download-button');
                 const modal = $('filename-modal');
-                
-                if (btn) {
-                    btn.addEventListener('click', async () => {
-                        try {
-                            const items = await navigator.clipboard.read();
-                            for (let item of items) {
-                                if (item.types.includes("image/png")) {
-                                    this.state.clipBlob = await item.getType("image/png");
-                                    modal.classList.remove('hidden');
-                                    $('filename-input').focus();
-                                    return;
-                                }
+                const input = $('filename-input');
+
+                // Consolidated logic for both button click and shortcuts
+                const handleClipboardAction = async (isInstant = false) => {
+                    // Check for native paste event context (not reliable directly here)
+                    // If triggered via button, try read()
+                    // If triggered via Ctrl+V, we need to rely on the paste listener below
+                    // This function is for manual button triggers or Alt+V attempts (if supported)
+                    
+                    try {
+                        const items = await navigator.clipboard.read();
+                        let found = false;
+                        for (let item of items) {
+                            if (item.types.includes("image/png")) {
+                                this.state.clipBlob = await item.getType("image/png");
+                                found = true;
+                                break;
                             }
+                        }
+                        
+                        if(found) {
+                            // Re-encode via canvas to ensure valid PNG
+                            const img = new Image();
+                            img.src = URL.createObjectURL(this.state.clipBlob);
+                            await new Promise(r => img.onload = r);
+                            const cvs = document.createElement('canvas');
+                            cvs.width = img.width; cvs.height = img.height;
+                            cvs.getContext('2d').drawImage(img, 0, 0);
+                            
+                            cvs.toBlob(b => {
+                                this.state.clipBlob = b; // Update state with clean blob
+                                
+                                if (isInstant) {
+                                    // Skip modal, download immediately with timestamp
+                                    const a = document.createElement('a');
+                                    a.href = URL.createObjectURL(b);
+                                    a.download = `clipboard-${Date.now()}.png`;
+                                    a.click();
+                                    showToast("Instant Download Started!");
+                                } else {
+                                    // Show naming modal
+                                    modal.classList.remove('hidden');
+                                    input.focus();
+                                }
+                            }, 'image/png');
+                        } else {
                             showToast("No PNG in clipboard", true);
-                        } catch(e) { showToast("Clipboard access denied", true); }
-                    });
-                }
+                        }
+                    } catch(e) { 
+                        console.error(e);
+                        // Fallback message
+                        showToast("Clipboard access denied. Please click the page and press Ctrl+V.", true); 
+                    }
+                };
+                
+                // Helper to process blob from paste event
+                const processPasteBlob = async (blob, isInstant = false) => {
+                     const img = new Image();
+                     img.src = URL.createObjectURL(blob);
+                     await new Promise(r => img.onload = r);
+                     const cvs = document.createElement('canvas');
+                     cvs.width = img.width; cvs.height = img.height;
+                     cvs.getContext('2d').drawImage(img, 0, 0);
+                     
+                     cvs.toBlob(b => {
+                         this.state.clipBlob = b;
+                         if (isInstant) {
+                             const a = document.createElement('a');
+                             a.href = URL.createObjectURL(b);
+                             a.download = `clipboard-${Date.now()}.png`;
+                             a.click();
+                             showToast("Instant Download Started!");
+                         } else {
+                             modal.classList.remove('hidden');
+                             input.focus();
+                         }
+                     }, 'image/png');
+                };
+
+                if (btn) btn.addEventListener('click', () => handleClipboardAction(false));
 
                 $('filename-cancel').addEventListener('click', () => modal.classList.add('hidden'));
                 $('filename-confirm').addEventListener('click', () => {
-                    const name = $('filename-input').value || 'clipboard';
+                    const name = input.value || 'clipboard';
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(this.state.clipBlob);
                     a.download = name + '.png';
@@ -955,15 +954,44 @@
                     showToast("Downloaded!");
                 });
 
-                // Global Ctrl+V Shortcut listener
+                // Global Shortcuts
                 document.addEventListener('keydown', (e) => {
-                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-                        const active = document.activeElement;
-                        const isInput = active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable;
-                        if (!isInput) {
-                            e.preventDefault();
-                            if (btn) btn.click();
+                    // Ignore if typing in an input
+                    const active = document.activeElement;
+                    const isInput = active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable;
+                    if (isInput) return;
+
+                    const key = e.key.toLowerCase();
+                    
+                    // Alt+V = Instant Download (Skip Naming) - Try read() first
+                    if (e.altKey && key === 'v') {
+                        e.preventDefault();
+                        handleClipboardAction(true);
+                        return;
+                    }
+                    
+                    // Ctrl+V handled by paste event below
+                });
+                
+                // Native Paste Listener (Bypasses read() permission issues for Ctrl+V)
+                document.addEventListener('paste', async (e) => {
+                    // If we are in an input, let default paste happen
+                    const active = document.activeElement;
+                    if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) return;
+                    
+                    e.preventDefault();
+                    
+                    if (e.clipboardData && e.clipboardData.items) {
+                        for (let i = 0; i < e.clipboardData.items.length; i++) {
+                            if (e.clipboardData.items[i].type.indexOf('image') !== -1) {
+                                const blob = e.clipboardData.items[i].getAsFile();
+                                // Check if Alt key was held during paste? (Not reliable across browsers/OS)
+                                // We'll assume standard paste behavior (modal) for Ctrl+V
+                                await processPasteBlob(blob, false);
+                                return;
+                            }
                         }
+                        showToast("No image data found in paste.", true);
                     }
                 });
             }
