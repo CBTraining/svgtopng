@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ImageTools v2.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -935,7 +935,7 @@
                                 if (item.types.includes("image/png")) {
                                     this.state.clipBlob = await item.getType("image/png");
                                     modal.classList.remove('hidden');
-                                    $('filename-input').focus();
+                                    $('modal-input').focus();
                                     return;
                                 }
                             }
