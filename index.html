@@ -481,7 +481,9 @@
                 const els = {
                     up: $('resizer-upload'), disp: $('resizer-display'), ctrls: $('resizer-controls'),
                     wR: $('w-range'), wI: $('w-input'), hR: $('h-range'), hI: $('h-input'),
-                    lock: $('resizer-lock'), rR: $('r-range'), rI: $('r-input')
+                    lock: $('resizer-lock'), rR: $('r-range'), rI: $('r-input'),
+                    dlBtn: $('btn-resizer-dl'), cpBtn: $('btn-resizer-copy'),
+                    canvas: $('proc-canvas')
                 };
 
                 const updatePreview = debounce(async () => {
@@ -574,6 +576,7 @@
                     a.href = URL.createObjectURL(blob);
                     a.download = `${this.state.resizer.name}-resized.png`;
                     a.click();
+                    showToast("Image downloaded!");
                 });
 
                 $('btn-resizer-copy').addEventListener('click', async () => {
@@ -600,7 +603,7 @@
                         this.state.compressor.url = URL.createObjectURL(blob);
                         els.prevRes.innerHTML = `<img src="${this.state.compressor.url}">`;
                         const saved = ((1 - (blob.size / this.state.compressor.file.size)) * 100).toFixed(1);
-                        els.stats.innerHTML = `Orig: <b>${(this.state.compressor.file.size/1024).toFixed(0)}KB</b> <i class="fas fa-arrow-right mx-2"></i> New: <b>${(blob.size/1024).toFixed(0)}KB</b> <span class="text-accent">(-${saved}%)</span>`;
+                        els.stats.innerHTML = `Orig: <b>${(this.state.compressor.file.size/1024).toFixed(0)}KB</b> <i class="fas fa-arrow-right mx-2 text-gray-400"></i> New: <b>${(blob.size/1024).toFixed(0)}KB</b> <span class="text-accent">(-${saved}%)</span>`;
                         els.dl.onclick = () => {
                             const a = document.createElement('a');
                             a.href = this.state.compressor.url;
