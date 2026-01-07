@@ -72,6 +72,7 @@
         /* Tools & Cards */
         .tool-card { background-color: var(--bg_card); border: 1px solid var(--border_default); border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05); }
         .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px; }
         html.dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #475569; }
 
@@ -119,7 +120,7 @@
         </div>
 
         <div class="px-6 mb-8">
-            <button id="btn-clipboard-dl" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
+            <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
                 <i class="fas fa-clipboard text-lg"></i> <span>Clipboard to PNG</span>
             </button>
         </div>
@@ -378,14 +379,14 @@
         <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
-    <div id="modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl">
             <h3 class="text-2xl font-bold mb-2">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="modal-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
+            <input type="text" id="filename-input" class="w-full p-4 mb-6 rounded-xl font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="btn-modal-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
-                <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
+                <button id="filename-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
     </div>
@@ -923,28 +924,47 @@
             },
 
             setupClipboard() {
-                $('btn-clipboard-dl').addEventListener('click', async () => {
-                    try {
-                        const items = await navigator.clipboard.read();
-                        for (let item of items) {
-                            if (item.types.includes("image/png")) {
-                                this.state.clipBlob = await item.getType("image/png");
-                                $('modal').classList.remove('hidden');
-                                $('modal-input').focus();
-                                return;
+                const btn = $('clipboard-download-button');
+                const modal = $('filename-modal');
+                
+                if (btn) {
+                    btn.addEventListener('click', async () => {
+                        try {
+                            const items = await navigator.clipboard.read();
+                            for (let item of items) {
+                                if (item.types.includes("image/png")) {
+                                    this.state.clipBlob = await item.getType("image/png");
+                                    modal.classList.remove('hidden');
+                                    $('filename-input').focus();
+                                    return;
+                                }
                             }
-                        }
-                        showToast("No PNG in clipboard", true);
-                    } catch(e) { showToast("Clipboard access denied", true); }
-                });
+                            showToast("No PNG in clipboard", true);
+                        } catch(e) { showToast("Clipboard access denied", true); }
+                    });
+                }
 
-                $('btn-modal-cancel').addEventListener('click', () => $('modal').classList.add('hidden'));
-                $('btn-modal-confirm').addEventListener('click', () => {
+                $('filename-cancel').addEventListener('click', () => modal.classList.add('hidden'));
+                $('filename-confirm').addEventListener('click', () => {
+                    const name = $('filename-input').value || 'clipboard';
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(this.state.clipBlob);
-                    a.download = ($('modal-input').value || 'clipboard') + '.png';
+                    a.download = name + '.png';
                     a.click();
-                    $('modal').classList.add('hidden');
+                    modal.classList.add('hidden');
+                    showToast("Downloaded!");
+                });
+
+                // Global Ctrl+V Shortcut listener
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+                        const active = document.activeElement;
+                        const isInput = active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable;
+                        if (!isInput) {
+                            e.preventDefault();
+                            if (btn) btn.click();
+                        }
+                    }
                 });
             }
         };
