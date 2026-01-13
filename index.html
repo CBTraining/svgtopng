@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Google Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Animation & GIF Libraries -->
@@ -28,7 +28,7 @@
                         'border-default': 'var(--border_default)',
                         'bg-input': 'var(--bg_input)',
                     },
-                    fontFamily: { sans: ['Google Sans', 'sans-serif'] }
+                    fontFamily: { sans: ['Poppins', 'sans-serif'] }
                 }
             }
         }
@@ -41,7 +41,7 @@
             --bg_page: #f8f9fa;
             --bg_sidebar: #ffffff;
             --bg_card: #ffffff;
-            --border_default: #e0e0e0;
+            --border-default: #e0e0e0;
             --bg_input: #f9fafb;
             --hover_item: #f0fdf4;
         }
@@ -60,7 +60,7 @@
         /* Added 'preload' class prevention for transitions */
         .preload * { transition: none !important; }
 
-        body { font-family: 'Google Sans', sans-serif; background-color: var(--bg_page); color: var(--text_primary); transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg_page); color: var(--text_primary); transition: background-color 0.3s, color 0.3s; overflow: hidden; }
         .sidebar { background-color: var(--bg_sidebar); border-right: 1px solid var(--border_default); transition: background-color 0.3s, border-color 0.3s; }
         
         /* Navigation */
@@ -383,14 +383,13 @@
         <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
-    <!-- File Name Modal -->
     <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
-            <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
+            <h3 class="text-2xl font-bold mb-2">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-[var(--text_primary)] font-medium" placeholder="clipboard-image">
+            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-primary font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="filename-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
                 <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
@@ -653,11 +652,9 @@
                     cvs.width = targetW; cvs.height = th;
                     const img = new Image();
                     const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-                    const blobUrl = URL.createObjectURL(blob);
-                    img.src = blobUrl;
+                    img.src = URL.createObjectURL(blob);
                     await new Promise(r => img.onload = r);
                     cvs.getContext('2d').drawImage(img, 0, 0, targetW, th);
-                    URL.revokeObjectURL(blobUrl);
                     cvs.toBlob(b => {
                         const url = URL.createObjectURL(b);
                         const card = document.createElement('div');
@@ -953,6 +950,14 @@
                     modal.classList.add('hidden');
                     showToast("Downloaded!");
                 });
+                
+                // Allow Enter key to submit
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        $('filename-confirm').click();
+                    }
+                });
 
                 // Global Shortcuts
                 document.addEventListener('keydown', (e) => {
@@ -979,11 +984,13 @@
                     const active = document.activeElement;
                     if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) return;
                     
-                    e.preventDefault();
+                    // Don't prevent default here as we want to inspect items, but usually we do to handle custom logic
+                    // Actually, to get items we need to inspect event
                     
                     if (e.clipboardData && e.clipboardData.items) {
                         for (let i = 0; i < e.clipboardData.items.length; i++) {
                             if (e.clipboardData.items[i].type.indexOf('image') !== -1) {
+                                e.preventDefault(); // Only prevent default if we found an image to handle
                                 const blob = e.clipboardData.items[i].getAsFile();
                                 // Check if Alt key was held during paste? (Not reliable across browsers/OS)
                                 // We'll assume standard paste behavior (modal) for Ctrl+V
@@ -991,7 +998,7 @@
                                 return;
                             }
                         }
-                        showToast("No image data found in paste.", true);
+                        // If no image, we don't prevent default, allowing text paste if applicable (though we aren't in input)
                     }
                 });
             }
