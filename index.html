@@ -41,7 +41,7 @@
             --bg_page: #f8f9fa;
             --bg_sidebar: #ffffff;
             --bg_card: #ffffff;
-            --border-default: #e0e0e0;
+            --border_default: #e0e0e0;
             --bg_input: #f9fafb;
             --hover_item: #f0fdf4;
         }
@@ -385,11 +385,11 @@
 
     <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
-            <h3 class="text-2xl font-bold mb-2">Save Image</h3>
+            <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
             <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-primary font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="filename-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
                 <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
@@ -860,6 +860,8 @@
                 const btn = $('clipboard-download-button');
                 const modal = $('filename-modal');
                 const input = $('filename-input');
+                const confirmBtn = $('filename-confirm');
+                const cancelBtn = $('filename-cancel');
 
                 // Consolidated logic for both button click and shortcuts
                 const handleClipboardAction = async (isInstant = false) => {
@@ -940,8 +942,10 @@
 
                 if (btn) btn.addEventListener('click', () => handleClipboardAction(false));
 
-                $('filename-cancel').addEventListener('click', () => modal.classList.add('hidden'));
-                $('filename-confirm').addEventListener('click', () => {
+                if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+
+                // Define the download function
+                const performDownload = () => {
                     const name = input.value || 'clipboard';
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(this.state.clipBlob);
@@ -949,15 +953,20 @@
                     a.click();
                     modal.classList.add('hidden');
                     showToast("Downloaded!");
-                });
+                };
+
+                // Bind to button click
+                if (confirmBtn) confirmBtn.addEventListener('click', performDownload);
                 
-                // Allow Enter key to submit
-                input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        $('filename-confirm').click();
-                    }
-                });
+                // Allow Enter key to submit within input
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            performDownload();
+                        }
+                    });
+                }
 
                 // Global Shortcuts
                 document.addEventListener('keydown', (e) => {
