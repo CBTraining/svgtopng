@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ImageTools v2.2</title>
+    <title>ImageTools</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,7 +41,7 @@
             --bg_page: #f8f9fa;
             --bg_sidebar: #ffffff;
             --bg_card: #ffffff;
-            --border_default: #e0e0e0;
+            --border-default: #e0e0e0;
             --bg_input: #f9fafb;
             --hover_item: #f0fdf4;
         }
@@ -61,6 +61,7 @@
         .preload * { transition: none !important; }
 
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg_page); color: var(--text_primary); transition: background-color 0.3s, color 0.3s; overflow: hidden; }
+        
         .sidebar { background-color: var(--bg_sidebar); border-right: 1px solid var(--border_default); transition: background-color 0.3s, border-color 0.3s; }
         
         /* Navigation */
@@ -95,6 +96,14 @@
         
         #svg-display, .image-preview-box { min-height: 240px; border: 2px dashed var(--border_default); display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 0.5rem; position: relative; }
         #svg-display > svg, .image-preview-box img { max-width: 100%; max-height: 100%; object-fit: contain; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+
+        /* --- COMPACT MODE LOGIC --- */
+        #compact-ui { display: none; }
+        
+        @media (max-height: 500px) {
+            #app-layout { display: none !important; }
+            #compact-ui { display: flex !important; }
+        }
     </style>
 
     <!-- PRE-RENDER THEME CHECK -->
@@ -106,116 +115,119 @@
         }
     </script>
 </head>
-<body class="flex h-screen w-full preload">
+<body class="h-screen w-full preload relative bg-page text-[var(--text_primary)]">
 
-    <aside class="sidebar w-72 flex-shrink-0 flex flex-col hidden md:flex z-20 h-full">
-        <div class="px-6 pt-8 pb-6 flex items-center gap-3">
-            <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white text-xl shadow-md flex-shrink-0">
-                <i class="fas fa-layer-group"></i>
-            </div>
-            <div>
-                <h1 class="text-xl font-bold leading-none text-[var(--text_primary)]">ImageTools</h1>
-                <p class="text-xs text-[var(--text_secondary)] font-medium mt-0.5">v2.8 HighRes</p>
-            </div>
-        </div>
-
-        <div class="px-6 mb-8">
-            <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
-                <i class="fas fa-clipboard text-lg"></i> <span>Clipboard to PNG</span>
-            </button>
-            <div class="mt-3 text-[10px] text-center text-[var(--text_secondary)] font-medium opacity-80 leading-relaxed tracking-wide">
-                <span class="block">CTRL+V to Save Named</span>
-                <span class="block">ALT+V to Skip Naming File</span>
-            </div>
-        </div>
-
-        <nav class="flex-1 overflow-y-auto px-6 custom-scroll">
-            <div class="text-xs font-bold text-[var(--text_secondary)] uppercase tracking-wider mb-3 px-2">IMAGE TOOLS</div>
-            <div id="nav-container" class="space-y-1 mb-6">
-                <div id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="resizer">
-                    <i class="fas fa-arrows-alt-h w-5 text-center text-lg"></i> <span class="text-[15px]">Resizer & Converter</span>
+    <!-- REGULAR APP LAYOUT -->
+    <div id="app-layout" class="flex h-full w-full">
+        <aside class="sidebar w-72 flex-shrink-0 flex flex-col hidden md:flex z-20 h-full">
+            <div class="px-6 pt-8 pb-6 flex items-center gap-3">
+                <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-white text-xl shadow-md flex-shrink-0">
+                    <i class="fas fa-layer-group"></i>
                 </div>
-                <div id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="compressor">
-                    <i class="fas fa-compress-arrows-alt w-5 text-center text-lg"></i> <span class="text-[15px]">Image Compressor</span>
-                </div>
-                <div id="nav-lottie" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="lottie">
-                    <i class="fas fa-film w-5 text-center text-lg"></i> <span class="text-[15px]">Lottie to GIF</span>
+                <div>
+                    <h1 class="text-xl font-bold leading-none text-[var(--text_primary)]">ImageTools</h1>
+                    <p class="text-xs text-[var(--text_secondary)] font-medium mt-0.5">v2.8 HighRes</p>
                 </div>
             </div>
 
-            <div class="text-xs font-bold text-[var(--text_secondary)] uppercase tracking-wider mb-3 px-2">DEV TOOLS</div>
-            <div class="space-y-1">
-                <div id="nav-scaler" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="scaler">
-                    <i class="fas fa-expand w-5 text-center text-lg"></i> <span class="text-[15px]">SVG Icon Scaler</span>
-                </div>
-                <div id="nav-json" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="json">
-                    <i class="fas fa-file-code w-5 text-center text-lg"></i> <span class="text-[15px]">JSON File Saver</span>
-                </div>
-                <div id="nav-formatter" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="formatter">
-                    <i class="fas fa-code w-5 text-center text-lg"></i> <span class="text-[15px]">HTML Formatter</span>
+            <div class="px-6 mb-8">
+                <button id="clipboard-download-button" class="w-full bg-accent hover:bg-accent-hover text-white py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 font-bold text-sm group active:scale-95">
+                    <i class="fas fa-clipboard text-lg"></i> <span>Clipboard to PNG</span>
+                </button>
+                <div class="mt-3 text-[10px] text-center text-[var(--text_secondary)] font-medium opacity-80 leading-relaxed tracking-wide">
+                    <span class="block">CTRL+V to Save Named</span>
+                    <span class="block">ALT+V to Skip Naming File</span>
                 </div>
             </div>
-        </nav>
 
-        <div class="p-6 mt-auto">
-            <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-[var(--text_secondary)]">
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-moon" id="theme-icon"></i> <span class="text-sm font-medium">Dark Mode</span>
+            <nav class="flex-1 overflow-y-auto px-6 custom-scroll">
+                <div class="text-xs font-bold text-[var(--text_secondary)] uppercase tracking-wider mb-3 px-2">IMAGE TOOLS</div>
+                <div id="nav-container" class="space-y-1 mb-6">
+                    <div id="nav-resizer" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="resizer">
+                        <i class="fas fa-arrows-alt-h w-5 text-center text-lg"></i> <span class="text-[15px]">Resizer & Converter</span>
+                    </div>
+                    <div id="nav-compressor" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="compressor">
+                        <i class="fas fa-compress-arrows-alt w-5 text-center text-lg"></i> <span class="text-[15px]">Image Compressor</span>
+                    </div>
+                    <div id="nav-lottie" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="lottie">
+                        <i class="fas fa-film w-5 text-center text-lg"></i> <span class="text-[15px]">Lottie to GIF</span>
+                    </div>
                 </div>
-                <div class="w-9 h-5 bg-gray-200 dark:bg-slate-600 rounded-full relative">
-                    <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 dark:translate-x-4 shadow-sm"></div>
-                </div>
-            </button>
-        </div>
-    </aside>
 
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-page">
-        <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll">
-            <div class="max-w-6xl mx-auto">
-                
-                <!-- RESIZER -->
-                <section id="tool-resizer" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Resizer & Converter</h2><p class="text-[var(--text_secondary)]">Precise dimension adjustment and PNG conversion.</p></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div class="lg:col-span-5 space-y-6">
-                            <div class="tool-card p-6">
-                                <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Source File</label>
-                                <div id="resizer-display" class="mb-4 bg-dots"><div class="text-center p-6 text-[var(--text_secondary)]"><i class="fas fa-cloud-upload-alt text-4xl mb-3 opacity-30"></i><p>No file selected</p></div></div>
-                                <label class="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium group">
-                                    <i class="fas fa-upload mr-2"></i> Upload SVG
-                                    <input type="file" id="resizer-upload" accept=".svg,image/svg+xml" class="hidden"/>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="lg:col-span-7 space-y-6">
-                            <div id="resizer-controls" class="tool-card p-6 opacity-50 pointer-events-none transition-opacity">
-                                <div class="flex justify-between mb-6 pb-4 border-b border-default">
-                                    <h3 class="text-lg font-bold flex gap-2"><i class="fas fa-sliders-h text-accent"></i> Parameters</h3>
-                                    <label class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full cursor-pointer">
-                                        <input type="checkbox" id="resizer-lock" class="accent-green-500" checked> <span class="text-xs font-bold uppercase">Lock Ratio</span>
+                <div class="text-xs font-bold text-[var(--text_secondary)] uppercase tracking-wider mb-3 px-2">DEV TOOLS</div>
+                <div class="space-y-1">
+                    <div id="nav-scaler" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="scaler">
+                        <i class="fas fa-expand w-5 text-center text-lg"></i> <span class="text-[15px]">SVG Icon Scaler</span>
+                    </div>
+                    <div id="nav-json" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="json">
+                        <i class="fas fa-file-code w-5 text-center text-lg"></i> <span class="text-[15px]">JSON File Saver</span>
+                    </div>
+                    <div id="nav-formatter" class="nav-item w-full flex items-center gap-4 px-3 py-3 rounded-lg text-left group" draggable="true" data-tab="formatter">
+                        <i class="fas fa-code w-5 text-center text-lg"></i> <span class="text-[15px]">HTML Formatter</span>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="p-6 mt-auto">
+                <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-[var(--text_secondary)]">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-moon" id="theme-icon"></i> <span class="text-sm font-medium">Dark Mode</span>
+                    </div>
+                    <div class="w-9 h-5 bg-gray-200 dark:bg-slate-600 rounded-full relative">
+                        <div class="absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform duration-300 dark:translate-x-4 shadow-sm"></div>
+                    </div>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll">
+                <div class="max-w-6xl mx-auto">
+                    
+                    <!-- RESIZER -->
+                    <section id="tool-resizer" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Resizer & Converter</h2><p class="text-[var(--text_secondary)]">Precise dimension adjustment and PNG conversion.</p></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div class="lg:col-span-5 space-y-6">
+                                <div class="tool-card p-6">
+                                    <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Source File</label>
+                                    <div id="resizer-display" class="mb-4 bg-dots"><div class="text-center p-6 text-[var(--text_secondary)]"><i class="fas fa-cloud-upload-alt text-4xl mb-3 opacity-30"></i><p>No file selected</p></div></div>
+                                    <label class="flex items-center justify-center w-full px-4 py-3 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium group">
+                                        <i class="fas fa-upload mr-2"></i> Upload SVG
+                                        <input type="file" id="resizer-upload" accept=".svg,image/svg+xml" class="hidden"/>
                                     </label>
                                 </div>
-                                <div class="space-y-4 mb-6">
-                                    <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Width</label><input type="range" id="w-range" min="1" max="4000" class="flex-1"><input type="number" id="w-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
-                                    <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Height</label><input type="range" id="h-range" min="1" max="4000" class="flex-1"><input type="number" id="h-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
-                                </div>
-                                <div class="border-t border-default pt-4 mb-4">
-                                    <h4 class="text-xs font-bold text-[var(--text_secondary)] uppercase mb-3">Cropping (px)</h4>
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Left</span><input type="number" id="crop-l" value="0" class="w-full p-1 text-xs text-center"></div>
-                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Right</span><input type="number" id="crop-r" value="0" class="w-full p-1 text-xs text-center"></div>
-                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Top</span><input type="number" id="crop-t" value="0" class="w-full p-1 text-xs text-center"></div>
-                                        <div class="flex items-center gap-2"><span class="text-xs w-8">Bot</span><input type="number" id="crop-b" value="0" class="w-full p-1 text-xs text-center"></div>
+                            </div>
+                            <div class="lg:col-span-7 space-y-6">
+                                <div id="resizer-controls" class="tool-card p-6 opacity-50 pointer-events-none transition-opacity">
+                                    <div class="flex justify-between mb-6 pb-4 border-b border-default">
+                                        <h3 class="text-lg font-bold flex gap-2"><i class="fas fa-sliders-h text-accent"></i> Parameters</h3>
+                                        <label class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-full cursor-pointer">
+                                            <input type="checkbox" id="resizer-lock" class="accent-green-500" checked> <span class="text-xs font-bold uppercase">Lock Ratio</span>
+                                        </label>
                                     </div>
-                                </div>
-                                <div class="flex items-center gap-4 border-t border-default pt-4 mb-6">
-                                    <label class="font-bold text-sm">Rounding</label>
-                                    <input type="range" id="r-range" min="0" max="200" value="0" class="flex-1">
-                                    <input type="number" id="r-input" value="0" class="w-20 p-1.5 text-center text-sm font-bold">
-                                </div>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <button id="btn-resizer-copy" class="py-3 rounded-xl font-bold text-sm border border-default hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"><i class="far fa-copy mr-2"></i> Copy Image</button>
-                                    <button id="btn-resizer-dl" class="py-3 rounded-xl font-bold text-sm bg-accent text-white hover:bg-accent-hover transition-colors shadow-md"><i class="fas fa-download mr-2"></i> Download PNG</button>
+                                    <div class="space-y-4 mb-6">
+                                        <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Width</label><input type="range" id="w-range" min="1" max="4000" class="flex-1"><input type="number" id="w-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
+                                        <div class="flex items-center gap-4"><label class="w-16 font-bold text-sm">Height</label><input type="range" id="h-range" min="1" max="4000" class="flex-1"><input type="number" id="h-input" class="w-20 p-1.5 text-center text-sm font-bold"></div>
+                                    </div>
+                                    <div class="border-t border-default pt-4 mb-4">
+                                        <h4 class="text-xs font-bold text-[var(--text_secondary)] uppercase mb-3">Cropping (px)</h4>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="flex items-center gap-2"><span class="text-xs w-8">Left</span><input type="number" id="crop-l" value="0" class="w-full p-1 text-xs text-center"></div>
+                                            <div class="flex items-center gap-2"><span class="text-xs w-8">Right</span><input type="number" id="crop-r" value="0" class="w-full p-1 text-xs text-center"></div>
+                                            <div class="flex items-center gap-2"><span class="text-xs w-8">Top</span><input type="number" id="crop-t" value="0" class="w-full p-1 text-xs text-center"></div>
+                                            <div class="flex items-center gap-2"><span class="text-xs w-8">Bot</span><input type="number" id="crop-b" value="0" class="w-full p-1 text-xs text-center"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4 border-t border-default pt-4 mb-6">
+                                        <label class="font-bold text-sm">Rounding</label>
+                                        <input type="range" id="r-range" min="0" max="200" value="0" class="flex-1">
+                                        <input type="number" id="r-input" value="0" class="w-20 p-1.5 text-center text-sm font-bold">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <button id="btn-resizer-copy" class="py-3 rounded-xl font-bold text-sm border border-default hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"><i class="far fa-copy mr-2"></i> Copy Image</button>
+                                        <button id="btn-resizer-dl" class="py-3 rounded-xl font-bold text-sm bg-accent text-white hover:bg-accent-hover transition-colors shadow-md"><i class="fas fa-download mr-2"></i> Download PNG</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -377,20 +389,35 @@
         </div>
     </main>
 
+    <!-- COMPACT VIEW OVERLAY -->
+    <div id="compact-ui" class="hidden absolute inset-0 z-50 bg-[var(--bg_page)] flex items-center justify-center p-4">
+        <div class="border-4 border-dashed border-accent/40 rounded-3xl p-8 text-center flex flex-col items-center justify-center w-full max-w-sm h-full max-h-[300px] bg-[var(--bg_card)] shadow-sm">
+            <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-accent text-3xl mb-4">
+                <i class="fas fa-clipboard"></i>
+            </div>
+            <h1 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Clipboard to PNG</h1>
+            <div class="space-y-1 text-sm text-[var(--text_secondary)] font-medium mt-2">
+                <p><span class="font-bold text-accent">CTRL + V</span> to Save Named</p>
+                <p><span class="font-bold text-accent">ALT + V</span> to Skip Naming</p>
+            </div>
+        </div>
+    </div>
+
     <canvas id="proc-canvas" class="hidden"></canvas>
 
     <div id="toast" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform translate-y-10 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
         <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
     </div>
 
+    <!-- File Name Modal -->
     <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
         <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
             <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
             <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-primary font-medium" placeholder="clipboard-image">
+            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-[var(--text_primary)] font-medium" placeholder="clipboard-image">
             <div class="flex justify-end gap-3">
-                <button id="filename-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
-                <button id="filename-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
+                <button id="btn-modal-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
             </div>
         </div>
     </div>
