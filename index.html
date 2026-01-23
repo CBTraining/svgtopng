@@ -41,7 +41,7 @@
             --bg_page: #f8f9fa;
             --bg_sidebar: #ffffff;
             --bg_card: #ffffff;
-            --border-default: #e0e0e0;
+            --border_default: #e0e0e0;
             --bg_input: #f9fafb;
             --hover_item: #f0fdf4;
         }
@@ -61,7 +61,6 @@
         .preload * { transition: none !important; }
 
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg_page); color: var(--text_primary); transition: background-color 0.3s, color 0.3s; overflow: hidden; }
-        
         .sidebar { background-color: var(--bg_sidebar); border-right: 1px solid var(--border_default); transition: background-color 0.3s, border-color 0.3s; }
         
         /* Navigation */
@@ -168,7 +167,13 @@
                 </div>
             </nav>
 
-            <div class="p-6 mt-auto">
+            <div class="p-6 mt-auto space-y-2">
+                <!-- INSTALL BUTTON (Hidden by default) -->
+                <button id="install-button" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left font-medium text-[var(--text_secondary)] hover:bg-[var(--hover_item)] hover:text-accent transition-colors hidden">
+                    <i class="fas fa-download w-5 text-center"></i>
+                    <span class="text-[14px]">Install App</span>
+                </button>
+                
                 <button id="theme-toggle" class="w-full flex items-center justify-between px-4 py-2.5 border border-default rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors text-[var(--text_secondary)]">
                     <div class="flex items-center gap-2">
                         <i class="fas fa-moon" id="theme-icon"></i> <span class="text-sm font-medium">Dark Mode</span>
@@ -180,7 +185,7 @@
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative bg-page">
             <div class="flex-1 overflow-y-auto p-4 md:p-12 custom-scroll">
                 <div class="max-w-6xl mx-auto">
                     
@@ -231,817 +236,790 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- COMPRESSOR -->
-                <section id="tool-compressor" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">Image Compressor</h2><p class="text-[var(--text_secondary)]">Optimize JPG/PNG size significantly.</p></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="tool-card p-6">
-                            <h3 class="font-bold mb-4">Original</h3>
-                            <div id="comp-preview-orig" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Select an image</div>
-                            <label class="flex items-center justify-center w-full px-4 py-4 bg-gray-50 border-2 border-dashed border-gray-300 hover:border-accent rounded-xl cursor-pointer transition-all font-medium">
-                                <i class="fas fa-image mr-2"></i> Select Image
-                                <input type="file" id="comp-upload" accept="image/jpeg,image/png" class="hidden"/>
-                            </label>
-                        </div>
-                        <div class="tool-card p-6">
-                            <h3 class="font-bold mb-4">Result</h3>
-                            <div id="comp-preview-res" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Preview</div>
-                            <div id="comp-controls" class="opacity-50 pointer-events-none transition-opacity space-y-4">
-                                <div class="flex justify-between items-center"><label class="font-bold text-sm">Quality</label><span id="comp-quality-val" class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">75%</span></div>
-                                <input type="range" id="comp-slider" min="1" max="100" value="75" class="w-full">
-                                <div id="comp-stats" class="text-center text-sm p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">Waiting...</div>
-                                <button id="btn-comp-dl" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md">Download Compressed</button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- LOTTIE TO GIF -->
-                <section id="tool-lottie" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">Lottie to GIF Converter</h2><p class="text-[var(--text_secondary)]">Convert JSON animations to animated GIFs.</p></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <div class="lg:col-span-5 space-y-6">
+                    <!-- COMPRESSOR -->
+                    <section id="tool-compressor" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">Image Compressor</h2><p class="text-[var(--text_secondary)]">Optimize JPG/PNG size significantly.</p></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div class="tool-card p-6">
-                                <div class="flex justify-between items-center mb-3">
-                                    <label class="text-sm font-bold uppercase tracking-wide">Input File</label>
-                                    <div class="text-xs text-[var(--text_secondary)]">Supports .json</div>
-                                </div>
-                                <label class="flex items-center justify-center w-full px-4 py-8 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium mb-6">
-                                    <div class="text-center">
-                                        <i class="fas fa-file-code text-3xl mb-2"></i><br>Upload Lottie JSON
-                                    </div>
-                                    <input type="file" id="lottie-upload" accept=".json" class="hidden"/>
+                                <h3 class="font-bold mb-4">Original</h3>
+                                <div id="comp-preview-orig" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Select an image</div>
+                                <label class="flex items-center justify-center w-full px-4 py-4 bg-gray-50 border-2 border-dashed border-gray-300 hover:border-accent rounded-xl cursor-pointer transition-all font-medium">
+                                    <i class="fas fa-image mr-2"></i> Select Image
+                                    <input type="file" id="comp-upload" accept="image/jpeg,image/png" class="hidden"/>
                                 </label>
-                                
-                                <div id="lottie-controls" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
-                                    <div>
-                                        <div class="flex justify-between mb-1"><label class="text-xs font-bold uppercase">Width (px)</label><span class="text-xs font-mono" id="lottie-dims">800x600</span></div>
-                                        <input type="number" id="lottie-width" value="800" class="w-full p-2 text-sm font-bold">
+                            </div>
+                            <div class="tool-card p-6">
+                                <h3 class="font-bold mb-4">Result</h3>
+                                <div id="comp-preview-res" class="image-preview-box mb-6 bg-dots text-[var(--text_secondary)] text-sm">Preview</div>
+                                <div id="comp-controls" class="opacity-50 pointer-events-none transition-opacity space-y-4">
+                                    <div class="flex justify-between items-center"><label class="font-bold text-sm">Quality</label><span id="comp-quality-val" class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">75%</span></div>
+                                    <input type="range" id="comp-slider" min="1" max="100" value="75" class="w-full">
+                                    <div id="comp-stats" class="text-center text-sm p-3 bg-gray-50 dark:bg-slate-800 rounded-lg">Waiting...</div>
+                                    <button id="btn-comp-dl" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md">Download Compressed</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- LOTTIE TO GIF -->
+                    <section id="tool-lottie" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">Lottie to GIF Converter</h2><p class="text-[var(--text_secondary)]">Convert JSON animations to animated GIFs.</p></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                            <div class="lg:col-span-5 space-y-6">
+                                <div class="tool-card p-6">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <label class="text-sm font-bold uppercase tracking-wide">Input File</label>
+                                        <div class="text-xs text-[var(--text_secondary)]">Supports .json</div>
                                     </div>
-                                    <div>
-                                        <div class="flex justify-between mb-1"><label class="text-xs font-bold uppercase">Background</label></div>
-                                        <div class="flex gap-2">
-                                            <input type="color" id="lottie-bg-color" value="#ffffff" class="h-10 w-10 p-0 rounded cursor-pointer border-0">
-                                            <button id="lottie-bg-transparent" class="flex-1 text-xs border border-default rounded hover:bg-gray-100 dark:hover:bg-slate-700">Transparent</button>
+                                    <label class="flex items-center justify-center w-full px-4 py-8 bg-white border-2 border-dashed border-gray-300 hover:border-accent hover:text-accent text-gray-500 rounded-xl cursor-pointer transition-all font-medium mb-6">
+                                        <div class="text-center">
+                                            <i class="fas fa-file-code text-3xl mb-2"></i><br>Upload Lottie JSON
                                         </div>
-                                    </div>
-                                    <div>
-                                        <div class="flex justify-between mb-1">
-                                            <label class="text-xs font-bold uppercase">Frame Rate</label>
-                                            <div class="flex gap-2">
-                                                <span id="lottie-size-est" class="text-[10px] text-gray-400 font-mono mt-0.5">Est: ~1MB</span>
-                                                <span id="lottie-fps-val" class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">30 FPS</span>
-                                            </div>
-                                        </div>
-                                        <input type="range" id="lottie-fps" min="10" max="60" value="30" class="w-full">
-                                    </div>
+                                        <input type="file" id="lottie-upload" accept=".json" class="hidden"/>
+                                    </label>
                                     
-                                    <div class="flex items-center justify-between pt-2">
-                                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                                            <div class="relative">
-                                                <input type="checkbox" id="lottie-loop" checked class="sr-only peer">
-                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+                                    <div id="lottie-controls" class="space-y-4 opacity-50 pointer-events-none transition-opacity">
+                                        <div>
+                                            <div class="flex justify-between mb-1"><label class="text-xs font-bold uppercase">Width (px)</label><span class="text-xs font-mono" id="lottie-dims">800x600</span></div>
+                                            <input type="number" id="lottie-width" value="800" class="w-full p-2 text-sm font-bold">
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between mb-1"><label class="text-xs font-bold uppercase">Background</label></div>
+                                            <div class="flex gap-2">
+                                                <input type="color" id="lottie-bg-color" value="#ffffff" class="h-10 w-10 p-0 rounded cursor-pointer border-0">
+                                                <button id="lottie-bg-transparent" class="flex-1 text-xs border border-default rounded hover:bg-gray-100 dark:hover:bg-slate-700">Transparent</button>
                                             </div>
-                                            <span class="text-xs font-bold uppercase">Loop Animation</span>
-                                        </label>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between mb-1">
+                                                <label class="text-xs font-bold uppercase">Frame Rate</label>
+                                                <div class="flex gap-2">
+                                                    <span id="lottie-size-est" class="text-[10px] text-gray-400 font-mono mt-0.5">Est: ~1MB</span>
+                                                    <span id="lottie-fps-val" class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">30 FPS</span>
+                                                </div>
+                                            </div>
+                                            <input type="range" id="lottie-fps" min="10" max="60" value="30" class="w-full">
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between pt-2">
+                                            <label class="flex items-center gap-2 cursor-pointer select-none">
+                                                <div class="relative">
+                                                    <input type="checkbox" id="lottie-loop" checked class="sr-only peer">
+                                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent"></div>
+                                                </div>
+                                                <span class="text-xs font-bold uppercase">Loop Animation</span>
+                                            </label>
+                                        </div>
+
+                                        <button id="btn-lottie-gen" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md transition-colors"><i class="fas fa-magic mr-2"></i> Convert to GIF</button>
                                     </div>
-
-                                    <button id="btn-lottie-gen" class="w-full py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md transition-colors"><i class="fas fa-magic mr-2"></i> Convert to GIF</button>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-7">
+                                <div class="tool-card p-6 min-h-[500px] flex flex-col">
+                                    <h3 class="font-bold mb-4">Preview <span class="text-xs font-normal text-gray-400 ml-2">(Simulates selected FPS)</span></h3>
+                                    <div id="lottie-preview-container" class="flex-1 bg-dots rounded-lg border border-default flex items-center justify-center overflow-hidden relative">
+                                        <div id="lottie-placeholder" class="text-[var(--text_secondary)] text-center"><i class="fas fa-film text-4xl mb-3 opacity-30"></i><p>Upload a file to preview</p></div>
+                                        <!-- Lottie renders here -->
+                                    </div>
+                                    <div id="lottie-progress" class="hidden mt-4">
+                                        <div class="flex justify-between text-xs font-bold mb-1"><span>Rendering GIF...</span><span id="lottie-pct">0%</span></div>
+                                        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700"><div id="lottie-bar" class="bg-accent h-2.5 rounded-full" style="width: 0%"></div></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                        <div class="lg:col-span-7">
-                            <div class="tool-card p-6 min-h-[500px] flex flex-col">
-                                <h3 class="font-bold mb-4">Preview <span class="text-xs font-normal text-gray-400 ml-2">(Simulates selected FPS)</span></h3>
-                                <div id="lottie-preview-container" class="flex-1 bg-dots rounded-lg border border-default flex items-center justify-center overflow-hidden relative">
-                                    <div id="lottie-placeholder" class="text-[var(--text_secondary)] text-center"><i class="fas fa-film text-4xl mb-3 opacity-30"></i><p>Upload a file to preview</p></div>
-                                    <!-- Lottie renders here -->
+                    </section>
+
+                    <!-- SCALER -->
+                    <section id="tool-scaler" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Icon Scaler</h2><p class="text-[var(--text_secondary)]">Batch generate pixel-perfect PNGs from SVG code.</p></div>
+                        <div class="tool-card p-6 mb-8">
+                            <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Input SVG Code</label>
+                            <textarea id="scaler-input" rows="6" class="w-full p-4 font-mono text-xs bg-input rounded-xl resize-y" placeholder="<svg ...>"></textarea>
+                            <div class="flex flex-wrap gap-4 mt-6 items-end">
+                                <label class="px-5 py-3 border border-default hover:bg-gray-50 dark:hover:bg-slate-800 font-bold rounded-lg cursor-pointer flex items-center h-[46px]">
+                                    <i class="fas fa-file-code mr-2"></i> Load File <input type="file" id="scaler-file" accept=".svg" class="hidden">
+                                </label>
+                                <div class="flex-1 min-w-[120px]">
+                                    <label class="block text-xs font-bold uppercase mb-1">Target Width (px)</label>
+                                    <input type="number" id="scaler-width" value="800" class="w-full p-2.5 h-[46px] font-mono text-sm">
                                 </div>
-                                <div id="lottie-progress" class="hidden mt-4">
-                                    <div class="flex justify-between text-xs font-bold mb-1"><span>Rendering GIF...</span><span id="lottie-pct">0%</span></div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700"><div id="lottie-bar" class="bg-accent h-2.5 rounded-full" style="width: 0%"></div></div>
+                                <button id="btn-scaler-gen" class="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-lg h-[46px]">Generate PNG</button>
+                            </div>
+                        </div>
+                        <div id="scaler-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </section>
+
+                    <!-- JSON SAVER -->
+                    <section id="tool-json" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">JSON File Saver</h2><p class="text-[var(--text_secondary)]">Paste text and download as a JSON file.</p></div>
+                        <div class="tool-card p-6 h-[600px] flex flex-col">
+                            <div class="flex justify-between items-end mb-4">
+                                <label class="block text-sm font-bold uppercase tracking-wide">JSON Content</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-bold">Filename:</span>
+                                    <input type="text" id="json-filename" value="data" class="py-1 px-2 text-xs font-mono w-32 text-right">
+                                    <span class="text-xs font-mono">.json</span>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- SCALER -->
-                <section id="tool-scaler" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">SVG Icon Scaler</h2><p class="text-[var(--text_secondary)]">Batch generate pixel-perfect PNGs from SVG code.</p></div>
-                    <div class="tool-card p-6 mb-8">
-                        <label class="block text-sm font-bold mb-3 uppercase tracking-wide">Input SVG Code</label>
-                        <textarea id="scaler-input" rows="6" class="w-full p-4 font-mono text-xs bg-input rounded-xl resize-y" placeholder="<svg ...>"></textarea>
-                        <div class="flex flex-wrap gap-4 mt-6 items-end">
-                            <label class="px-5 py-3 border border-default hover:bg-gray-50 dark:hover:bg-slate-800 font-bold rounded-lg cursor-pointer flex items-center h-[46px]">
-                                <i class="fas fa-file-code mr-2"></i> Load File <input type="file" id="scaler-file" accept=".svg" class="hidden">
-                            </label>
-                            <div class="flex-1 min-w-[120px]">
-                                <label class="block text-xs font-bold uppercase mb-1">Target Width (px)</label>
-                                <input type="number" id="scaler-width" value="800" class="w-full p-2.5 h-[46px] font-mono text-sm">
-                            </div>
-                            <button id="btn-scaler-gen" class="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-lg h-[46px]">Generate PNG</button>
-                        </div>
-                    </div>
-                    <div id="scaler-results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </section>
-
-                <!-- JSON SAVER -->
-                <section id="tool-json" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">JSON File Saver</h2><p class="text-[var(--text_secondary)]">Paste text and download as a JSON file.</p></div>
-                    <div class="tool-card p-6 h-[600px] flex flex-col">
-                        <div class="flex justify-between items-end mb-4">
-                            <label class="block text-sm font-bold uppercase tracking-wide">JSON Content</label>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-bold">Filename:</span>
-                                <input type="text" id="json-filename" value="data" class="py-1 px-2 text-xs font-mono w-32 text-right">
-                                <span class="text-xs font-mono">.json</span>
+                            <textarea id="json-input" class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-2 focus:ring-accent border border-default rounded-xl mb-6" placeholder='{"key": "value"}'></textarea>
+                            <div class="flex justify-end">
+                                <button id="btn-json-save" class="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md"><i class="fas fa-save mr-2"></i> Save as JSON</button>
                             </div>
                         </div>
-                        <textarea id="json-input" class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-2 focus:ring-accent border border-default rounded-xl mb-6" placeholder='{"key": "value"}'></textarea>
-                        <div class="flex justify-end">
-                            <button id="btn-json-save" class="px-8 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl shadow-md"><i class="fas fa-save mr-2"></i> Save as JSON</button>
-                        </div>
-                    </div>
-                </section>
+                    </section>
 
-                <!-- FORMATTER -->
-                <section id="tool-formatter" class="tool-section hidden">
-                    <div class="mb-8"><h2 class="text-3xl font-bold mb-2">HTML Formatter</h2></div>
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[600px]">
-                        <div class="tool-card flex flex-col h-full overflow-hidden">
-                            <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 font-bold text-xs uppercase">Input</div>
-                            <textarea id="fmt-input" class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none" placeholder="Paste messy HTML..."></textarea>
-                        </div>
-                        <div class="tool-card flex flex-col h-full overflow-hidden">
-                            <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
-                                <span class="font-bold text-xs uppercase">Output</span>
-                                <button id="btn-fmt-copy" class="text-accent font-bold text-xs hover:underline"><i class="fas fa-copy"></i> Copy</button>
+                    <!-- FORMATTER -->
+                    <section id="tool-formatter" class="tool-section hidden">
+                        <div class="mb-8"><h2 class="text-3xl font-bold mb-2">HTML Formatter</h2></div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[600px]">
+                            <div class="tool-card flex flex-col h-full overflow-hidden">
+                                <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 font-bold text-xs uppercase">Input</div>
+                                <textarea id="fmt-input" class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none" placeholder="Paste messy HTML..."></textarea>
                             </div>
-                            <textarea id="fmt-output" readonly class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none"></textarea>
+                            <div class="tool-card flex flex-col h-full overflow-hidden">
+                                <div class="p-3 border-b border-default bg-gray-50 dark:bg-slate-800 flex justify-between items-center">
+                                    <span class="font-bold text-xs uppercase">Output</span>
+                                    <button id="btn-fmt-copy" class="text-accent font-bold text-xs hover:underline"><i class="fas fa-copy"></i> Copy</button>
+                                </div>
+                                <textarea id="fmt-output" readonly class="flex-1 p-4 font-mono text-xs resize-none bg-input focus:ring-0 border-none"></textarea>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </div>
+            </div>
+        </main>
+
+        <!-- COMPACT VIEW OVERLAY -->
+        <div id="compact-ui" class="hidden absolute inset-0 z-50 bg-[var(--bg_page)] flex items-center justify-center p-4">
+            <div class="border-4 border-dashed border-accent/40 rounded-3xl p-8 text-center flex flex-col items-center justify-center w-full max-w-sm h-full max-h-[300px] bg-[var(--bg_card)] shadow-sm">
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-accent text-3xl mb-4">
+                    <i class="fas fa-clipboard"></i>
+                </div>
+                <h1 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Clipboard to PNG</h1>
+                <div class="space-y-1 text-sm text-[var(--text_secondary)] font-medium mt-2">
+                    <p><span class="font-bold text-accent">CTRL + V</span> to Save Named</p>
+                    <p><span class="font-bold text-accent">ALT + V</span> to Skip Naming</p>
+                </div>
             </div>
         </div>
-    </main>
 
-    <!-- COMPACT VIEW OVERLAY -->
-    <div id="compact-ui" class="hidden absolute inset-0 z-50 bg-[var(--bg_page)] flex items-center justify-center p-4">
-        <div class="border-4 border-dashed border-accent/40 rounded-3xl p-8 text-center flex flex-col items-center justify-center w-full max-w-sm h-full max-h-[300px] bg-[var(--bg_card)] shadow-sm">
-            <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center text-accent text-3xl mb-4">
-                <i class="fas fa-clipboard"></i>
-            </div>
-            <h1 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Clipboard to PNG</h1>
-            <div class="space-y-1 text-sm text-[var(--text_secondary)] font-medium mt-2">
-                <p><span class="font-bold text-accent">CTRL + V</span> to Save Named</p>
-                <p><span class="font-bold text-accent">ALT + V</span> to Skip Naming</p>
+        <canvas id="proc-canvas" class="hidden"></canvas>
+
+        <div id="toast" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform translate-y-10 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
+            <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
+        </div>
+
+        <!-- File Name Modal -->
+        <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
+            <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
+                <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
+                <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
+                <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-[var(--text_primary)] font-medium" placeholder="clipboard-image">
+                <div class="flex justify-end gap-3">
+                    <button id="btn-modal-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
+                    <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <canvas id="proc-canvas" class="hidden"></canvas>
-
-    <div id="toast" class="fixed bottom-6 right-6 px-6 py-4 bg-gray-900 text-white rounded-xl shadow-2xl hidden transform translate-y-10 opacity-0 transition-all duration-300 z-50 flex items-center gap-3">
-        <i class="fas fa-check-circle text-accent text-lg"></i> <span id="toast-msg" class="font-medium">Notification</span>
-    </div>
-
-    <!-- File Name Modal -->
-    <div id="filename-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex items-center justify-center z-50">
-        <div class="tool-card p-8 rounded-2xl w-full max-w-md shadow-2xl transform transition-all scale-100">
-            <h3 class="text-2xl font-bold mb-2 text-[var(--text_primary)]">Save Image</h3>
-            <p class="text-sm text-[var(--text_secondary)] mb-6">Enter a filename for your clipboard image.</p>
-            <input type="text" id="filename-input" class="w-full p-4 border border-default bg-input rounded-xl mb-6 focus:ring-2 focus:ring-accent focus:border-accent text-[var(--text_primary)] font-medium" placeholder="clipboard-image">
-            <div class="flex justify-end gap-3">
-                <button id="btn-modal-cancel" class="px-5 py-2.5 text-[var(--text_secondary)] hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-bold transition-colors">Cancel</button>
-                <button id="btn-modal-confirm" class="px-6 py-2.5 bg-accent hover:bg-accent-hover text-white rounded-xl font-bold shadow-lg">Download</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // --- UTILITIES ---
-        const $ = (id) => document.getElementById(id);
-        const debounce = (func, wait) => {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => { clearTimeout(timeout); func(...args); };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+        <script>
+            // --- UTILITIES ---
+            const $ = (id) => document.getElementById(id);
+            const debounce = (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => { clearTimeout(timeout); func(...args); };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
             };
-        };
 
-        const showToast = (msg, isError = false) => {
-            const t = $('toast'), m = $('toast-msg'), i = t.querySelector('i');
-            m.textContent = msg;
-            i.className = isError ? 'fas fa-exclamation-circle text-red-400 text-xl' : 'fas fa-check-circle text-green-400 text-xl';
-            t.classList.remove('hidden');
-            setTimeout(() => t.classList.remove('translate-y-10', 'opacity-0'), 10);
-            setTimeout(() => {
-                t.classList.add('translate-y-10', 'opacity-0');
-                setTimeout(() => t.classList.add('hidden'), 300);
-            }, 3000);
-        };
+            const showToast = (msg, isError = false) => {
+                const t = $('toast'), m = $('toast-msg'), i = t.querySelector('i');
+                m.textContent = msg;
+                i.className = isError ? 'fas fa-exclamation-circle text-red-400 text-xl' : 'fas fa-check-circle text-green-400 text-xl';
+                t.classList.remove('hidden');
+                setTimeout(() => t.classList.remove('translate-y-10', 'opacity-0'), 10);
+                setTimeout(() => {
+                    t.classList.add('translate-y-10', 'opacity-0');
+                    setTimeout(() => t.classList.add('hidden'), 300);
+                }, 3000);
+            };
 
-        const copyToClipboard = async (blob) => {
-            try {
-                await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-                showToast("Copied to clipboard!");
-            } catch(e) { showToast("Copy failed. Use download instead.", true); }
-        };
+            const copyToClipboard = async (blob) => {
+                try {
+                    await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+                    showToast("Copied to clipboard!");
+                } catch(e) { showToast("Copy failed. Use download instead.", true); }
+            };
 
-        const syncInputs = (rangeId, inputId, callback) => {
-            const r = $(rangeId), i = $(inputId);
-            if(!r || !i) return;
-            r.addEventListener('input', () => { i.value = r.value; callback(); });
-            i.addEventListener('input', () => { r.value = i.value; callback(); });
-        };
+            const syncInputs = (rangeId, inputId, callback) => {
+                const r = $(rangeId), i = $(inputId);
+                if(!r || !i) return;
+                r.addEventListener('input', () => { i.value = r.value; callback(); });
+                i.addEventListener('input', () => { r.value = i.value; callback(); });
+            };
 
-        // --- APP LOGIC ---
-        const App = {
-            state: {
-                activeTab: 'resizer',
-                resizer: { svg: null, aspect: 1, name: 'image' },
-                compressor: { file: null, url: null },
-                lottie: { json: null, animation: null, name: 'animation', duration: 0 },
-                clipBlob: null
-            },
+            // --- APP LOGIC ---
+            const App = {
+                state: {
+                    activeTab: 'resizer',
+                    resizer: { svg: null, aspect: 1, name: 'image' },
+                    compressor: { file: null, url: null },
+                    lottie: { json: null, animation: null, name: 'animation', duration: 0 },
+                    clipBlob: null
+                },
 
-            init() {
-                setTimeout(() => document.body.classList.remove('preload'), 300);
-                this.setupTheme();
-                this.setupNav();
-                this.setupResizer();
-                this.setupCompressor();
-                this.setupScaler();
-                this.setupFormatter();
-                this.setupJsonSaver();
-                this.setupLottie();
-                this.setupClipboard();
-            },
+                init() {
+                    setTimeout(() => document.body.classList.remove('preload'), 300);
+                    this.setupTheme();
+                    this.setupNav();
+                    this.setupResizer();
+                    this.setupCompressor();
+                    this.setupScaler();
+                    this.setupFormatter();
+                    this.setupJsonSaver();
+                    this.setupLottie();
+                    this.setupClipboard();
+                },
 
-            setupTheme() {
-                const toggle = $('theme-toggle');
-                toggle.addEventListener('click', () => {
-                    document.documentElement.classList.toggle('dark');
-                    localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-                });
-            },
-
-            setupNav() {
-                const container = $('nav-container');
-                const switchTab = (id) => {
-                    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                    document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
-                    const nav = $(`nav-${id}`);
-                    if(nav) nav.classList.add('active');
-                    $(`tool-${id}`).classList.remove('hidden');
-                    this.state.activeTab = id;
-                };
-
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', () => switchTab(item.dataset.tab));
-                });
-                
-                switchTab('resizer');
-            },
-
-            setupResizer() {
-                const els = {
-                    up: $('resizer-upload'), disp: $('resizer-display'), ctrls: $('resizer-controls'),
-                    wR: $('w-range'), wI: $('w-input'), hR: $('h-range'), hI: $('h-input'),
-                    lock: $('resizer-lock'), rR: $('r-range'), rI: $('r-input'),
-                    dlBtn: $('btn-resizer-dl'), cpBtn: $('btn-resizer-copy'),
-                    canvas: $('proc-canvas')
-                };
-
-                const updatePreview = debounce(async () => {
-                    if(!this.state.resizer.svg) return;
-                    const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
-                    const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
-                    const rad = parseInt(els.rI.value)||0;
-
-                    const svgEl = els.disp.querySelector('svg');
-                    const fw = Math.max(1, w - crop.l - crop.r), fh = Math.max(1, h - crop.t - crop.b);
-                    const scale = Math.min(1, 280/fw, 280/fh);
-                    
-                    els.disp.style.width = `${fw * scale}px`; els.disp.style.height = `${fh * scale}px`;
-                    els.disp.style.borderRadius = `${rad * scale}px`;
-                    
-                    if(svgEl) {
-                        svgEl.style.width = `${w * scale}px`; svgEl.style.height = `${h * scale}px`;
-                        svgEl.style.marginLeft = `-${crop.l * scale}px`; svgEl.style.marginTop = `-${crop.t * scale}px`;
-                    }
-                }, 10);
-
-                syncInputs('w-range', 'w-input', () => {
-                     if(els.lock.checked) {
-                        const h = Math.round(parseInt(els.wI.value) / this.state.resizer.aspect);
-                        els.hI.value = els.hR.value = h;
-                     }
-                     updatePreview();
-                });
-                syncInputs('h-range', 'h-input', () => {
-                     if(els.lock.checked) {
-                        const w = Math.round(parseInt(els.hI.value) * this.state.resizer.aspect);
-                        els.wI.value = els.wR.value = w;
-                     }
-                     updatePreview();
-                });
-                syncInputs('r-range', 'r-input', updatePreview);
-                ['crop-l','crop-r','crop-t','crop-b'].forEach(id => $(id).addEventListener('input', updatePreview));
-
-                const generateBlob = async () => {
-                    const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
-                    const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
-                    const rad = parseInt(els.rI.value)||0;
-                    const fw = w - crop.l - crop.r, fh = h - crop.t - crop.b;
-
-                    const cvs = $('proc-canvas');
-                    cvs.width = fw; cvs.height = fh;
-                    const ctx = cvs.getContext('2d');
-                    
-                    if(rad > 0) {
-                        ctx.beginPath(); ctx.moveTo(rad, 0);
-                        ctx.arcTo(fw, 0, fw, fh, rad); ctx.arcTo(fw, fh, 0, fh, rad);
-                        ctx.arcTo(0, fh, 0, 0, rad); ctx.arcTo(0, 0, fw, 0, rad);
-                        ctx.closePath(); ctx.clip();
-                    }
-
-                    let svgStr = this.state.resizer.svg;
-                    if(svgStr.includes('<svg')) {
-                        svgStr = svgStr.replace(/<svg([^>]*)>/, (m) => m.replace(/width="[^"]*"/i, '').replace(/height="[^"]*"/i, '') + ` width="${w}" height="${h}"`);
-                    }
-                    const img = new Image();
-                    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
-                    await new Promise(r => img.onload = r);
-                    ctx.drawImage(img, -crop.l, -crop.t, w, h);
-                    
-                    return new Promise(r => cvs.toBlob(r, 'image/png'));
-                };
-
-                els.up.addEventListener('change', e => {
-                    const f = e.target.files[0];
-                    if(!f) return;
-                    this.state.resizer.name = f.name.replace('.svg','');
-                    const reader = new FileReader();
-                    reader.onload = ev => {
-                        this.state.resizer.svg = ev.target.result;
-                        els.disp.innerHTML = this.state.resizer.svg;
-                        const svg = els.disp.querySelector('svg');
-                        const viewbox = svg.viewBox.baseVal || {width: 500, height: 500};
-                        const w = Math.round(viewbox.width), h = Math.round(viewbox.height);
-                        this.state.resizer.aspect = w / h;
-                        els.wI.value = els.wR.value = w; els.hI.value = els.hR.value = h;
-                        els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
-                        updatePreview();
-                    };
-                    reader.readAsText(f);
-                });
-
-                $('btn-resizer-dl').addEventListener('click', async () => {
-                    const blob = await generateBlob();
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(blob);
-                    a.download = `${this.state.resizer.name}-resized.png`;
-                    a.click();
-                    showToast("Image downloaded!");
-                });
-
-                $('btn-resizer-copy').addEventListener('click', async () => {
-                    const blob = await generateBlob();
-                    copyToClipboard(blob);
-                });
-            },
-
-            setupCompressor() {
-                const els = { up: $('comp-upload'), prevOrig: $('comp-preview-orig'), prevRes: $('comp-preview-res'), ctrls: $('comp-controls'), sl: $('comp-slider'), val: $('comp-quality-val'), stats: $('comp-stats'), dl: $('btn-comp-dl') };
-
-                const process = debounce(async () => {
-                    if(!this.state.compressor.file) return;
-                    const q = parseInt(els.sl.value) / 100;
-                    els.val.innerText = `${parseInt(els.sl.value)}%`;
-                    const img = new Image();
-                    img.src = URL.createObjectURL(this.state.compressor.file);
-                    await new Promise(r => img.onload = r);
-                    const cvs = $('proc-canvas');
-                    cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
-                    const ctx = cvs.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    cvs.toBlob(blob => {
-                        if(this.state.compressor.url) URL.revokeObjectURL(this.state.compressor.url);
-                        this.state.compressor.url = URL.createObjectURL(blob);
-                        els.prevRes.innerHTML = `<img src="${this.state.compressor.url}">`;
-                        const saved = ((1 - (blob.size / this.state.compressor.file.size)) * 100).toFixed(1);
-                        els.stats.innerHTML = `Orig: <b>${(this.state.compressor.file.size/1024).toFixed(0)}KB</b> <i class="fas fa-arrow-right mx-2 text-gray-400"></i> New: <b>${(blob.size/1024).toFixed(0)}KB</b> <span class="text-accent">(-${saved}%)</span>`;
-                        els.dl.onclick = () => {
-                            const a = document.createElement('a');
-                            a.href = this.state.compressor.url;
-                            a.download = `min-${this.state.compressor.file.name.split('.')[0]}.jpg`;
-                            a.click();
-                        };
-                    }, 'image/jpeg', q);
-                }, 100);
-
-                els.up.addEventListener('change', e => {
-                    const f = e.target.files[0];
-                    if(!f) return;
-                    this.state.compressor.file = f;
-                    els.prevOrig.innerHTML = `<img src="${URL.createObjectURL(f)}">`;
-                    els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
-                    process();
-                });
-                els.sl.addEventListener('input', process);
-            },
-
-            setupScaler() {
-                const els = { in: $('scaler-input'), width: $('scaler-width'), btn: $('btn-scaler-gen'), file: $('scaler-file'), res: $('scaler-results') };
-                els.file.addEventListener('change', e => {
-                    const f = e.target.files[0];
-                    if(f) { const r = new FileReader(); r.onload = ev => els.in.value = ev.target.result; r.readAsText(f); }
-                });
-                els.btn.addEventListener('click', async () => {
-                    const svg = els.in.value.trim();
-                    if(!svg) return showToast('Paste SVG code first', true);
-                    const targetW = parseInt(els.width.value) || 800;
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(svg, 'image/svg+xml');
-                    let iw = 32, ih = 32;
-                    if(doc.documentElement.hasAttribute('viewBox')) {
-                        const vb = doc.documentElement.getAttribute('viewBox').split(/[\s,]+/).map(Number);
-                        if(vb.length===4) { iw = vb[2]; ih = vb[3]; }
-                    }
-                    const th = Math.round(targetW / (iw/ih));
-                    const cvs = document.createElement('canvas');
-                    cvs.width = targetW; cvs.height = th;
-                    const img = new Image();
-                    const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-                    img.src = URL.createObjectURL(blob);
-                    await new Promise(r => img.onload = r);
-                    cvs.getContext('2d').drawImage(img, 0, 0, targetW, th);
-                    cvs.toBlob(b => {
-                        const url = URL.createObjectURL(b);
-                        const card = document.createElement('div');
-                        card.className = "tool-card p-4 flex flex-col items-center bg-gray-50 dark:bg-slate-800";
-                        card.innerHTML = `<div class="h-32 w-full flex items-center justify-center bg-dots rounded border border-default mb-3 p-2"><img src="${url}" class="max-h-full"></div><div class="text-xs font-bold mb-3">${targetW} x ${th} px</div><button class="copy-btn-scaler text-xs bg-white dark:bg-slate-700 border border-default rounded-lg text-xs font-bold shadow-sm hover:text-accent w-full py-2">Copy Image</button>`;
-                        card.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
-                             try {
-                                await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
-                                showToast("Copied to clipboard!");
-                             } catch(e) { showToast("Copy failed.", true); }
-                        });
-                        els.res.prepend(card);
+                setupTheme() {
+                    const toggle = $('theme-toggle');
+                    toggle.addEventListener('click', () => {
+                        document.documentElement.classList.toggle('dark');
+                        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
                     });
-                });
-            },
+                },
 
-            setupJsonSaver() {
-                $('btn-json-save').addEventListener('click', () => {
-                    const content = $('json-input').value;
-                    const filename = $('json-filename').value || 'data';
-                    if(!content.trim()) return showToast('Input is empty', true);
+                setupNav() {
+                    const container = $('nav-container');
+                    const switchTab = (id) => {
+                        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                        document.querySelectorAll('.tool-section').forEach(el => el.classList.add('hidden'));
+                        const nav = $(`nav-${id}`);
+                        if(nav) nav.classList.add('active');
+                        $(`tool-${id}`).classList.remove('hidden');
+                        this.state.activeTab = id;
+                    };
+
+                    document.querySelectorAll('.nav-item').forEach(item => {
+                        item.addEventListener('click', () => switchTab(item.dataset.tab));
+                    });
                     
-                    try {
-                        const blob = new Blob([content], { type: 'application/json' });
+                    switchTab('resizer');
+                },
+
+                setupResizer() {
+                    const els = {
+                        up: $('resizer-upload'), disp: $('resizer-display'), ctrls: $('resizer-controls'),
+                        wR: $('w-range'), wI: $('w-input'), hR: $('h-range'), hI: $('h-input'),
+                        lock: $('resizer-lock'), rR: $('r-range'), rI: $('r-input'),
+                        dlBtn: $('btn-resizer-dl'), cpBtn: $('btn-resizer-copy'),
+                        canvas: $('proc-canvas')
+                    };
+
+                    const updatePreview = debounce(async () => {
+                        if(!this.state.resizer.svg) return;
+                        const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
+                        const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
+                        const rad = parseInt(els.rI.value)||0;
+
+                        const svgEl = els.disp.querySelector('svg');
+                        const fw = Math.max(1, w - crop.l - crop.r), fh = Math.max(1, h - crop.t - crop.b);
+                        const scale = Math.min(1, 280/fw, 280/fh);
+                        
+                        els.disp.style.width = `${fw * scale}px`; els.disp.style.height = `${fh * scale}px`;
+                        els.disp.style.borderRadius = `${rad * scale}px`;
+                        
+                        if(svgEl) {
+                            svgEl.style.width = `${w * scale}px`; svgEl.style.height = `${h * scale}px`;
+                            svgEl.style.marginLeft = `-${crop.l * scale}px`; svgEl.style.marginTop = `-${crop.t * scale}px`;
+                        }
+                    }, 10);
+
+                    syncInputs('w-range', 'w-input', () => {
+                         if(els.lock.checked) {
+                            const h = Math.round(parseInt(els.wI.value) / this.state.resizer.aspect);
+                            els.hI.value = els.hR.value = h;
+                         }
+                         updatePreview();
+                    });
+                    syncInputs('h-range', 'h-input', () => {
+                         if(els.lock.checked) {
+                            const w = Math.round(parseInt(els.hI.value) * this.state.resizer.aspect);
+                            els.wI.value = els.wR.value = w;
+                         }
+                         updatePreview();
+                    });
+                    syncInputs('r-range', 'r-input', updatePreview);
+                    ['crop-l','crop-r','crop-t','crop-b'].forEach(id => $(id).addEventListener('input', updatePreview));
+
+                    const generateBlob = async () => {
+                        const w = parseInt(els.wI.value), h = parseInt(els.hI.value);
+                        const crop = { l: parseInt($('crop-l').value)||0, r: parseInt($('crop-r').value)||0, t: parseInt($('crop-t').value)||0, b: parseInt($('crop-b').value)||0 };
+                        const rad = parseInt(els.rI.value)||0;
+                        const fw = w - crop.l - crop.r, fh = h - crop.t - crop.b;
+
+                        const cvs = $('proc-canvas');
+                        cvs.width = fw; cvs.height = fh;
+                        const ctx = cvs.getContext('2d');
+                        
+                        if(rad > 0) {
+                            ctx.beginPath(); ctx.moveTo(rad, 0);
+                            ctx.arcTo(fw, 0, fw, fh, rad); ctx.arcTo(fw, fh, 0, fh, rad);
+                            ctx.arcTo(0, fh, 0, 0, rad); ctx.arcTo(0, 0, fw, 0, rad);
+                            ctx.closePath(); ctx.clip();
+                        }
+
+                        let svgStr = this.state.resizer.svg;
+                        if(svgStr.includes('<svg')) {
+                            svgStr = svgStr.replace(/<svg([^>]*)>/, (m) => m.replace(/width="[^"]*"/i, '').replace(/height="[^"]*"/i, '') + ` width="${w}" height="${h}"`);
+                        }
+                        const img = new Image();
+                        img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+                        await new Promise(r => img.onload = r);
+                        ctx.drawImage(img, -crop.l, -crop.t, w, h);
+                        
+                        return new Promise(r => cvs.toBlob(r, 'image/png'));
+                    };
+
+                    els.up.addEventListener('change', e => {
+                        const f = e.target.files[0];
+                        if(!f) return;
+                        this.state.resizer.name = f.name.replace('.svg','');
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                            this.state.resizer.svg = ev.target.result;
+                            els.disp.innerHTML = this.state.resizer.svg;
+                            const svg = els.disp.querySelector('svg');
+                            const viewbox = svg.viewBox.baseVal || {width: 500, height: 500};
+                            const w = Math.round(viewbox.width), h = Math.round(viewbox.height);
+                            this.state.resizer.aspect = w / h;
+                            els.wI.value = els.wR.value = w; els.hI.value = els.hR.value = h;
+                            els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                            updatePreview();
+                        };
+                        reader.readAsText(f);
+                    });
+
+                    $('btn-resizer-dl').addEventListener('click', async () => {
+                        const blob = await generateBlob();
                         const a = document.createElement('a');
                         a.href = URL.createObjectURL(blob);
-                        a.download = `${filename}.json`;
+                        a.download = `${this.state.resizer.name}-resized.png`;
                         a.click();
-                        showToast('JSON Saved!');
-                    } catch(e) { showToast('Error saving file', true); }
-                });
-            },
+                        showToast("Image downloaded!");
+                    });
 
-            setupLottie() {
-                const els = {
-                    up: $('lottie-upload'), ctrls: $('lottie-controls'), prev: $('lottie-preview-container'),
-                    width: $('lottie-width'), bgCol: $('lottie-bg-color'), bgTrans: $('lottie-bg-transparent'),
-                    fps: $('lottie-fps'), fpsVal: $('lottie-fps-val'), btn: $('btn-lottie-gen'),
-                    bar: $('lottie-bar'), pct: $('lottie-pct'), prog: $('lottie-progress'), dims: $('lottie-dims'),
-                    est: $('lottie-size-est'), loop: $('lottie-loop')
-                };
+                    $('btn-resizer-copy').addEventListener('click', async () => {
+                        const blob = await generateBlob();
+                        copyToClipboard(blob);
+                    });
+                },
 
-                let animData = null;
-                let bgColor = 'transparent';
-                let previewInterval = null;
+                setupCompressor() {
+                    const els = { up: $('comp-upload'), prevOrig: $('comp-preview-orig'), prevRes: $('comp-preview-res'), ctrls: $('comp-controls'), sl: $('comp-slider'), val: $('comp-quality-val'), stats: $('comp-stats'), dl: $('btn-comp-dl') };
 
-                const updateSizeEstimate = () => {
-                    if(!animData) return;
-                    const w = parseInt(els.width.value) || 800;
-                    const h = Math.round(w / (animData.w / animData.h));
-                    els.dims.innerText = `${w}x${h}`;
-                    const fps = parseInt(els.fps.value);
-                    const duration = this.state.lottie.duration || 1;
-                    const frames = Math.ceil(duration * fps);
-                    const sizeMB = ((w * h * frames * 0.6) / 1024 / 1024).toFixed(1);
-                    els.est.innerText = `Est: ~${sizeMB} MB`;
-                };
+                    const process = debounce(async () => {
+                        if(!this.state.compressor.file) return;
+                        const q = parseInt(els.sl.value) / 100;
+                        els.val.innerText = `${parseInt(els.sl.value)}%`;
+                        const img = new Image();
+                        img.src = URL.createObjectURL(this.state.compressor.file);
+                        await new Promise(r => img.onload = r);
+                        const cvs = $('proc-canvas');
+                        cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
+                        const ctx = cvs.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+                        cvs.toBlob(blob => {
+                            if(this.state.compressor.url) URL.revokeObjectURL(this.state.compressor.url);
+                            this.state.compressor.url = URL.createObjectURL(blob);
+                            els.prevRes.innerHTML = `<img src="${this.state.compressor.url}">`;
+                            const saved = ((1 - (blob.size / this.state.compressor.file.size)) * 100).toFixed(1);
+                            els.stats.innerHTML = `Orig: <b>${(this.state.compressor.file.size/1024).toFixed(0)}KB</b> <i class="fas fa-arrow-right mx-2 text-gray-400"></i> New: <b>${(blob.size/1024).toFixed(0)}KB</b> <span class="text-accent">(-${saved}%)</span>`;
+                            els.dl.onclick = () => {
+                                const a = document.createElement('a');
+                                a.href = this.state.compressor.url;
+                                a.download = `min-${this.state.compressor.file.name.split('.')[0]}.jpg`;
+                                a.click();
+                            };
+                        }, 'image/jpeg', q);
+                    }, 100);
 
-                const updatePreviewBg = () => {
-                    els.prev.style.background = bgColor === 'transparent' ? '' : bgColor;
-                    els.prev.classList.toggle('bg-dots', bgColor === 'transparent');
-                };
+                    els.up.addEventListener('change', e => {
+                        const f = e.target.files[0];
+                        if(!f) return;
+                        this.state.compressor.file = f;
+                        els.prevOrig.innerHTML = `<img src="${URL.createObjectURL(f)}">`;
+                        els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                        process();
+                    });
+                    els.sl.addEventListener('input', process);
+                },
 
-                const startPreviewLoop = () => {
-                    if(previewInterval) clearInterval(previewInterval);
-                    if(!this.state.lottie.animation) return;
+                setupScaler() {
+                    const els = { in: $('scaler-input'), width: $('scaler-width'), btn: $('btn-scaler-gen'), file: $('scaler-file'), res: $('scaler-results') };
+                    els.file.addEventListener('change', e => {
+                        const f = e.target.files[0];
+                        if(f) { const r = new FileReader(); r.onload = ev => els.in.value = ev.target.result; r.readAsText(f); }
+                    });
+                    els.btn.addEventListener('click', async () => {
+                        const svg = els.in.value.trim();
+                        if(!svg) return showToast('Paste SVG code first', true);
+                        const targetW = parseInt(els.width.value) || 800;
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(svg, 'image/svg+xml');
+                        let iw = 32, ih = 32;
+                        if(doc.documentElement.hasAttribute('viewBox')) {
+                            const vb = doc.documentElement.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+                            if(vb.length===4) { iw = vb[2]; ih = vb[3]; }
+                        }
+                        const th = Math.round(targetW / (iw/ih));
+                        const cvs = document.createElement('canvas');
+                        cvs.width = targetW; cvs.height = th;
+                        const img = new Image();
+                        const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+                        img.src = URL.createObjectURL(blob);
+                        await new Promise(r => img.onload = r);
+                        cvs.getContext('2d').drawImage(img, 0, 0, targetW, th);
+                        cvs.toBlob(b => {
+                            const url = URL.createObjectURL(b);
+                            const card = document.createElement('div');
+                            card.className = "tool-card p-4 flex flex-col items-center bg-gray-50 dark:bg-slate-800";
+                            card.innerHTML = `<div class="h-32 w-full flex items-center justify-center bg-dots rounded border border-default mb-3 p-2"><img src="${url}" class="max-h-full"></div><div class="text-xs font-bold mb-3">${targetW} x ${th} px</div><button class="copy-btn-scaler text-xs bg-white dark:bg-slate-700 border border-default rounded-lg text-xs font-bold shadow-sm hover:text-accent w-full py-2">Copy Image</button>`;
+                            card.querySelector('.copy-btn-scaler').addEventListener('click', async () => {
+                                 try {
+                                    await navigator.clipboard.write([new ClipboardItem({'image/png': b})]);
+                                    showToast("Copied to clipboard!");
+                                 } catch(e) { showToast("Copy failed.", true); }
+                            });
+                            els.res.prepend(card);
+                        });
+                    });
+                },
 
-                    const fps = parseInt(els.fps.value);
-                    const anim = this.state.lottie.animation;
-                    const totalFrames = anim.totalFrames;
-                    let currentFrame = 0;
-                    anim.stop();
-                    previewInterval = setInterval(() => {
-                        currentFrame += 1;
-                        const time = currentFrame / fps;
-                        if(time >= anim.getDuration(false)) currentFrame = 0;
-                        const lottieFrame = (currentFrame / (anim.getDuration(false) * fps)) * totalFrames;
-                        anim.goToAndStop(lottieFrame, true); 
-                    }, 1000/fps);
-                };
-
-                els.bgCol.addEventListener('input', e => { bgColor = e.target.value; updatePreviewBg(); });
-                els.bgTrans.addEventListener('click', () => { bgColor = 'transparent'; els.bgCol.value = '#ffffff'; updatePreviewBg(); });
-                
-                els.fps.addEventListener('input', e => {
-                    els.fpsVal.innerText = `${e.target.value} FPS`;
-                    updateSizeEstimate();
-                    startPreviewLoop();
-                });
-                els.width.addEventListener('input', updateSizeEstimate);
-
-                els.up.addEventListener('change', e => {
-                    const f = e.target.files[0];
-                    if(!f) return;
-                    this.state.lottie.name = f.name.replace('.json','');
-                    const reader = new FileReader();
-                    reader.onload = ev => {
+                setupJsonSaver() {
+                    $('btn-json-save').addEventListener('click', () => {
+                        const content = $('json-input').value;
+                        const filename = $('json-filename').value || 'data';
+                        if(!content.trim()) return showToast('Input is empty', true);
+                        
                         try {
-                            animData = JSON.parse(ev.target.result);
-                            $('lottie-placeholder').classList.add('hidden');
-                            if(this.state.lottie.animation) this.state.lottie.animation.destroy();
-                            this.state.lottie.animation = lottie.loadAnimation({
-                                container: els.prev, renderer: 'svg', loop: false, autoplay: false, animationData: animData
-                            });
-                            this.state.lottie.animation.addEventListener('DOMLoaded', () => {
-                                this.state.lottie.duration = this.state.lottie.animation.getDuration(false);
-                                const w = animData.w || 800; const h = animData.h || 600;
-                                els.width.value = w; els.dims.innerText = `${w}x${h}`;
-                                els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
-                                updateSizeEstimate(); startPreviewLoop();
-                            });
-                        } catch(err) { showToast('Invalid JSON file', true); }
+                            const blob = new Blob([content], { type: 'application/json' });
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = `${filename}.json`;
+                            a.click();
+                            showToast('JSON Saved!');
+                        } catch(e) { showToast('Error saving file', true); }
+                    });
+                },
+
+                setupLottie() {
+                    const els = {
+                        up: $('lottie-upload'), ctrls: $('lottie-controls'), prev: $('lottie-preview-container'),
+                        width: $('lottie-width'), bgCol: $('lottie-bg-color'), bgTrans: $('lottie-bg-transparent'),
+                        fps: $('lottie-fps'), fpsVal: $('lottie-fps-val'), btn: $('btn-lottie-gen'),
+                        bar: $('lottie-bar'), pct: $('lottie-pct'), prog: $('lottie-progress'), dims: $('lottie-dims'),
+                        est: $('lottie-size-est'), loop: $('lottie-loop')
                     };
-                    reader.readAsText(f);
-                });
 
-                els.btn.addEventListener('click', async () => {
-                    if(!animData) return;
-                    els.btn.disabled = true; els.btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
-                    els.prog.classList.remove('hidden');
+                    let animData = null;
+                    let bgColor = 'transparent';
+                    let previewInterval = null;
 
-                    try {
-                        const workerBlob = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r=>r.blob());
-                        const workerUrl = URL.createObjectURL(workerBlob);
+                    const updateSizeEstimate = () => {
+                        if(!animData) return;
+                        const w = parseInt(els.width.value) || 800;
+                        const h = Math.round(w / (animData.w / animData.h));
+                        els.dims.innerText = `${w}x${h}`;
+                        const fps = parseInt(els.fps.value);
+                        const duration = this.state.lottie.duration || 1;
+                        const frames = Math.ceil(duration * fps);
+                        const sizeMB = ((w * h * frames * 0.6) / 1024 / 1024).toFixed(1);
+                        els.est.innerText = `Est: ~${sizeMB} MB`;
+                    };
+
+                    const updatePreviewBg = () => {
+                        els.prev.style.background = bgColor === 'transparent' ? '' : bgColor;
+                        els.prev.classList.toggle('bg-dots', bgColor === 'transparent');
+                    };
+
+                    const startPreviewLoop = () => {
+                        if(previewInterval) clearInterval(previewInterval);
+                        if(!this.state.lottie.animation) return;
 
                         const fps = parseInt(els.fps.value);
-                        const targetW = parseInt(els.width.value);
-                        const ar = (animData.w / animData.h) || 1;
-                        const targetH = Math.round(targetW / ar);
-                        
-                        const gif = new GIF({
-                            workers: 2, quality: 1, workerScript: workerUrl, width: targetW, height: targetH,
-                            transparent: bgColor === 'transparent' ? 0x000000 : null,
-                            repeat: els.loop.checked ? 0 : -1
-                        });
+                        const anim = this.state.lottie.animation;
+                        const totalFrames = anim.totalFrames;
+                        let currentFrame = 0;
+                        anim.stop();
+                        previewInterval = setInterval(() => {
+                            currentFrame += 1;
+                            const time = currentFrame / fps;
+                            if(time >= anim.getDuration(false)) currentFrame = 0;
+                            const lottieFrame = (currentFrame / (anim.getDuration(false) * fps)) * totalFrames;
+                            anim.goToAndStop(lottieFrame, true); 
+                        }, 1000/fps);
+                    };
 
-                        const lottieCanvas = document.createElement('canvas');
-                        lottieCanvas.width = targetW; lottieCanvas.height = targetH;
-                        const exportAnimData = JSON.parse(JSON.stringify(animData));
-                        const animRenderer = lottie.loadAnimation({
-                            renderer: 'canvas', loop: false, autoplay: false, animationData: exportAnimData,
-                            rendererSettings: { context: lottieCanvas.getContext('2d'), preserveAspectRatio: 'xMidYMid meet', clearCanvas: true }
-                        });
-
-                        await new Promise(r => { if(animRenderer.isLoaded) r(); else animRenderer.addEventListener('DOMLoaded', r); });
-                        animRenderer.resize(); 
-
-                        const duration = animRenderer.getDuration(true); 
-                        const totalTime = animRenderer.getDuration(false); 
-                        const frameCount = Math.ceil(totalTime * fps);
-                        const frameStep = duration / frameCount;
-
-                        const compCanvas = document.createElement('canvas');
-                        compCanvas.width = targetW; compCanvas.height = targetH;
-                        const ctx = compCanvas.getContext('2d');
-
-                        for (let i = 0; i < frameCount; i++) {
-                            animRenderer.goToAndStop(i * frameStep, true);
-                            ctx.clearRect(0, 0, targetW, targetH);
-                            if(bgColor !== 'transparent') { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, targetW, targetH); }
-                            ctx.drawImage(lottieCanvas, 0, 0);
-                            gif.addFrame(ctx, {copy: true, delay: 1000/fps});
-                            const pct = Math.round((i/frameCount)*100);
-                            els.bar.style.width = `${pct}%`; els.pct.innerText = `${pct}%`;
-                            await new Promise(r => setTimeout(r, 0)); 
-                        }
-
-                        gif.on('finished', blob => {
-                            const a = document.createElement('a');
-                            a.href = URL.createObjectURL(blob); a.download = `${this.state.lottie.name}.gif`; a.click();
-                            els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
-                            els.prog.classList.add('hidden'); els.bar.style.width = '0%';
-                        });
-                        gif.render();
-                    } catch(e) {
-                        console.error(e); showToast('Generation Failed', true);
-                        els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
-                    }
-                });
-            },
-
-            setupFormatter() {
-                const fmt = (html) => {
-                    let formatted = '', pad = 0;
-                    html.replace(/(>)(<)(\/*)/g, '$1\r\n$2$3').split('\r\n').forEach(node => {
-                        let indent = 0;
-                        if (node.match(/.+<\/\w[^>]*>$/)) indent = 0;
-                        else if (node.match(/^<\/\w/)) { if (pad != 0) pad -= 1; }
-                        else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1;
-                        formatted += '  '.repeat(pad) + node + '\r\n';
-                        pad += indent;
-                    });
-                    return formatted;
-                };
-                $('fmt-input').addEventListener('input', e => $('fmt-output').value = fmt(e.target.value));
-                $('btn-fmt-copy').addEventListener('click', () => {
-                    navigator.clipboard.writeText($('fmt-output').value);
-                    showToast('HTML Copied');
-                });
-            },
-
-            setupClipboard() {
-                const btn = $('clipboard-download-button');
-                const modal = $('filename-modal');
-                const input = $('filename-input');
-                const confirmBtn = $('filename-confirm');
-                const cancelBtn = $('filename-cancel');
-
-                // Consolidated logic for both button click and shortcuts
-                const handleClipboardAction = async (isInstant = false) => {
-                    // Check for native paste event context (not reliable directly here)
-                    // If triggered via button, try read()
-                    // If triggered via Ctrl+V, we need to rely on the paste listener below
-                    // This function is for manual button triggers or Alt+V attempts (if supported)
+                    els.bgCol.addEventListener('input', e => { bgColor = e.target.value; updatePreviewBg(); });
+                    els.bgTrans.addEventListener('click', () => { bgColor = 'transparent'; els.bgCol.value = '#ffffff'; updatePreviewBg(); });
                     
-                    try {
-                        const items = await navigator.clipboard.read();
-                        let found = false;
-                        for (let item of items) {
-                            if (item.types.includes("image/png")) {
-                                this.state.clipBlob = await item.getType("image/png");
-                                found = true;
-                                break;
+                    els.fps.addEventListener('input', e => {
+                        els.fpsVal.innerText = `${e.target.value} FPS`;
+                        updateSizeEstimate();
+                        startPreviewLoop();
+                    });
+                    els.width.addEventListener('input', updateSizeEstimate);
+
+                    els.up.addEventListener('change', e => {
+                        const f = e.target.files[0];
+                        if(!f) return;
+                        this.state.lottie.name = f.name.replace('.json','');
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                            try {
+                                animData = JSON.parse(ev.target.result);
+                                $('lottie-placeholder').classList.add('hidden');
+                                if(this.state.lottie.animation) this.state.lottie.animation.destroy();
+                                this.state.lottie.animation = lottie.loadAnimation({
+                                    container: els.prev, renderer: 'svg', loop: false, autoplay: false, animationData: animData
+                                });
+                                this.state.lottie.animation.addEventListener('DOMLoaded', () => {
+                                    this.state.lottie.duration = this.state.lottie.animation.getDuration(false);
+                                    const w = animData.w || 800; const h = animData.h || 600;
+                                    els.width.value = w; els.dims.innerText = `${w}x${h}`;
+                                    els.ctrls.classList.remove('opacity-50', 'pointer-events-none');
+                                    updateSizeEstimate(); startPreviewLoop();
+                                });
+                            } catch(err) { showToast('Invalid JSON file', true); }
+                        };
+                        reader.readAsText(f);
+                    });
+
+                    els.btn.addEventListener('click', async () => {
+                        if(!animData) return;
+                        els.btn.disabled = true; els.btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Generating...';
+                        els.prog.classList.remove('hidden');
+
+                        try {
+                            const workerBlob = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js').then(r=>r.blob());
+                            const workerUrl = URL.createObjectURL(workerBlob);
+
+                            const fps = parseInt(els.fps.value);
+                            const targetW = parseInt(els.width.value);
+                            const ar = (animData.w / animData.h) || 1;
+                            const targetH = Math.round(targetW / ar);
+                            
+                            const gif = new GIF({
+                                workers: 2, quality: 1, workerScript: workerUrl, width: targetW, height: targetH,
+                                transparent: bgColor === 'transparent' ? 0x000000 : null,
+                                repeat: els.loop.checked ? 0 : -1
+                            });
+
+                            const lottieCanvas = document.createElement('canvas');
+                            lottieCanvas.width = targetW; lottieCanvas.height = targetH;
+                            const exportAnimData = JSON.parse(JSON.stringify(animData));
+                            const animRenderer = lottie.loadAnimation({
+                                renderer: 'canvas', loop: false, autoplay: false, animationData: exportAnimData,
+                                rendererSettings: { context: lottieCanvas.getContext('2d'), preserveAspectRatio: 'xMidYMid meet', clearCanvas: true }
+                            });
+
+                            await new Promise(r => { if(animRenderer.isLoaded) r(); else animRenderer.addEventListener('DOMLoaded', r); });
+                            animRenderer.resize(); 
+
+                            const duration = animRenderer.getDuration(true); 
+                            const totalTime = animRenderer.getDuration(false); 
+                            const frameCount = Math.ceil(totalTime * fps);
+                            const frameStep = duration / frameCount;
+
+                            const compCanvas = document.createElement('canvas');
+                            compCanvas.width = targetW; compCanvas.height = targetH;
+                            const ctx = compCanvas.getContext('2d');
+
+                            for (let i = 0; i < frameCount; i++) {
+                                animRenderer.goToAndStop(i * frameStep, true);
+                                ctx.clearRect(0, 0, targetW, targetH);
+                                if(bgColor !== 'transparent') { ctx.fillStyle = bgColor; ctx.fillRect(0, 0, targetW, targetH); }
+                                ctx.drawImage(lottieCanvas, 0, 0);
+                                gif.addFrame(ctx, {copy: true, delay: 1000/fps});
+                                const pct = Math.round((i/frameCount)*100);
+                                els.bar.style.width = `${pct}%`; els.pct.innerText = `${pct}%`;
+                                await new Promise(r => setTimeout(r, 0)); 
                             }
+
+                            gif.on('finished', blob => {
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(blob); a.download = `${this.state.lottie.name}.gif`; a.click();
+                                els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
+                                els.prog.classList.add('hidden'); els.bar.style.width = '0%';
+                            });
+                            gif.render();
+                        } catch(e) {
+                            console.error(e); showToast('Generation Failed', true);
+                            els.btn.disabled = false; els.btn.innerHTML = '<i class="fas fa-magic mr-2"></i> Convert to GIF';
+                        }
+                    });
+                },
+
+                setupFormatter() {
+                    const fmt = (html) => {
+                        let formatted = '', pad = 0;
+                        html.replace(/(>)(<)(\/*)/g, '$1\r\n$2$3').split('\r\n').forEach(node => {
+                            let indent = 0;
+                            if (node.match(/.+<\/\w[^>]*>$/)) indent = 0;
+                            else if (node.match(/^<\/\w/)) { if (pad != 0) pad -= 1; }
+                            else if (node.match(/^<\w[^>]*[^\/]>.*$/)) indent = 1;
+                            formatted += '  '.repeat(pad) + node + '\r\n';
+                            pad += indent;
+                        });
+                        return formatted;
+                    };
+                    $('fmt-input').addEventListener('input', e => $('fmt-output').value = fmt(e.target.value));
+                    $('btn-fmt-copy').addEventListener('click', () => {
+                        navigator.clipboard.writeText($('fmt-output').value);
+                        showToast('HTML Copied');
+                    });
+                },
+
+                setupClipboard() {
+                    const btn = $('clipboard-download-button');
+                    const modal = $('filename-modal');
+                    const input = $('filename-input');
+                    const confirmBtn = $('filename-confirm');
+                    const cancelBtn = $('filename-cancel');
+
+                    // 1. Core Download Logic (reusable)
+                    const performDownload = () => {
+                        const name = (input.value || 'clipboard').trim();
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(this.state.clipBlob);
+                        a.download = name + '.png';
+                        a.click();
+                        modal.classList.add('hidden');
+                        showToast("Downloaded!");
+                    };
+
+                    // 2. Clipboard Handling
+                    const handleClipboardAction = async (isInstant = false) => {
+                        try {
+                            const items = await navigator.clipboard.read();
+                            let found = false;
+                            for (let item of items) {
+                                if (item.types.includes("image/png")) {
+                                    this.state.clipBlob = await item.getType("image/png");
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            
+                            if(found) {
+                                // Re-encode via canvas
+                                const img = new Image();
+                                img.src = URL.createObjectURL(this.state.clipBlob);
+                                await new Promise(r => img.onload = r);
+                                const cvs = document.createElement('canvas');
+                                cvs.width = img.width; cvs.height = img.height;
+                                cvs.getContext('2d').drawImage(img, 0, 0);
+                                
+                                cvs.toBlob(b => {
+                                    this.state.clipBlob = b;
+                                    
+                                    if (isInstant) {
+                                        const a = document.createElement('a');
+                                        a.href = URL.createObjectURL(b);
+                                        a.download = `clipboard-${Date.now()}.png`;
+                                        a.click();
+                                        showToast("Instant Download Started!");
+                                    } else {
+                                        modal.classList.remove('hidden');
+                                        input.value = ''; // Clear previous
+                                        input.focus();
+                                    }
+                                }, 'image/png');
+                            } else {
+                                showToast("No PNG in clipboard", true);
+                            }
+                        } catch(e) { 
+                            showToast("Clipboard access denied", true); 
+                        }
+                    };
+
+                    // 3. Event Listeners
+                    if (btn) btn.addEventListener('click', () => handleClipboardAction(false));
+                    if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
+                    
+                    // Bind explicit download function to button click
+                    if (confirmBtn) confirmBtn.addEventListener('click', performDownload);
+                    
+                    // Bind explicit download function to Enter key on input
+                    if (input) {
+                        input.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                performDownload();
+                            }
+                        });
+                    }
+
+                    // Global Shortcuts
+                    document.addEventListener('keydown', (e) => {
+                        const active = document.activeElement;
+                        // Ignore global shortcut if user is typing in a field
+                        const isInput = active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable;
+                        if (isInput) return;
+
+                        const key = e.key.toLowerCase();
+                        
+                        // Alt+V = Instant Download
+                        if (e.altKey && key === 'v') {
+                            e.preventDefault();
+                            handleClipboardAction(true);
+                            return;
                         }
                         
-                        if(found) {
-                            // Re-encode via canvas to ensure valid PNG
-                            const img = new Image();
-                            img.src = URL.createObjectURL(this.state.clipBlob);
-                            await new Promise(r => img.onload = r);
-                            const cvs = document.createElement('canvas');
-                            cvs.width = img.width; cvs.height = img.height;
-                            cvs.getContext('2d').drawImage(img, 0, 0);
-                            
-                            cvs.toBlob(b => {
-                                this.state.clipBlob = b; // Update state with clean blob
-                                
-                                if (isInstant) {
-                                    // Skip modal, download immediately with timestamp
-                                    const a = document.createElement('a');
-                                    a.href = URL.createObjectURL(b);
-                                    a.download = `clipboard-${Date.now()}.png`;
-                                    a.click();
-                                    showToast("Instant Download Started!");
-                                } else {
-                                    // Show naming modal
-                                    modal.classList.remove('hidden');
-                                    input.focus();
+                        // Ctrl+V handled via paste event for security
+                    });
+                    
+                    // Native Paste Listener
+                    document.addEventListener('paste', async (e) => {
+                        const active = document.activeElement;
+                        if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) return;
+                        
+                        if (e.clipboardData && e.clipboardData.items) {
+                            for (let i = 0; i < e.clipboardData.items.length; i++) {
+                                if (e.clipboardData.items[i].type.indexOf('image') !== -1) {
+                                    e.preventDefault();
+                                    const blob = e.clipboardData.items[i].getAsFile();
+                                    
+                                    const img = new Image();
+                                    img.src = URL.createObjectURL(blob);
+                                    await new Promise(r => img.onload = r);
+                                    const cvs = document.createElement('canvas');
+                                    cvs.width = img.width; cvs.height = img.height;
+                                    cvs.getContext('2d').drawImage(img, 0, 0);
+                                    
+                                    cvs.toBlob(b => {
+                                        this.state.clipBlob = b;
+                                        modal.classList.remove('hidden');
+                                        input.value = '';
+                                        input.focus();
+                                    }, 'image/png');
+                                    return;
                                 }
-                            }, 'image/png');
-                        } else {
-                            showToast("No PNG in clipboard", true);
-                        }
-                    } catch(e) { 
-                        console.error(e);
-                        // Fallback message
-                        showToast("Clipboard access denied. Please click the page and press Ctrl+V.", true); 
-                    }
-                };
-                
-                // Helper to process blob from paste event
-                const processPasteBlob = async (blob, isInstant = false) => {
-                     const img = new Image();
-                     img.src = URL.createObjectURL(blob);
-                     await new Promise(r => img.onload = r);
-                     const cvs = document.createElement('canvas');
-                     cvs.width = img.width; cvs.height = img.height;
-                     cvs.getContext('2d').drawImage(img, 0, 0);
-                     
-                     cvs.toBlob(b => {
-                         this.state.clipBlob = b;
-                         if (isInstant) {
-                             const a = document.createElement('a');
-                             a.href = URL.createObjectURL(b);
-                             a.download = `clipboard-${Date.now()}.png`;
-                             a.click();
-                             showToast("Instant Download Started!");
-                         } else {
-                             modal.classList.remove('hidden');
-                             input.focus();
-                         }
-                     }, 'image/png');
-                };
-
-                if (btn) btn.addEventListener('click', () => handleClipboardAction(false));
-
-                if (cancelBtn) cancelBtn.addEventListener('click', () => modal.classList.add('hidden'));
-
-                // Define the download function
-                const performDownload = () => {
-                    const name = input.value || 'clipboard';
-                    const a = document.createElement('a');
-                    a.href = URL.createObjectURL(this.state.clipBlob);
-                    a.download = name + '.png';
-                    a.click();
-                    modal.classList.add('hidden');
-                    showToast("Downloaded!");
-                };
-
-                // Bind to button click
-                if (confirmBtn) confirmBtn.addEventListener('click', performDownload);
-                
-                // Allow Enter key to submit within input
-                if (input) {
-                    input.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            performDownload();
+                            }
                         }
                     });
                 }
+            };
 
-                // Global Shortcuts
-                document.addEventListener('keydown', (e) => {
-                    // Ignore if typing in an input
-                    const active = document.activeElement;
-                    const isInput = active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable;
-                    if (isInput) return;
-
-                    const key = e.key.toLowerCase();
-                    
-                    // Alt+V = Instant Download (Skip Naming) - Try read() first
-                    if (e.altKey && key === 'v') {
-                        e.preventDefault();
-                        handleClipboardAction(true);
-                        return;
-                    }
-                    
-                    // Ctrl+V handled by paste event below
-                });
-                
-                // Native Paste Listener (Bypasses read() permission issues for Ctrl+V)
-                document.addEventListener('paste', async (e) => {
-                    // If we are in an input, let default paste happen
-                    const active = document.activeElement;
-                    if (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable) return;
-                    
-                    // Don't prevent default here as we want to inspect items, but usually we do to handle custom logic
-                    // Actually, to get items we need to inspect event
-                    
-                    if (e.clipboardData && e.clipboardData.items) {
-                        for (let i = 0; i < e.clipboardData.items.length; i++) {
-                            if (e.clipboardData.items[i].type.indexOf('image') !== -1) {
-                                e.preventDefault(); // Only prevent default if we found an image to handle
-                                const blob = e.clipboardData.items[i].getAsFile();
-                                // Check if Alt key was held during paste? (Not reliable across browsers/OS)
-                                // We'll assume standard paste behavior (modal) for Ctrl+V
-                                await processPasteBlob(blob, false);
-                                return;
-                            }
-                        }
-                        // If no image, we don't prevent default, allowing text paste if applicable (though we aren't in input)
-                    }
-                });
-            }
-        };
-
-        // Initialize App
-        document.addEventListener('DOMContentLoaded', () => App.init());
-    </script>
+            // Initialize App
+            document.addEventListener('DOMContentLoaded', () => App.init());
+        </script>
 </body>
 </html>
