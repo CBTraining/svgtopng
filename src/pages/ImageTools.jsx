@@ -4,17 +4,18 @@ import Dropzone from '../components/Dropzone';
 import './ImageTools.css'; // Will create
 
 export default function ImageTools() {
-  useEffect(() => {
-    return () => {
-      if (imageSrc) URL.revokeObjectURL(imageSrc);
-    };
-  }, [imageSrc]);
   const [imageFile, setImageFile] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [width, setWidth] = useState(800);
   const [radius, setRadius] = useState(0);
   const [quality, setQuality] = useState(0.8);
   const canvasRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
+    };
+  }, [imageSrc]);
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
