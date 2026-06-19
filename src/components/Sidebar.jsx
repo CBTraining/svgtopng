@@ -9,6 +9,7 @@ import {
   CommandLineIcon, 
   Square3Stack3DIcon,
   EyeDropperIcon,
+  QrCodeIcon,
   ClipboardDocumentIcon,
   SunIcon,
   MoonIcon
