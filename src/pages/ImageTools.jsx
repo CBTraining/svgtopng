@@ -4,6 +4,11 @@ import Dropzone from '../components/Dropzone';
 import './ImageTools.css'; // Will create
 
 export default function ImageTools() {
+  useEffect(() => {
+    return () => {
+      if (imageSrc) URL.revokeObjectURL(imageSrc);
+    };
+  }, [imageSrc]);
   const [imageFile, setImageFile] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [width, setWidth] = useState(800);

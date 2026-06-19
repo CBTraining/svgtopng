@@ -1,10 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CodeBracketSquareIcon as FileJson, ArrowDownTrayIcon as Download, CheckIcon as Check, ExclamationCircleIcon as AlertCircle } from '@heroicons/react/24/solid';
 
 export default function JsonSaver() {
   const [jsonText, setJsonText] = useState('');
+  const [downloadUrl, setDownloadUrl] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+    };
+  }, [downloadUrl]);
 
   const handleFormat = () => {
     try {

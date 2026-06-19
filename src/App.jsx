@@ -89,6 +89,7 @@ function App() {
         setFilename('clipboard_image');
         setShowModal(true);
       }, 'image/png');
+      URL.revokeObjectURL(img.src);
     };
     img.src = URL.createObjectURL(blob);
   }, []);

@@ -1,28 +1,21 @@
-import { useState } from 'react';
-import { SparklesIcon as ImageMinus } from '@heroicons/react/24/solid';
+import { useState, useEffect } from 'react';
+import { SparklesIcon as ImageMinus, XMarkIcon as XMark } from '@heroicons/react/24/solid';
 import { CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/outline';
 import Dropzone from '../components/Dropzone';
 import { removeBackground } from '@imgly/background-removal';
 import { useProcessing } from '../contexts/ProcessingContext';
 
-export default function BackgroundRemover() {
-  const [imageFile, setImageFile] = useState(null);
-  const [originalSrc, setOriginalSrc] = useState(null);
+const TOOL_ID = 'bg-remove';
 
-  const { jobs, addJob, updateJob, removeJob } = useProcessing();
-  const myJobId = 'bg-remove';
+function BackgroundRemoverSlot({ slot }) {
+  const { jobs, addJob, updateJob, removeJob, removeSlot } = useProcessing();
+
+  const myJobId = slot.id;
   const myJob = jobs.find(j => j.id === myJobId);
   const isProcessing = myJob?.status === 'running';
   const resultUrl = myJob?.resultUrl;
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      setOriginalSrc(URL.createObjectURL(file));
-      if (myJob) removeJob(myJobId);
-    }
-  };
+  const { imageFile, previewUrl } = slot;
 
   const processImage = async () => {
     if (!imageFile || isProcessing) return;
@@ -32,23 +25,71 @@ export default function BackgroundRemover() {
     try {
       const config = {
         progress: (key, current, total) => {
-          // Progress roughly goes through fetching model -> processing
-          // `current` / `total` represents fetch progress.
-          if (total) {
-            updateJob(myJobId, { progress: 10 + (current / total) * 80, log: 'AI Model Processing...' });
+          if (total > 0) {
+            updateJob(myJobId, { progress: (current / total) * 100, log: `Processing ${key}...` });
           }
         }
       };
 
       const imageBlob = await removeBackground(imageFile, config);
       const rUrl = URL.createObjectURL(imageBlob);
-      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `nobg-${Date.now()}.png`, progress: 100 });
+      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `nobg-${Date.now()}.png` });
     } catch (err) {
       console.error(err);
-      updateJob(myJobId, { status: 'error', error: 'Ensure you are connected to the internet on first run to download the model.' });
-      alert('Error removing background. Ensure you are connected to the internet on first run to download the model.');
+      updateJob(myJobId, { status: 'error', error: err.message });
+      alert("Failed to remove background. Please try a different image.");
     }
   };
+
+  return (
+    <div className="glass-panel controls" style={{ position: 'relative', marginBottom: '2rem' }}>
+      <button 
+        onClick={() => removeSlot(TOOL_ID, slot.id)} 
+        style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '50%', padding: '0.25rem', cursor: 'pointer', zIndex: 10 }}
+        title="Close Slot"
+      >
+        <XMark style={{ width: 20, height: 20, color: 'var(--text-secondary)' }} />
+      </button>
+
+      <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+         <img src={previewUrl} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
+         
+         {!isProcessing && !resultUrl && (
+           <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>
+             Remove Background
+           </button>
+         )}
+         
+         {isProcessing && (
+           <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+             AI is analyzing and removing background...
+           </div>
+         )}
+      </div>
+
+      {resultUrl && (
+        <div className="glass-panel preview-panel" style={{marginTop: '1.5rem', background: 'var(--bg-tertiary)'}}>
+           <h3 style={{marginTop: 0}}>Result</h3>
+           <div className="canvas-container">
+              <img src={resultUrl} alt="No Background" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+           </div>
+           <div className="button-group" style={{marginTop: '1rem'}}>
+             <a href={resultUrl} download={`nobg-${imageFile.name}.png`} className="btn btn-primary">
+                <Download style={{width: "18px", height: "18px"}} /> Download HD
+             </a>
+             <button className="btn" onClick={() => removeJob(myJobId)}>
+                Discard Result
+             </button>
+           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function BackgroundRemover() {
+  const { workspaces, addSlot } = useProcessing();
+  const slots = workspaces[TOOL_ID] || [];
 
   return (
     <div className="animate-fade-in">
@@ -56,67 +97,34 @@ export default function BackgroundRemover() {
         <ImageMinus style={{width: 32, height: 32, fill: "url(#accent-grad)"}}/>
         <h1>Background Remover</h1>
       </div>
-      <p>Remove backgrounds from images locally using an AI model right in your browser.</p>
+      <p>Remove backgrounds from images locally using on-device AI. 100% private.</p>
       
-      <div className="glass-panel" style={{marginBottom: '1rem', background: 'var(--accent-transparent)', border: '1px solid var(--accent-color)'}}>
-        <strong>Note:</strong> The AI model (~40MB) will be downloaded to your browser on the first use. Subsequent uses will work offline!
-      </div>
+      <div className="grid-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        {slots.map(slot => (
+          <BackgroundRemoverSlot key={slot.id} slot={slot} />
+        ))}
 
-      <div className="grid-container">
-        <div className="glass-panel controls">
-          {!originalSrc ? (
-            <Dropzone 
-              onDrop={(file) => {
+        <div className="glass-panel controls" style={{ borderStyle: 'dashed', borderColor: 'var(--border-color)', borderWidth: '2px', background: 'transparent' }}>
+          <Dropzone 
+            onDrop={(files) => {
+              const fileList = Array.isArray(files) ? files : [files];
+              fileList.forEach(file => {
                 if (file && file.type.startsWith('image/')) {
-                  setImageFile(file);
-                  const reader = new FileReader();
-                  reader.onload = (e) => setOriginalSrc(e.target.result);
-                  reader.readAsDataURL(file);
-                  if (myJob) removeJob(myJobId);
+                  const slotId = `${TOOL_ID}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+                  addSlot(TOOL_ID, {
+                    id: slotId,
+                    imageFile: file,
+                    previewUrl: URL.createObjectURL(file)
+                  });
                 }
-              }}
-              title="Upload Image"
-              subtitle="Select an image to remove its background"
-              icon={<UploadCloud style={{width: 48, height: 48}}/>}
-            />
-          ) : (
-            <div className="controls">
-               <img src={originalSrc} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
-               
-               {!isProcessing && !resultUrl && (
-                 <button className="btn btn-primary" onClick={processImage}>
-                   Remove Background
-                 </button>
-               )}
-
-               {isProcessing && (
-                 <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
-                   Processing in background... You can safely navigate to other tools!
-                 </div>
-               )}
-
-               {resultUrl && (
-                 <div className="button-group" style={{marginTop: '1rem'}}>
-                   <a className="btn btn-primary" href={resultUrl} download={`nobg-${Date.now()}.png`}>
-                     <Download style={{width: "18px", height: "18px"}} /> Download Result
-                   </a>
-                   <button className="btn" onClick={() => {setOriginalSrc(null); setImageFile(null); removeJob(myJobId);}}>
-                     Reset
-                   </button>
-                 </div>
-               )}
-            </div>
-          )}
+              });
+            }}
+            accept="image/*"
+            title={slots.length > 0 ? "Add another image" : "Upload Image"}
+            subtitle="Drop a JPG or PNG here"
+            icon={<UploadCloud style={{width: 48, height: 48, color: 'var(--text-secondary)'}}/>}
+          />
         </div>
-
-        {resultUrl && (
-          <div className="glass-panel preview-panel">
-             <h3>Result</h3>
-             <div className="canvas-container">
-                <img src={resultUrl} alt="No Background" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
-             </div>
-          </div>
-        )}
       </div>
     </div>
   );

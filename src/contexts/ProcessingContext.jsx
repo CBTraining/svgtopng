@@ -45,8 +45,44 @@ export function ProcessingProvider({ children }) {
     });
   };
 
+  const [workspaces, setWorkspaces] = useState({});
+
+  const addSlot = (toolId, slotData) => {
+    setWorkspaces(prev => ({
+      ...prev,
+      [toolId]: [...(prev[toolId] || []), slotData]
+    }));
+  };
+
+  const updateSlot = (toolId, slotId, updates) => {
+    setWorkspaces(prev => ({
+      ...prev,
+      [toolId]: (prev[toolId] || []).map(slot => slot.id === slotId ? { ...slot, ...updates } : slot)
+    }));
+  };
+
+  const removeSlot = (toolId, slotId) => {
+    setWorkspaces(prev => {
+      const toolSlots = prev[toolId] || [];
+      const slot = toolSlots.find(s => s.id === slotId);
+      if (slot && slot.previewUrl) {
+        URL.revokeObjectURL(slot.previewUrl);
+      }
+      return {
+        ...prev,
+        [toolId]: toolSlots.filter(s => s.id !== slotId)
+      };
+    });
+    // Optional: remove job if it was running for this slot
+    removeJob(slotId);
+  };
+
   return (
-    <ProcessingContext.Provider value={{ jobs, addJob, updateJob, removeJob, ffmpeg: ffmpegRef.current, isFfmpegLoaded }}>
+    <ProcessingContext.Provider value={{ 
+      jobs, addJob, updateJob, removeJob, 
+      ffmpeg: ffmpegRef.current, isFfmpegLoaded,
+      workspaces, addSlot, updateSlot, removeSlot
+    }}>
       {children}
     </ProcessingContext.Provider>
   );

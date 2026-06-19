@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download } from '@heroicons/react/24/solid';
 
 export default function SvgConverter() {
@@ -7,6 +7,12 @@ export default function SvgConverter() {
   const [height, setHeight] = useState(512);
   const canvasRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   const handleConvert = () => {
     if (!svgText.trim()) return;
@@ -31,8 +37,10 @@ export default function SvgConverter() {
       
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
-        const pngUrl = URL.createObjectURL(pngBlob);
-        setPreviewUrl(pngUrl);
+        setPreviewUrl(prev => {
+           if (prev) URL.revokeObjectURL(prev);
+           return URL.createObjectURL(pngBlob);
+        });
       }, 'image/png');
       URL.revokeObjectURL(url);
     };
