@@ -3,27 +3,31 @@ import { SparklesIcon as ImageMinus } from '@heroicons/react/24/solid';
 import { CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/outline';
 import Dropzone from '../components/Dropzone';
 import { removeBackground } from '@imgly/background-removal';
+import { useProcessing } from '../contexts/ProcessingContext';
 
 export default function BackgroundRemover() {
   const [imageFile, setImageFile] = useState(null);
   const [originalSrc, setOriginalSrc] = useState(null);
-  const [resultSrc, setResultSrc] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
+
+  const { jobs, addJob, updateJob, removeJob } = useProcessing();
+  const myJobId = 'bg-remove';
+  const myJob = jobs.find(j => j.id === myJobId);
+  const isProcessing = myJob?.status === 'running';
+  const resultUrl = myJob?.resultUrl;
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
       setImageFile(file);
       setOriginalSrc(URL.createObjectURL(file));
-      setResultSrc(null);
+      if (myJob) removeJob(myJobId);
     }
   };
 
   const processImage = async () => {
-    if (!imageFile) return;
-    setIsProcessing(true);
-    setProgress(0.1); // Provide initial feedback
+    if (!imageFile || isProcessing) return;
+    
+    addJob({ id: myJobId, title: 'Removing Background', type: 'bg-remove' });
 
     try {
       const config = {
@@ -31,26 +35,25 @@ export default function BackgroundRemover() {
           // Progress roughly goes through fetching model -> processing
           // `current` / `total` represents fetch progress.
           if (total) {
-            setProgress(0.1 + (current / total) * 0.8);
+            updateJob(myJobId, { progress: 10 + (current / total) * 80, log: 'AI Model Processing...' });
           }
         }
       };
 
       const imageBlob = await removeBackground(imageFile, config);
-      setProgress(1.0);
-      setResultSrc(URL.createObjectURL(imageBlob));
+      const rUrl = URL.createObjectURL(imageBlob);
+      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `nobg-${Date.now()}.png`, progress: 100 });
     } catch (err) {
       console.error(err);
+      updateJob(myJobId, { status: 'error', error: 'Ensure you are connected to the internet on first run to download the model.' });
       alert('Error removing background. Ensure you are connected to the internet on first run to download the model.');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <ImageMinus />
+        <ImageMinus style={{width: 32, height: 32, fill: "url(#accent-grad)"}}/>
         <h1>Background Remover</h1>
       </div>
       <p>Remove backgrounds from images locally using an AI model right in your browser.</p>
@@ -69,6 +72,7 @@ export default function BackgroundRemover() {
                   const reader = new FileReader();
                   reader.onload = (e) => setOriginalSrc(e.target.result);
                   reader.readAsDataURL(file);
+                  if (myJob) removeJob(myJobId);
                 }
               }}
               title="Upload Image"
@@ -79,28 +83,24 @@ export default function BackgroundRemover() {
             <div className="controls">
                <img src={originalSrc} alt="Original" style={{maxWidth: '100%', borderRadius: 'var(--border-radius-sm)'}} />
                
-               {!isProcessing && !resultSrc && (
+               {!isProcessing && !resultUrl && (
                  <button className="btn btn-primary" onClick={processImage}>
                    Remove Background
                  </button>
                )}
 
                {isProcessing && (
-                 <div style={{ textAlign: 'center' }}>
-                   <p>Processing... AI Model may be downloading</p>
-                   <div className="loader" style={{marginBottom: '1rem'}}></div>
-                   <div style={{ width: '100%', background: 'var(--bg-tertiary)', height: '8px', borderRadius: '4px' }}>
-                     <div style={{ width: `${progress * 100}%`, background: 'var(--accent-color)', height: '100%', borderRadius: '4px', transition: 'width 0.2s' }}></div>
-                   </div>
+                 <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+                   Processing in background... You can safely navigate to other tools!
                  </div>
                )}
 
-               {resultSrc && (
-                 <div className="button-group">
-                   <a className="btn btn-primary" href={resultSrc} download={`nobg-${Date.now()}.png`}>
+               {resultUrl && (
+                 <div className="button-group" style={{marginTop: '1rem'}}>
+                   <a className="btn btn-primary" href={resultUrl} download={`nobg-${Date.now()}.png`}>
                      <Download style={{width: "18px", height: "18px"}} /> Download Result
                    </a>
-                   <button className="btn" onClick={() => {setOriginalSrc(null); setImageFile(null); setResultSrc(null);}}>
+                   <button className="btn" onClick={() => {setOriginalSrc(null); setImageFile(null); removeJob(myJobId);}}>
                      Reset
                    </button>
                  </div>
@@ -109,11 +109,11 @@ export default function BackgroundRemover() {
           )}
         </div>
 
-        {resultSrc && (
+        {resultUrl && (
           <div className="glass-panel preview-panel">
              <h3>Result</h3>
              <div className="canvas-container">
-                <img src={resultSrc} alt="No Background" style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }} />
+                <img src={resultUrl} alt="No Background" style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }} />
              </div>
           </div>
         )}

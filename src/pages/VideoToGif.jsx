@@ -1,16 +1,12 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { GifIcon as Gif, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/solid';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { playDing } from '../utils/audio';
+import { useProcessing } from '../contexts/ProcessingContext';
 
 export default function VideoToGif() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [log, setLog] = useState('');
-  const [resultUrl, setResultUrl] = useState(null);
 
   // Advanced Options
   const [quality, setQuality] = useState(80);
@@ -18,54 +14,21 @@ export default function VideoToGif() {
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(5);
 
-  const ffmpegRef = useRef(new FFmpeg());
-  const isLoadingRef = useRef(false);
-  const [isReady, setIsReady] = useState(false);
-  const [loadError, setLoadError] = useState('');
-
-  // Video element ref to get video duration when loaded
   const videoRef = useRef(null);
 
-  useEffect(() => {
-    const load = async () => {
-      const ffmpeg = ffmpegRef.current;
-      if (ffmpeg.loaded || isLoadingRef.current) {
-        setIsReady(true);
-        return;
-      }
-      isLoadingRef.current = true;
-      
-      ffmpeg.on('log', ({ message }) => {
-        setLog(message);
-      });
-      
-      ffmpeg.on('progress', ({ progress, time }) => {
-        setProgress(progress);
-      });
+  const { jobs, addJob, updateJob, removeJob, ffmpeg, isFfmpegLoaded } = useProcessing();
 
-      try {
-        const baseURL = `${import.meta.env.BASE_URL}ffmpeg`;
-        await ffmpeg.load({
-          coreURL: `${baseURL}/ffmpeg-core.js?v=2`,
-          wasmURL: `${baseURL}/ffmpeg-core.wasm?v=2`,
-        });
-        setIsReady(true);
-      } catch (err) {
-        console.error('Failed to load FFmpeg:', err);
-        setLoadError(`Failed to load: ${err.message || err.toString()}`);
-        isLoadingRef.current = false;
-      }
-    };
-    
-    load();
-  }, []);
+  const myJobId = 'video-to-gif';
+  const myJob = jobs.find(j => j.id === myJobId);
+  const isProcessing = myJob?.status === 'running';
+  const resultUrl = myJob?.resultUrl;
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('video/')) {
       setVideoFile(file);
       setVideoSrc(URL.createObjectURL(file));
-      setResultUrl(null);
+      if (myJob) removeJob(myJobId);
     }
   };
 
@@ -76,17 +39,22 @@ export default function VideoToGif() {
   };
 
   const processVideo = async () => {
-    if (!videoFile || !isReady) return;
-    setIsProcessing(true);
-    setProgress(0);
-    setLog('Starting process...');
-
-    const ffmpeg = ffmpegRef.current;
+    if (!videoFile || !isFfmpegLoaded || isProcessing) return;
     
-    // Accumulate log to show on error
+    addJob({ id: myJobId, title: 'Converting Video to GIF', type: 'video-to-gif' });
+
     let fullLog = '';
-    const logHandler = ({ message }) => { fullLog += message + '\n'; };
+    const logHandler = ({ message }) => { 
+      fullLog += message + '\n'; 
+      updateJob(myJobId, { log: message });
+    };
+    
+    const progressHandler = ({ progress }) => {
+      updateJob(myJobId, { progress: progress * 100 });
+    };
+
     ffmpeg.on('log', logHandler);
+    ffmpeg.on('progress', progressHandler);
 
     try {
       const inputName = videoFile.name.replace(/\s+/g, '_');
@@ -121,14 +89,16 @@ export default function VideoToGif() {
       if (data.length === 0) throw new Error("Generated GIF is 0 bytes");
 
       const blob = new Blob([data], { type: 'image/gif' });
-      setResultUrl(URL.createObjectURL(blob));
+      const rUrl = URL.createObjectURL(blob);
+      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `animation-${Date.now()}.gif` });
       playDing();
     } catch (err) {
       console.error(err);
+      updateJob(myJobId, { status: 'error', error: err.message });
       alert("Failed to create GIF:\n" + err.message);
     } finally {
       ffmpeg.off('log', logHandler);
-      setIsProcessing(false);
+      ffmpeg.off('progress', progressHandler);
     }
   };
 
@@ -140,15 +110,10 @@ export default function VideoToGif() {
       </div>
       <p>Convert videos to high-quality GIFs offline with complete control.</p>
       
-      {!isReady && !loadError && (
+      {!isFfmpegLoaded && (
         <div className="glass-panel" style={{marginBottom: '1rem', background: 'var(--accent-transparent)', border: '1px solid var(--accent-color)'}}>
           <div className="loader" style={{width: '16px', height: '16px', marginRight: '10px'}}></div>
-          Loading FFmpeg engine...
-        </div>
-      )}
-      {loadError && (
-        <div className="glass-panel" style={{marginBottom: '1rem', background: 'rgba(255, 77, 79, 0.1)', border: '1px solid var(--danger-color)', color: 'var(--danger-color)'}}>
-          <strong>Error: </strong> {loadError}
+          Loading FFmpeg engine globally...
         </div>
       )}
 
@@ -164,7 +129,6 @@ export default function VideoToGif() {
                 accept="video/*" 
                 onChange={handleFileUpload} 
                 style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer'}} 
-                disabled={!isReady}
               />
             </div>
           ) : (
@@ -237,7 +201,7 @@ export default function VideoToGif() {
                   </div>
 
                   <div className="button-group" style={{marginTop: '1.5rem'}}>
-                    <button className="btn btn-primary" onClick={processVideo}>
+                    <button className="btn btn-primary" onClick={processVideo} disabled={!isFfmpegLoaded}>
                       Convert to GIF
                     </button>
                     <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null);}}>
@@ -248,23 +212,8 @@ export default function VideoToGif() {
               )}
 
               {isProcessing && (
-                <div className="glass-panel animate-fade-in" style={{
-                  position: 'fixed',
-                  bottom: '2rem',
-                  right: '2rem',
-                  width: '320px',
-                  zIndex: 50,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                  border: '1px solid var(--accent-color)'
-                }}>
-                  <h4 style={{marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem'}}>
-                    <div className="loader" style={{width: '14px', height: '14px'}}></div>
-                    Converting... {Math.round(progress * 100)}%
-                  </h4>
-                  <div style={{ width: '100%', background: 'var(--bg-tertiary)', height: '6px', borderRadius: '4px', marginBottom: '0.5rem' }}>
-                    <div style={{ width: `${progress * 100}%`, background: 'var(--accent-color)', height: '100%', borderRadius: '4px', transition: 'width 0.2s' }}></div>
-                  </div>
-                  <small style={{ color: 'var(--text-secondary)', fontFamily: 'monospace', display: 'block', height: '1.5em', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{log}</small>
+                <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+                  Processing in background... You can safely navigate to other tools!
                 </div>
               )}
 
@@ -273,7 +222,7 @@ export default function VideoToGif() {
                   <a className="btn btn-primary" href={resultUrl} download={`animation-${Date.now()}.gif`}>
                     <Download style={{width: "18px", height: "18px"}} /> Download GIF
                   </a>
-                  <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null); setResultUrl(null);}}>
+                  <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null); removeJob(myJobId);}}>
                     Start Over
                   </button>
                 </div>

@@ -1,78 +1,48 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { ArrowsPointingInIcon as Compress, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/solid';
 import Dropzone from '../components/Dropzone';
-import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile } from '@ffmpeg/util';
 import { playDing } from '../utils/audio';
+import { useProcessing } from '../contexts/ProcessingContext';
 
 export default function VideoCompressor() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [log, setLog] = useState('');
-  const [resultUrl, setResultUrl] = useState(null);
+  
+  const { jobs, addJob, updateJob, removeJob, ffmpeg, isFfmpegLoaded } = useProcessing();
 
-  const ffmpegRef = useRef(new FFmpeg());
-  const isLoadingRef = useRef(false);
-  const [isReady, setIsReady] = useState(false);
-  const [loadError, setLoadError] = useState('');
-
-  useEffect(() => {
-    const load = async () => {
-      const ffmpeg = ffmpegRef.current;
-      if (ffmpeg.loaded || isLoadingRef.current) {
-        setIsReady(true);
-        return;
-      }
-      isLoadingRef.current = true;
-      
-      ffmpeg.on('log', ({ message }) => {
-        setLog(message);
-      });
-      
-      ffmpeg.on('progress', ({ progress, time }) => {
-        setProgress(progress);
-      });
-
-      try {
-        const baseURL = `${import.meta.env.BASE_URL}ffmpeg`;
-        await ffmpeg.load({
-          coreURL: `${baseURL}/ffmpeg-core.js?v=2`,
-          wasmURL: `${baseURL}/ffmpeg-core.wasm?v=2`,
-        });
-        setIsReady(true);
-      } catch (err) {
-        console.error('Failed to load FFmpeg:', err);
-        setLoadError(`Failed to load: ${err.message || err.toString()}`);
-        isLoadingRef.current = false;
-      }
-    };
-    
-    load();
-  }, []);
+  const myJobId = 'video-compress';
+  const myJob = jobs.find(j => j.id === myJobId);
+  const isProcessing = myJob?.status === 'running';
+  const resultUrl = myJob?.resultUrl;
 
   const processVideo = async () => {
-    if (!videoFile || !isReady) return;
-    setIsProcessing(true);
-    setProgress(0);
-    setLog('Starting process...');
-
-    const ffmpeg = ffmpegRef.current;
+    if (!videoFile || !isFfmpegLoaded || isProcessing) return;
     
-    // Accumulate log to show on error
+    addJob({ id: myJobId, title: 'Compressing Video', type: 'video-compress' });
+
     let fullLog = '';
-    const logHandler = ({ message }) => { fullLog += message + '\n'; };
+    const logHandler = ({ message }) => { 
+      fullLog += message + '\n'; 
+      updateJob(myJobId, { log: message });
+    };
+    
+    const progressHandler = ({ progress }) => {
+      updateJob(myJobId, { progress: progress * 100 });
+    };
+
     ffmpeg.on('log', logHandler);
+    ffmpeg.on('progress', progressHandler);
 
     try {
-      const inputName = videoFile.name.replace(/\s+/g, '_'); // Replace spaces just in case
+      const ext = videoFile.name.split('.').pop() || 'mp4';
+      const inputName = `input.${ext}`;
       
       // Write file to memory
       await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
 
-      // Compress Video: Re-encode with lower bitrate/CRF
-      const execResult = await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', 'output.mp4']);
+      // Compress Video
+      const execResult = await ffmpeg.exec(['-y', '-i', inputName, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', 'output.mp4']);
       if (execResult !== 0) {
         throw new Error(`FFmpeg exited with code ${execResult}. Last logs:\n${fullLog.substring(fullLog.length - 400)}`);
       }
@@ -81,14 +51,16 @@ export default function VideoCompressor() {
       if (data.length === 0) throw new Error("Generated video is 0 bytes");
 
       const blob = new Blob([data], { type: 'video/mp4' });
-      setResultUrl(URL.createObjectURL(blob));
+      const rUrl = URL.createObjectURL(blob);
+      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: 'compressed_video.mp4' });
       playDing();
     } catch (err) {
       console.error(err);
+      updateJob(myJobId, { status: 'error', error: err.message });
       alert("Failed to compress video:\n" + err.message);
     } finally {
       ffmpeg.off('log', logHandler);
-      setIsProcessing(false);
+      ffmpeg.off('progress', progressHandler);
     }
   };
 
@@ -100,15 +72,10 @@ export default function VideoCompressor() {
       </div>
       <p>Compress MP4 videos instantly, fully offline in your browser.</p>
       
-      {!isReady && !loadError && (
+      {!isFfmpegLoaded && (
         <div className="glass-panel" style={{marginBottom: '1rem', background: 'var(--accent-transparent)', border: '1px solid var(--accent-color)'}}>
           <div className="loader" style={{width: '16px', height: '16px', marginRight: '10px'}}></div>
-          Loading FFmpeg engine...
-        </div>
-      )}
-      {loadError && (
-        <div className="glass-panel" style={{marginBottom: '1rem', background: 'rgba(255, 77, 79, 0.1)', border: '1px solid var(--danger-color)', color: 'var(--danger-color)'}}>
-          <strong>Error: </strong> {loadError}
+          Loading FFmpeg engine globally...
         </div>
       )}
 
@@ -120,6 +87,8 @@ export default function VideoCompressor() {
                 if (file && file.type.startsWith('video/')) {
                   setVideoFile(file);
                   setVideoSrc(URL.createObjectURL(file));
+                  // Clear previous job if any
+                  if (myJob) removeJob(myJobId);
                 } else {
                   alert("Please upload a video file");
                 }
@@ -135,7 +104,7 @@ export default function VideoCompressor() {
               
               {!isProcessing && !resultUrl && (
                 <div className="button-group" style={{marginTop: '1rem'}}>
-                  <button className="btn btn-primary" onClick={processVideo}>
+                  <button className="btn btn-primary" onClick={processVideo} disabled={!isFfmpegLoaded}>
                     Compress Video
                   </button>
                   <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null);}}>
@@ -145,55 +114,27 @@ export default function VideoCompressor() {
               )}
 
               {isProcessing && (
-                <div className="glass-panel animate-fade-in" style={{
-                  position: 'fixed',
-                  bottom: '2rem',
-                  right: '2rem',
-                  width: '320px',
-                  zIndex: 50,
-                  boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                  border: '1px solid var(--accent-color)'
-                }}>
-                  <h4 style={{marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem'}}>
-                    <div className="loader" style={{width: '14px', height: '14px'}}></div>
-                    {progress >= 0 && progress <= 1 ? `Compressing... ${Math.round(progress * 100)}%` : `Compressing...`}
-                  </h4>
-                  <div style={{ width: '100%', background: 'var(--bg-tertiary)', height: '6px', borderRadius: '4px', marginBottom: '0.5rem', overflow: 'hidden' }}>
-                    <div style={{ 
-                      width: progress >= 0 && progress <= 1 ? `${progress * 100}%` : '100%', 
-                      background: 'var(--accent-color)', 
-                      height: '100%', 
-                      borderRadius: '4px', 
-                      transition: 'width 0.2s',
-                      opacity: progress >= 0 && progress <= 1 ? 1 : 0.5 
-                    }}></div>
-                  </div>
-                  <small style={{ color: 'var(--text-secondary)', fontFamily: 'monospace', display: 'block', height: '1.5em', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{log}</small>
+                <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+                  Processing in background... You can safely navigate to other tools!
                 </div>
               )}
 
               {resultUrl && (
-                <div className="button-group" style={{marginTop: '1rem'}}>
-                  <a className="btn btn-primary" href={resultUrl} download={`compressed-${Date.now()}.mp4`}>
-                    <Download style={{width: "18px", height: "18px"}} /> Download MP4
-                  </a>
-                  <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null); setResultUrl(null);}}>
-                    Start Over
-                  </button>
+                <div className="result-container animate-fade-in" style={{marginTop: '1.5rem'}}>
+                  <h3>Compressed Video</h3>
+                  <div className="button-group" style={{marginTop: '1rem'}}>
+                    <a href={resultUrl} download="compressed_video.mp4" className="btn btn-primary">
+                      <Download style={{width: 20, height: 20}}/> Download
+                    </a>
+                    <button className="btn" onClick={() => {setVideoSrc(null); setVideoFile(null); removeJob(myJobId);}}>
+                      Compress Another
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </div>
-
-        {resultUrl && (
-          <div className="glass-panel preview-panel">
-             <h3>Compressed Result</h3>
-             <div className="canvas-container">
-                <video src={resultUrl} controls style={{ maxWidth: '100%', maxHeight: '60vh', background: '#000' }} />
-             </div>
-          </div>
-        )}
       </div>
     </div>
   );

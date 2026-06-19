@@ -12,6 +12,8 @@ import JsonSaver from './pages/JsonSaver';
 import ColorPicker from './pages/ColorPicker';
 import QrGenerator from './pages/QrGenerator';
 import BackgroundDots from './components/BackgroundDots';
+import { ProcessingProvider } from './contexts/ProcessingContext';
+import BackgroundJobsWidget from './components/BackgroundJobsWidget';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -317,74 +319,78 @@ function App() {
   };
 
   return (
-    <Router>
-      <BackgroundDots />
-      <svg width="0" height="0" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
-        <defs>
-          <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#40E0D0" />
-            <stop offset="100%" stopColor="#12a5d1" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="app-layout">
-        <div className="mobile-header">
-          <button onClick={() => setIsSidebarOpen(true)}>
-            <Bars3Icon style={{width: '28px', height: '28px'}} />
-          </button>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="24" height="24" />
-            <span style={{ fontWeight: 'normal', fontSize: '1.2rem' }}>Web<span className="text-gradient">Tools</span></span>
-          </div>
-        </div>
-        
-        {globalToast && (
-          <div className="toast animate-fade-in" style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: '#ff4444', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-            {globalToast}
-          </div>
-        )}
-
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/image-tools" element={<ImageTools />} />
-            <Route path="/bg-remover" element={<BackgroundRemover />} />
-            <Route path="/video-compressor" element={<VideoCompressor />} />
-            <Route path="/video-to-gif" element={<VideoToGif />} />
-            <Route path="/lottie-to-gif" element={<LottieToGif />} />
-            <Route path="/svg-converter" element={<SvgConverter />} />
-            <Route path="/json-saver" element={<JsonSaver />} />
-            <Route path="/color-picker" element={<ColorPicker />} />
-            <Route path="/qr-generator" element={<QrGenerator />} />
-          </Routes>
-        </main>
-
-        {showModal && (
-          <div className="modal-overlay">
-            <div className="modal glass-panel animate-fade-in">
-              <h3>Save Image</h3>
-              <p style={{marginBottom: '1rem', fontSize: '0.9rem'}}>Enter a name for your pasted image.</p>
-              <input 
-                ref={inputRef}
-                type="text" 
-                className="input-field" 
-                value={filename}
-                onChange={(e) => setFilename(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleDownload();
-                  if (e.key === 'Escape') handleCancel();
-                }}
-              />
-              <div className="button-group" style={{justifyContent: 'flex-end', marginTop: '1.5rem'}}>
-                <button className="btn" onClick={handleCancel}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleDownload}>Save</button>
-              </div>
+    <ProcessingProvider>
+      <Router>
+        <BackgroundDots />
+        <svg width="0" height="0" style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden' }}>
+          <defs>
+            <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#40E0D0" />
+              <stop offset="100%" stopColor="#12a5d1" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="app-layout">
+          <div className="mobile-header">
+            <button onClick={() => setIsSidebarOpen(true)}>
+              <Bars3Icon style={{width: '28px', height: '28px'}} />
+            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '1rem' }}>
+              <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="24" height="24" />
+              <span style={{ fontWeight: 'normal', fontSize: '1.2rem' }}>Web<span className="text-gradient">Tools</span></span>
             </div>
           </div>
-        )}
-      </div>
-    </Router>
+          
+          {globalToast && (
+            <div className="toast animate-fade-in" style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: '#ff4444', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+              {globalToast}
+            </div>
+          )}
+
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} />
+          <main className="main-content">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/image-tools" element={<ImageTools />} />
+              <Route path="/bg-remover" element={<BackgroundRemover />} />
+              <Route path="/video-compressor" element={<VideoCompressor />} />
+              <Route path="/video-to-gif" element={<VideoToGif />} />
+              <Route path="/lottie-to-gif" element={<LottieToGif />} />
+              <Route path="/svg-converter" element={<SvgConverter />} />
+              <Route path="/json-saver" element={<JsonSaver />} />
+              <Route path="/color-picker" element={<ColorPicker />} />
+              <Route path="/qr-generator" element={<QrGenerator />} />
+            </Routes>
+          </main>
+
+          <BackgroundJobsWidget />
+
+          {showModal && (
+            <div className="modal-overlay">
+              <div className="modal glass-panel animate-fade-in">
+                <h3>Save Image</h3>
+                <p style={{marginBottom: '1rem', fontSize: '0.9rem'}}>Enter a name for your pasted image.</p>
+                <input 
+                  ref={inputRef}
+                  type="text" 
+                  className="input-field" 
+                  value={filename}
+                  onChange={(e) => setFilename(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleDownload();
+                    if (e.key === 'Escape') handleCancel();
+                  }}
+                />
+                <div className="button-group" style={{justifyContent: 'flex-end', marginTop: '1.5rem'}}>
+                  <button className="btn" onClick={handleCancel}>Cancel</button>
+                  <button className="btn btn-primary" onClick={handleDownload}>Save</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Router>
+    </ProcessingProvider>
   );
 }
 

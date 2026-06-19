@@ -1,20 +1,24 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { ScissorsIcon as Scissors, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/solid';
 import Dropzone from '../components/Dropzone';
 import lottie from 'lottie-web';
 import GIF from 'gif.js';
+import { useProcessing } from '../contexts/ProcessingContext';
 
 export default function LottieToGif() {
   const [lottieData, setLottieData] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [gifUrl, setGifUrl] = useState(null);
   const containerRef = useRef(null);
 
+  const { jobs, addJob, updateJob, removeJob } = useProcessing();
+  const myJobId = 'lottie-to-gif';
+  const myJob = jobs.find(j => j.id === myJobId);
+  const isProcessing = myJob?.status === 'running';
+  const resultUrl = myJob?.resultUrl;
+
   const handleConvert = async () => {
-    if (!lottieData) return;
-    setIsProcessing(true);
-    setProgress(0);
+    if (!lottieData || isProcessing) return;
+    
+    addJob({ id: myJobId, title: 'Converting Lottie to GIF', type: 'lottie-to-gif' });
 
     // Create a temporary hidden container for canvas rendering
     const tempContainer = document.createElement('div');
@@ -40,34 +44,47 @@ export default function LottieToGif() {
 
     const canvas = tempContainer.querySelector('canvas');
     
-    // We use a CDN for the worker to avoid Vite build configuration complexities
     const gif = new GIF({
       workers: 2,
       quality: 10,
       width: canvas.width,
       height: canvas.height,
       workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js',
-      transparent: 0x000000 // Best effort transparency
+      transparent: 0x000000
     });
 
-    gif.on('progress', p => setProgress(p));
+    gif.on('progress', p => {
+      updateJob(myJobId, { progress: p * 100, log: `Rendering frame...` });
+    });
     
     gif.on('finished', (blob) => {
-      setGifUrl(URL.createObjectURL(blob));
-      setIsProcessing(false);
+      const rUrl = URL.createObjectURL(blob);
+      updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `lottie-${Date.now()}.gif` });
       animItem.destroy();
       document.body.removeChild(tempContainer);
     });
 
-    // Render frame by frame
     for (let i = 0; i < totalFrames; i++) {
       animItem.goToAndStop(i, true);
-      // We must pass the canvas element to gif.addFrame
       gif.addFrame(canvas, { copy: true, delay });
     }
 
     gif.render();
   };
+
+  // Re-render preview if we return to the page
+  useEffect(() => {
+    if (lottieData && containerRef.current) {
+      containerRef.current.innerHTML = '';
+      lottie.loadAnimation({
+        container: containerRef.current,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        animationData: lottieData,
+      });
+    }
+  }, [lottieData]);
 
   return (
     <div className="animate-fade-in">
@@ -88,21 +105,7 @@ export default function LottieToGif() {
                     try {
                       const json = JSON.parse(e.target.result);
                       setLottieData(json);
-                      setGifUrl(null);
-                      
-                      // Render preview
-                      setTimeout(() => {
-                        if (containerRef.current) {
-                          containerRef.current.innerHTML = '';
-                          lottie.loadAnimation({
-                            container: containerRef.current,
-                            renderer: 'svg',
-                            loop: true,
-                            autoplay: true,
-                            animationData: json,
-                          });
-                        }
-                      }, 0);
+                      if (myJob) removeJob(myJobId);
                     } catch (err) {
                       alert("Invalid JSON file");
                     }
@@ -123,27 +126,24 @@ export default function LottieToGif() {
                 <div ref={containerRef} style={{ width: '200px', height: '200px' }}></div>
               </div>
               
-              {!isProcessing && !gifUrl && (
-                <button className="btn btn-primary" onClick={handleConvert}>
+              {!isProcessing && !resultUrl && (
+                <button className="btn btn-primary" onClick={handleConvert} style={{marginTop: '1rem'}}>
                   Convert to GIF
                 </button>
               )}
               
               {isProcessing && (
-                <div style={{ textAlign: 'center' }}>
-                  <p>Processing... {Math.round(progress * 100)}%</p>
-                  <div style={{ width: '100%', background: 'var(--bg-tertiary)', height: '8px', borderRadius: '4px' }}>
-                    <div style={{ width: `${progress * 100}%`, background: 'var(--accent-color)', height: '100%', borderRadius: '4px', transition: 'width 0.2s' }}></div>
-                  </div>
+                <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
+                  Processing in background... You can safely navigate to other tools!
                 </div>
               )}
 
-              {gifUrl && (
-                <div className="button-group" style={{justifyContent: 'center'}}>
-                  <a className="btn btn-primary" href={gifUrl} download={`lottie-${Date.now()}.gif`}>
+              {resultUrl && (
+                <div className="button-group" style={{justifyContent: 'center', marginTop: '1rem'}}>
+                  <a className="btn btn-primary" href={resultUrl} download={`lottie-${Date.now()}.gif`}>
                     <Download style={{width: "18px", height: "18px"}} /> Download GIF
                   </a>
-                  <button className="btn" onClick={() => {setLottieData(null); setGifUrl(null);}}>
+                  <button className="btn" onClick={() => {setLottieData(null); removeJob(myJobId);}}>
                     Convert Another
                   </button>
                 </div>
