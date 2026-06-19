@@ -6,6 +6,8 @@
   --text-primary: #ffffff;
   --text-secondary: #d1d5db; /* Lighter grey for better visibility */
   --heading-color: #ffffff;
+  --heading-gradient: linear-gradient(135deg, #ffffff 0%, #aaaaaa 100%);
+  --panel-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
   
   --accent-color: #40E0D0; /* Turquoise Solid */
   --accent-gradient: linear-gradient(135deg, #40E0D0 0%, #12a5d1 100%);
@@ -35,6 +37,8 @@
   --text-primary: #1f2937;
   --text-secondary: #4b5563;
   --heading-color: #000000;
+  --heading-gradient: linear-gradient(135deg, #111111 0%, #666666 100%);
+  --panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   
   --border-color: #e5e7eb;
 }
@@ -78,7 +82,7 @@ body {
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--panel-shadow);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   padding: 1.5rem;
@@ -308,7 +312,7 @@ p {
 .page-header h1 {
   margin-bottom: 0;
   font-size: 2rem;
-  background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+  background: var(--heading-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1.3;
