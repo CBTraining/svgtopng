@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 
 const ProcessingContext = createContext();
@@ -27,13 +27,13 @@ export function ProcessingProvider({ children }) {
     loadFfmpeg();
   }, []);
 
-  const addJob = (job) => {
+  const addJob = useCallback((job) => {
     setJobs((prev) => [...prev, { ...job, progress: 0, status: 'running', log: 'Starting...' }]);
-  };
+  }, []);
 
-  const updateJob = (id, updates) => {
+  const updateJob = useCallback((id, updates) => {
     setJobs((prev) => prev.map(job => job.id === id ? { ...job, ...updates } : job));
-  };
+  }, []);
 
   const createFfmpegInstance = async () => {
     const instance = new FFmpeg();
@@ -50,7 +50,7 @@ export function ProcessingProvider({ children }) {
     }
   };
 
-  const removeJob = (id) => {
+  const removeJob = useCallback((id) => {
     setJobs((prev) => {
       const job = prev.find(j => j.id === id);
       if (job && job.resultUrl) {
@@ -58,7 +58,7 @@ export function ProcessingProvider({ children }) {
       }
       return prev.filter(j => j.id !== id);
     });
-  };
+  }, []);
 
   const [workspaces, setWorkspaces] = useState({});
 
