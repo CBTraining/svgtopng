@@ -56,6 +56,10 @@ export default function BackgroundDots() {
           dots.push({
             x: i * spacing,
             y: j * spacing,
+            baseX: i * spacing,
+            baseY: j * spacing,
+            vx: 0,
+            vy: 0,
             baseRadius: 2, // Regular size
             radius: 2,
             targetRadius: 2,
@@ -94,9 +98,14 @@ export default function BackgroundDots() {
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         // Interaction radius (wider area: 180px)
-        if (dist < 180) {
+        if (dist < 180 && dist > 0) {
+          // Push away from mouse
+          const force = (180 - dist) / 180;
+          dot.vx -= (dx / dist) * force * 1.5;
+          dot.vy -= (dy / dist) * force * 1.5;
+          
           // Max radius 4 when distance is 0
-          dot.targetRadius = 4 - (dist / 180) * 2;
+          dot.targetRadius = 4 - force * 2;
         } else {
           dot.targetRadius = dot.baseRadius;
         }
@@ -112,31 +121,50 @@ export default function BackgroundDots() {
              const bdy = b.y - dot.y;
              const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
              const distToWave = Math.abs(bdist - b.radius);
-             if (distToWave < 80) {
+             if (distToWave < 80 && bdist > 0) {
                const push = (80 - distToWave) / 80; // 0 to 1
                dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
+               dot.vx -= (bdx / bdist) * push * 15 * b.alpha;
+               dot.vy -= (bdy / bdist) * push * 15 * b.alpha;
              }
            } else if (b.type === 'vertical') {
              const distToWave = Math.abs(dot.x - b.radius);
              if (distToWave < 120) {
                const push = (120 - distToWave) / 120;
                dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
+               // Push to the right
+               dot.vx += push * 20 * b.alpha;
              }
            }
         } 
         
-        // Render optimization: only fill arcs if they are actively visible/glowing, 
+        // Spring dynamics (pull back to base position)
+        const springX = (dot.baseX - dot.x) * 0.05;
+        const springY = (dot.baseY - dot.y) * 0.05;
+        dot.vx += springX;
+        dot.vy += springY;
+        
+        // Friction
+        dot.vx *= 0.85;
+        dot.vy *= 0.85;
+        
+        // Apply velocity
+        dot.x += dot.vx;
+        dot.y += dot.vy;
+
+        // Render optimization: only fill arcs if they are actively visible/glowing/displaced
         // otherwise use fillRect for the tiny 1px dots for massive performance boost
-        if (dot.radius > 2.1) {
+        const isDisplaced = Math.abs(dot.x - dot.baseX) > 0.5 || Math.abs(dot.y - dot.baseY) > 0.5;
+        if (dot.radius > 2.1 || isDisplaced) {
           const intensity = Math.min((dot.radius - 2) / 2, 1);
           ctx.fillStyle = `rgba(${accentRGB}, ${0.1 + intensity * 0.5})`;
           ctx.beginPath();
-          ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+          ctx.arc(dot.x, dot.y, Math.max(dot.radius, 2), 0, Math.PI * 2);
           ctx.fill();
         } else {
           ctx.fillStyle = `rgba(${baseRGB}, 0.1)`; // Slightly more visible
           // Using a square for the base 2px dot is faster and looks identical to a 2px circle
-          ctx.fillRect(dot.x - 1.5, dot.y - 1.5, 3, 3);
+          ctx.fillRect(dot.baseX - 1.5, dot.baseY - 1.5, 3, 3);
         }
       }
 
