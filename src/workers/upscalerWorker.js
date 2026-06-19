@@ -45,18 +45,46 @@ self.addEventListener('message', async (event) => {
         // Run the model on the image
         const output = await upscaler(dataUrl);
 
-        // output is a RawImage. We need to convert it back to a blob
-        const canvas = new OffscreenCanvas(output.width, output.height);
-        const ctx = canvas.getContext('2d');
-        
-        const imageData = new ImageData(
-            new Uint8ClampedArray(output.data),
-            output.width,
-            output.height
-        );
-        ctx.putImageData(imageData, 0, 0);
+        // output is either a RawImage or an object containing a RawImage
+        const resultImage = (Array.isArray(output) ? output[0] : (output.image || output));
 
-        const upscaledBlob = await canvas.convertToBlob({ type: 'image/png' });
+        let upscaledBlob;
+        if (typeof resultImage.toBlob === 'function') {
+            // Use native Transformers.js method
+            upscaledBlob = await resultImage.toBlob('image/png');
+        } else {
+            // Fallback manual conversion
+            const canvas = new OffscreenCanvas(resultImage.width, resultImage.height);
+            const ctx = canvas.getContext('2d');
+            
+            let rgbaData;
+            if (resultImage.channels === 3) {
+                rgbaData = new Uint8ClampedArray(resultImage.width * resultImage.height * 4);
+                for (let i = 0, j = 0; i < resultImage.data.length; i += 3, j += 4) {
+                    rgbaData[j] = resultImage.data[i];
+                    rgbaData[j + 1] = resultImage.data[i + 1];
+                    rgbaData[j + 2] = resultImage.data[i + 2];
+                    rgbaData[j + 3] = 255;
+                }
+            } else if (resultImage.channels === 1) {
+                rgbaData = new Uint8ClampedArray(resultImage.width * resultImage.height * 4);
+                for (let i = 0, j = 0; i < resultImage.data.length; i += 1, j += 4) {
+                    const val = resultImage.data[i];
+                    rgbaData[j] = val;
+                    rgbaData[j + 1] = val;
+                    rgbaData[j + 2] = val;
+                    rgbaData[j + 3] = 255;
+                }
+            } else {
+                rgbaData = new Uint8ClampedArray(resultImage.data);
+            }
+            
+            const imageData = new ImageData(rgbaData, resultImage.width, resultImage.height);
+            ctx.putImageData(imageData, 0, 0);
+    
+            upscaledBlob = await canvas.convertToBlob({ type: 'image/png' });
+        }
+
         const upscaledUrl = URL.createObjectURL(upscaledBlob);
 
         // Send the output back to the main thread
