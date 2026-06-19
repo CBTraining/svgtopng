@@ -4,6 +4,15 @@ import { fetchFile } from '@ffmpeg/util';
 import { playDing } from '../utils/audio';
 import { useProcessing } from '../contexts/ProcessingContext';
 
+function formatBytes(bytes, decimals = 2) {
+  if (!+bytes) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
 export default function VideoToGif() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
@@ -22,6 +31,15 @@ export default function VideoToGif() {
   const myJob = jobs.find(j => j.id === myJobId);
   const isProcessing = myJob?.status === 'running';
   const resultUrl = myJob?.resultUrl;
+
+  // Estimation Logic
+  const targetFps = Math.floor(5 + ((quality - 1) / 99) * 15); // 5 to 20 fps
+  const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560); // 240 to 800 width
+  const duration = Math.max(0.1, endTime - startTime);
+  // Rough GIF byte size estimation: (Width * Height * FPS * Duration) / 3.5
+  // Assuming standard 16:9 aspect ratio roughly for height calculation.
+  const estimatedHeight = targetScale * (9 / 16);
+  const estimatedBytes = (targetScale * estimatedHeight * targetFps * duration) / 3.5;
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -61,9 +79,6 @@ export default function VideoToGif() {
       
       // Write file to memory
       await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
-
-      const targetFps = Math.floor(5 + ((quality - 1) / 99) * 15); // 5 to 20 fps
-      const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560); // 240 to 800 width
 
       let args = ['-y']; // Force overwrite
       
@@ -161,7 +176,7 @@ export default function VideoToGif() {
                     </small>
                   </div>
 
-                  <div className="input-group" style={{marginBottom: '1rem', background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)'}}>
+                  <div className="input-group" style={{marginBottom: '1.5rem', background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)'}}>
                     <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: enableCrop ? '1rem' : '0'}}>
                       <input 
                         type="checkbox" 
@@ -200,7 +215,14 @@ export default function VideoToGif() {
                     )}
                   </div>
 
-                  <div className="button-group" style={{marginTop: '1.5rem'}}>
+                  <div style={{background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '1rem'}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                      <span style={{color: 'var(--text-secondary)'}}>Estimated GIF Size:</span>
+                      <span style={{fontWeight: 'bold', color: 'var(--accent-color)'}}>~{formatBytes(estimatedBytes)}</span>
+                    </div>
+                  </div>
+
+                  <div className="button-group">
                     <button className="btn btn-primary" onClick={processVideo} disabled={!isFfmpegLoaded}>
                       Convert to GIF
                     </button>
