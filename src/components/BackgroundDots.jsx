@@ -152,17 +152,31 @@ export default function BackgroundDots() {
         dot.x += dot.vx;
         dot.y += dot.vy;
 
-        // Render optimization: only fill arcs if they are actively visible/glowing/displaced
-        // otherwise use fillRect for the tiny 1px dots for massive performance boost
-        const isDisplaced = Math.abs(dot.x - dot.baseX) > 0.5 || Math.abs(dot.y - dot.baseY) > 0.5;
-        if (dot.radius > 2.1 || isDisplaced) {
-          const intensity = Math.min((dot.radius - 2) / 2, 1);
-          ctx.fillStyle = `rgba(${accentRGB}, ${0.1 + intensity * 0.5})`;
+        // Calculate interaction intensity for smooth color blending
+        const displacementDist = Math.sqrt(Math.pow(dot.x - dot.baseX, 2) + Math.pow(dot.y - dot.baseY, 2));
+        const sizeIntensity = Math.max(0, dot.radius - dot.baseRadius) / 0.2; // 0 to 1 based on growth
+        const displaceIntensity = Math.min(displacementDist / 5, 1); // 0 to 1 based on movement
+        const totalIntensity = Math.min(Math.max(sizeIntensity, displaceIntensity), 1);
+
+        if (totalIntensity > 0.01) {
+          // Parse baseRGB and accentRGB into arrays
+          const baseArr = baseRGB.split(',').map(n => parseInt(n.trim()));
+          const accentArr = accentRGB.split(',').map(n => parseInt(n.trim()));
+          
+          // Interpolate RGB
+          const r = Math.round(baseArr[0] + (accentArr[0] - baseArr[0]) * totalIntensity);
+          const g = Math.round(baseArr[1] + (accentArr[1] - baseArr[1]) * totalIntensity);
+          const b = Math.round(baseArr[2] + (accentArr[2] - baseArr[2]) * totalIntensity);
+          
+          // Smoothly ramp alpha from 0.1 to 0.6
+          const alpha = 0.1 + totalIntensity * 0.5;
+          
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.beginPath();
           ctx.arc(dot.x, dot.y, Math.max(dot.radius, 2), 0, Math.PI * 2);
           ctx.fill();
         } else {
-          ctx.fillStyle = `rgba(${baseRGB}, 0.1)`; // Slightly more visible
+          ctx.fillStyle = `rgba(${baseRGB}, 0.1)`; // Base visibility
           // Using a square for the base 2px dot is faster and looks identical to a 2px circle
           ctx.fillRect(dot.baseX - 1.5, dot.baseY - 1.5, 3, 3);
         }
