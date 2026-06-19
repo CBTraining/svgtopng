@@ -101,8 +101,8 @@ export default function BackgroundDots() {
         if (dist < 180 && dist > 0) {
           // Push away from mouse
           const force = (180 - dist) / 180;
-          dot.vx -= (dx / dist) * force * 1.5;
-          dot.vy -= (dy / dist) * force * 1.5;
+          dot.vx -= (dx / dist) * force * 0.8;
+          dot.vy -= (dy / dist) * force * 0.8;
           
           // Max radius 4 when distance is 0
           dot.targetRadius = 4 - force * 2;
@@ -124,8 +124,8 @@ export default function BackgroundDots() {
              if (distToWave < 80 && bdist > 0) {
                const push = (80 - distToWave) / 80; // 0 to 1
                dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
-               dot.vx -= (bdx / bdist) * push * 15 * b.alpha;
-               dot.vy -= (bdy / bdist) * push * 15 * b.alpha;
+               dot.vx -= (bdx / bdist) * push * 8 * b.alpha;
+               dot.vy -= (bdy / bdist) * push * 8 * b.alpha;
              }
            } else if (b.type === 'vertical') {
              const distToWave = Math.abs(dot.x - b.radius);
@@ -133,7 +133,7 @@ export default function BackgroundDots() {
                const push = (120 - distToWave) / 120;
                dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
                // Push to the right
-               dot.vx += push * 20 * b.alpha;
+               dot.vx += push * 10 * b.alpha;
              }
            }
         } 
