@@ -149,7 +149,7 @@ export default function LottieToGif() {
       </div>
       <p>Convert your JSON Lottie animations to high-quality GIFs. Open multiple windows below!</p>
 
-      <div className="grid-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
         {slots.map(slot => (
           <LottieToGifSlot key={slot.id} slot={slot} />
         ))}

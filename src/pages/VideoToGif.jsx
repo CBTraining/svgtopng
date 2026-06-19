@@ -323,7 +323,7 @@ export default function VideoToGif() {
         </div>
       )}
 
-      <div className="grid-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
         {slots.map(slot => (
           <VideoToGifSlot key={slot.id} slot={slot} />
         ))}

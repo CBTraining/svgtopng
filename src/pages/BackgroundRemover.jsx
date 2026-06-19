@@ -99,7 +99,7 @@ export default function BackgroundRemover() {
       </div>
       <p>Remove backgrounds from images locally using on-device AI. 100% private.</p>
       
-      <div className="grid-container" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
         {slots.map(slot => (
           <BackgroundRemoverSlot key={slot.id} slot={slot} />
         ))}
