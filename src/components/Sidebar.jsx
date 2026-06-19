@@ -12,7 +12,8 @@ import {
   QrCodeIcon,
   ClipboardDocumentIcon,
   SunIcon,
-  MoonIcon
+  MoonIcon,
+  ClockIcon
 } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
 import './Sidebar.css';
@@ -118,7 +119,8 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
       title: 'Web & Dev',
       items: [
         { to: '/qr-generator', icon: QrCodeIcon, label: 'QR Generator' },
-        { to: '/json-saver', icon: CodeBracketSquareIcon, label: 'JSON Saver' }
+        { to: '/json-saver', icon: CodeBracketSquareIcon, label: 'JSON Saver' },
+        { to: '/timezone-converter', icon: ClockIcon, label: 'Timezone Converter' }
       ]
     }
   ];
