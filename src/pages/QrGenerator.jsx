@@ -76,6 +76,14 @@ export default function QrGenerator() {
     }
   }, []);
 
+  const handleColorBlur = () => {
+    // Fix for Chrome bug where browser acts like a popup is still open
+    setTimeout(() => {
+      window.focus();
+      if (document.activeElement) document.activeElement.blur();
+    }, 50);
+  };
+
   useEffect(() => {
     if (qrCodeInstance.current) {
       qrCodeInstance.current.update({
@@ -167,6 +175,7 @@ export default function QrGenerator() {
                     type="color" 
                     value={color1} 
                     onChange={(e) => setColor1(e.target.value)} 
+                    onBlur={handleColorBlur}
                     style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
                   />
                   <ColorSwatches colors={savedColors} onSelect={setColor1} />
@@ -176,6 +185,7 @@ export default function QrGenerator() {
                     type="color" 
                     value={color2} 
                     onChange={(e) => setColor2(e.target.value)} 
+                    onBlur={handleColorBlur}
                     style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
                   />
                   <ColorSwatches colors={savedColors} onSelect={setColor2} />
@@ -187,6 +197,7 @@ export default function QrGenerator() {
                   type="color" 
                   value={singleColor} 
                   onChange={(e) => setSingleColor(e.target.value)} 
+                  onBlur={handleColorBlur}
                   style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
                 />
                 <ColorSwatches colors={savedColors} onSelect={setSingleColor} />
