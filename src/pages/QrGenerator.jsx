@@ -3,7 +3,7 @@ import { QrCodeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 import QRCodeStyling from 'qr-code-styling';
 
 export default function QrGenerator() {
-  const [data, setData] = useState('https://github.com/CBTraining/webtoolstest');
+  const [data, setData] = useState('Place your URL here');
   const [size, setSize] = useState(300);
   const [isGradient, setIsGradient] = useState(true);
   const [singleColor, setSingleColor] = useState('#ffffff');
