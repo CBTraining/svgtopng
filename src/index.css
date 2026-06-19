@@ -5,6 +5,7 @@
   
   --text-primary: #ffffff;
   --text-secondary: #d1d5db; /* Lighter grey for better visibility */
+  --heading-color: #ffffff;
   
   --accent-color: #40E0D0; /* Turquoise Solid */
   --accent-gradient: linear-gradient(135deg, #40E0D0 0%, #12a5d1 100%);
@@ -33,6 +34,7 @@
   
   --text-primary: #1f2937;
   --text-secondary: #4b5563;
+  --heading-color: #000000;
   
   --border-color: #e5e7eb;
 }
@@ -166,7 +168,7 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  color: var(--text-primary);
+  color: var(--heading-color);
   margin-bottom: 1rem;
   font-weight: 600;
 }
