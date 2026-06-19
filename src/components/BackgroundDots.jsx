@@ -70,9 +70,11 @@ export default function BackgroundDots() {
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
       
+      const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
+      
       // Parse out the turquoise accent color visually
       const accentRGB = '64, 224, 208'; // #40E0D0
-      const baseRGB = '255, 255, 255';
+      const baseRGB = isLightMode ? '0, 0, 0' : '255, 255, 255';
 
       // Update bursts
       for (let i = bursts.length - 1; i >= 0; i--) {
