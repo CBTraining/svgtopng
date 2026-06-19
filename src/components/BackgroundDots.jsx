@@ -156,7 +156,15 @@ export default function BackgroundDots() {
         const displacementDist = Math.sqrt(Math.pow(dot.x - dot.baseX, 2) + Math.pow(dot.y - dot.baseY, 2));
         const sizeIntensity = Math.max(0, dot.radius - dot.baseRadius) / 0.2; // 0 to 1 based on growth
         const displaceIntensity = Math.min(displacementDist / 5, 1); // 0 to 1 based on movement
-        const totalIntensity = Math.min(Math.max(sizeIntensity, displaceIntensity), 1);
+        const targetIntensity = Math.min(Math.max(sizeIntensity, displaceIntensity), 1);
+        
+        dot.intensity = dot.intensity || 0;
+        if (targetIntensity > dot.intensity) {
+            dot.intensity += (targetIntensity - dot.intensity) * 0.4; // Light up fast
+        } else {
+            dot.intensity += (targetIntensity - dot.intensity) * 0.02; // Fade out very slowly
+        }
+        const totalIntensity = dot.intensity;
 
         if (totalIntensity > 0.01) {
           // Parse baseRGB and accentRGB into arrays
