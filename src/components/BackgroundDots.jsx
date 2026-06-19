@@ -44,9 +44,9 @@ export default function BackgroundDots() {
           dots.push({
             x: i * spacing,
             y: j * spacing,
-            baseRadius: 1, // Regular size
-            radius: 1,
-            targetRadius: 1,
+            baseRadius: 2, // Regular size
+            radius: 2,
+            targetRadius: 2,
           });
         }
       }
@@ -71,8 +71,8 @@ export default function BackgroundDots() {
         
         // Interaction radius (wider area: 180px)
         if (dist < 180) {
-          // Max radius 2.5 when distance is 0
-          dot.targetRadius = 2.5 - (dist / 180) * 1.5;
+          // Max radius 4 when distance is 0
+          dot.targetRadius = 4 - (dist / 180) * 2;
         } else {
           dot.targetRadius = dot.baseRadius;
         }
@@ -83,16 +83,16 @@ export default function BackgroundDots() {
         
         // Render optimization: only fill arcs if they are actively visible/glowing, 
         // otherwise use fillRect for the tiny 1px dots for massive performance boost
-        if (dot.radius > 1.1) {
-          const intensity = Math.min((dot.radius - 1) / 1.5, 1);
+        if (dot.radius > 2.1) {
+          const intensity = Math.min((dot.radius - 2) / 2, 1);
           ctx.fillStyle = `rgba(${accentRGB}, ${0.1 + intensity * 0.5})`;
           ctx.beginPath();
           ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
           ctx.fill();
         } else {
-          ctx.fillStyle = `rgba(${baseRGB}, 0.07)`;
-          // Using a square for the base 1px dot is faster and looks identical to a 1px circle
-          ctx.fillRect(dot.x - 1, dot.y - 1, 2, 2);
+          ctx.fillStyle = `rgba(${baseRGB}, 0.1)`; // Slightly more visible
+          // Using a square for the base 2px dot is faster and looks identical to a 2px circle
+          ctx.fillRect(dot.x - 1.5, dot.y - 1.5, 3, 3);
         }
       }
       
