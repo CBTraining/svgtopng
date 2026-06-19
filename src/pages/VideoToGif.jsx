@@ -81,16 +81,23 @@ export default function VideoToGif() {
     setProgress(0);
     setLog('Starting process...');
 
+    const ffmpeg = ffmpegRef.current;
+    
+    // Accumulate log to show on error
+    let fullLog = '';
+    const logHandler = ({ message }) => { fullLog += message + '\n'; };
+    ffmpeg.on('log', logHandler);
+
     try {
-      const ffmpeg = ffmpegRef.current;
+      const inputName = videoFile.name.replace(/\s+/g, '_');
       
       // Write file to memory
-      await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+      await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
 
       const targetFps = Math.floor(5 + ((quality - 1) / 99) * 15); // 5 to 20 fps
       const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560); // 240 to 800 width
 
-      let args = [];
+      let args = ['-y']; // Force overwrite
       
       // Determine cropping
       if (enableCrop) {
@@ -98,9 +105,8 @@ export default function VideoToGif() {
       }
       
       // Convert to GIF: Generate palette, then apply
-      // Use scale=w:-2 to ensure height is divisible by 2, avoiding some filter crashes
       args.push(
-        '-i', 'input.mp4', 
+        '-i', inputName, 
         '-vf', `fps=${targetFps},scale=${targetScale}:-2:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`, 
         '-loop', '0', 
         'output.gif'
@@ -108,7 +114,7 @@ export default function VideoToGif() {
 
       const execResult = await ffmpeg.exec(args);
       if (execResult !== 0) {
-        throw new Error(`FFmpeg execution failed with code ${execResult}`);
+        throw new Error(`FFmpeg exited with code ${execResult}. Last logs:\n${fullLog.substring(fullLog.length - 400)}`);
       }
 
       const data = await ffmpeg.readFile('output.gif');
@@ -119,8 +125,9 @@ export default function VideoToGif() {
       playDing();
     } catch (err) {
       console.error(err);
-      alert("Failed to create GIF: " + err.message);
+      alert("Failed to create GIF:\n" + err.message);
     } finally {
+      ffmpeg.off('log', logHandler);
       setIsProcessing(false);
     }
   };

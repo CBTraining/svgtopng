@@ -58,16 +58,23 @@ export default function VideoCompressor() {
     setProgress(0);
     setLog('Starting process...');
 
+    const ffmpeg = ffmpegRef.current;
+    
+    // Accumulate log to show on error
+    let fullLog = '';
+    const logHandler = ({ message }) => { fullLog += message + '\n'; };
+    ffmpeg.on('log', logHandler);
+
     try {
-      const ffmpeg = ffmpegRef.current;
+      const inputName = videoFile.name.replace(/\s+/g, '_'); // Replace spaces just in case
       
       // Write file to memory
-      await ffmpeg.writeFile('input.mp4', await fetchFile(videoFile));
+      await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
 
       // Compress Video: Re-encode with lower bitrate/CRF
-      const execResult = await ffmpeg.exec(['-i', 'input.mp4', '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', 'output.mp4']);
+      const execResult = await ffmpeg.exec(['-i', inputName, '-vcodec', 'libx264', '-crf', '28', '-preset', 'fast', 'output.mp4']);
       if (execResult !== 0) {
-        throw new Error(`FFmpeg execution failed with code ${execResult}`);
+        throw new Error(`FFmpeg exited with code ${execResult}. Last logs:\n${fullLog.substring(fullLog.length - 400)}`);
       }
 
       const data = await ffmpeg.readFile('output.mp4');
@@ -78,8 +85,9 @@ export default function VideoCompressor() {
       playDing();
     } catch (err) {
       console.error(err);
-      alert("Failed to compress video: " + err.message);
+      alert("Failed to compress video:\n" + err.message);
     } finally {
+      ffmpeg.off('log', logHandler);
       setIsProcessing(false);
     }
   };
