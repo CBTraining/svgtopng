@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { XMarkIcon as XMark } from '@heroicons/react/24/solid';
-import { SparklesIcon, ArrowDownTrayIcon as Download } from '@heroicons/react/24/outline';
+import { SparklesIcon, ArrowDownTrayIcon as Download, CloudArrowUpIcon as UploadCloud } from '@heroicons/react/24/outline';
 import Dropzone from '../components/Dropzone';
 import { useProcessing } from '../contexts/ProcessingContext';
-import './ImageUpscaler.css';
 
 const TOOL_ID = 'ai-upscaler';
 
@@ -17,6 +16,17 @@ function UpscalerSlot({ slot }) {
   const resultUrl = myJob?.resultUrl;
 
   const { imageFile, previewUrl } = slot;
+  const [resolution, setResolution] = useState(null);
+
+  useEffect(() => {
+    if (previewUrl && !resolution) {
+      const img = new Image();
+      img.onload = () => {
+        setResolution({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.src = previewUrl;
+    }
+  }, [previewUrl, resolution]);
 
   useEffect(() => {
     // Initialize Web Worker
@@ -82,51 +92,50 @@ function UpscalerSlot({ slot }) {
         <XMark style={{ width: 20, height: 20, color: 'var(--text-secondary)' }} />
       </button>
 
-      <div className="upscaler-workspace">
-         <div className="upscaler-canvas glass-panel">
-           {resultUrl ? (
-             <img src={resultUrl} alt="Upscaled" className="upscaler-preview-image" />
-           ) : (
-             <img src={previewUrl} alt="Original" className="upscaler-preview-image" style={{ filter: isProcessing ? 'blur(4px) brightness(0.7)' : 'none' }} />
-           )}
-           
+      <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+         <div style={{ position: 'relative', minHeight: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+           <img src={previewUrl} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto', filter: isProcessing ? 'blur(4px) brightness(0.7)' : 'none' }} />
            {isProcessing && (
              <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                <div className="spinner"></div>
-               <span style={{ background: 'rgba(0,0,0,0.6)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'white', fontWeight: 'bold' }}>
+               <span style={{ background: 'rgba(0,0,0,0.6)', padding: '0.5rem 1rem', borderRadius: '20px', color: 'white', fontWeight: 'bold', fontSize: '0.9rem', textAlign: 'center' }}>
                  {myJob?.log || 'Processing...'}
                </span>
              </div>
            )}
          </div>
          
-         <div className="upscaler-controls glass-panel">
-            <h3 style={{marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
-              <SparklesIcon style={{width: 20, height: 20, color: 'var(--accent-color)'}}/> 
-              AI Upscaler
-            </h3>
-            <p style={{color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem'}}>
-              Boost image resolution by 2x using the local Swin2SR AI model running entirely in your browser.
-            </p>
-
-            {!isProcessing && !resultUrl && (
-              <button className="upscaler-download-btn" onClick={processImage}>
-                Upscale 2x
-              </button>
-            )}
-            
-            {resultUrl && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <a href={resultUrl} download={`upscaled-${imageFile.name}.png`} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem', fontWeight: 'bold' }}>
-                   <Download style={{width: "20px", height: "20px"}} /> Download HD
-                </a>
-                <button className="btn" onClick={() => removeJob(myJobId)}>
-                   Discard Result
-                </button>
-              </div>
-            )}
-         </div>
+         {!isProcessing && !resultUrl && (
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+             {resolution && (
+               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                 Original: {resolution.width} x {resolution.height}px<br/>
+                 <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>Upscaled: {resolution.width * 2} x {resolution.height * 2}px</span>
+               </div>
+             )}
+             <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>
+               Upscale 2x
+             </button>
+           </div>
+         )}
       </div>
+
+      {resultUrl && (
+        <div className="glass-panel preview-panel" style={{marginTop: '1.5rem', background: 'var(--bg-tertiary)'}}>
+           <h3 style={{marginTop: 0}}>Result ({resolution ? `${resolution.width * 2}x${resolution.height * 2}` : '2x'})</h3>
+           <div className="canvas-container">
+              <img src={resultUrl} alt="Upscaled" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
+           </div>
+           <div className="button-group" style={{marginTop: '1rem'}}>
+             <a href={resultUrl} download={`upscaled-${imageFile.name}.png`} className="btn btn-primary">
+                <Download style={{width: "18px", height: "18px"}} /> Download HD
+             </a>
+             <button className="btn" onClick={() => removeJob(myJobId)}>
+                Discard Result
+             </button>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -149,22 +158,32 @@ export default function ImageUpscaler() {
         </div>
       </header>
 
-      {slots.map(slot => (
-        <UpscalerSlot key={slot.id} slot={slot} />
-      ))}
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+        {slots.map(slot => (
+          <UpscalerSlot key={slot.id} slot={slot} />
+        ))}
 
-      <div style={{ marginTop: slots.length > 0 ? '2rem' : '0' }}>
-        <Dropzone 
-          onDrop={(files) => {
-            files.forEach(file => {
-              if (file.type.startsWith('image/')) {
-                addSlot(TOOL_ID, file);
-              }
-            });
-          }} 
-          accept="image/*" 
-          title="Drop images to upscale..."
-        />
+        <div className="glass-panel controls" style={{ borderStyle: 'dashed', borderColor: 'var(--border-color)', borderWidth: '2px', background: 'transparent' }}>
+          <Dropzone 
+            onDrop={(files) => {
+              const fileList = Array.isArray(files) ? files : [files];
+              fileList.forEach(file => {
+                if (file && file.type.startsWith('image/')) {
+                  const slotId = `${TOOL_ID}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+                  addSlot(TOOL_ID, {
+                    id: slotId,
+                    imageFile: file,
+                    previewUrl: URL.createObjectURL(file)
+                  });
+                }
+              });
+            }} 
+            accept="image/*" 
+            title={slots.length > 0 ? "Add another image" : "Upload Image"}
+            subtitle="Drop a JPG or PNG here"
+            icon={<UploadCloud style={{width: 48, height: 48, color: 'var(--text-secondary)'}}/>}
+          />
+        </div>
       </div>
     </div>
   );
