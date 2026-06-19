@@ -66,6 +66,7 @@ export default function QrGenerator() {
               ]
             }
           } : {
+            gradient: null,
             color: singleColor
           })
         },
