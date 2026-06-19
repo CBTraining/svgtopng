@@ -168,8 +168,8 @@ export default function BackgroundDots() {
           const g = Math.round(baseArr[1] + (accentArr[1] - baseArr[1]) * totalIntensity);
           const b = Math.round(baseArr[2] + (accentArr[2] - baseArr[2]) * totalIntensity);
           
-          // Smoothly ramp alpha from 0.1 to 0.6
-          const alpha = 0.1 + totalIntensity * 0.5;
+          // Smoothly ramp alpha from 0.2 to 1.0
+          const alpha = 0.2 + totalIntensity * 0.8;
           
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
           ctx.beginPath();
