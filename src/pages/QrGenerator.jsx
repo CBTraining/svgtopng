@@ -128,7 +128,7 @@ export default function QrGenerator() {
         </div>
       </header>
 
-      <div className="grid-container">
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
         <div className="glass-panel controls">
           <h3>Customization</h3>
           
