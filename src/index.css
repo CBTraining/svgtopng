@@ -76,6 +76,18 @@ body {
   overflow-x: hidden;
 }
 
+::selection {
+  background-color: var(--accent-color);
+  color: #000;
+}
+
+input[type="checkbox"], 
+input[type="radio"] {
+  accent-color: var(--accent-color);
+  cursor: pointer;
+  width: 1.1rem;
+  height: 1.1rem;
+}
 
 /* Glassmorphism Panel */
 .glass-panel {

@@ -7,6 +7,7 @@ export default function ImageTools() {
   const [imageFile, setImageFile] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [originalWidth, setOriginalWidth] = useState(4000);
   const [width, setWidth] = useState(800);
   const [radius, setRadius] = useState(0);
   const [quality, setQuality] = useState(1);
@@ -27,6 +28,7 @@ export default function ImageTools() {
       
       const img = new Image();
       img.onload = () => {
+        setOriginalWidth(img.width);
         setWidth(img.width);
       };
       img.src = url;
@@ -132,7 +134,7 @@ export default function ImageTools() {
                 <label>Width: {width}px</label>
                 <input 
                   type="range" 
-                  min="100" max="4000" 
+                  min="100" max={originalWidth} 
                   value={width} 
                   onChange={(e) => setWidth(parseInt(e.target.value))} 
                 />
