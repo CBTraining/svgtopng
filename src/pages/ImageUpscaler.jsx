@@ -34,6 +34,12 @@ function UpscalerSlot({ slot }) {
       type: 'module'
     });
 
+    workerRef.current.onerror = (err) => {
+      console.error('Worker initialization or runtime error:', err);
+      updateJob(myJobId, { status: 'error', error: 'Worker crashed: ' + err.message });
+      alert("Worker failed: " + err.message);
+    };
+
     workerRef.current.onmessage = (event) => {
       const { jobId, status, progressData, log, resultUrl, error } = event.data;
       if (jobId !== myJobId) return;
@@ -146,17 +152,11 @@ export default function ImageUpscaler() {
 
   return (
     <div className="tool-page page-container animate-fade-in">
-      <header className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div className="tool-icon-wrapper">
-            <SparklesIcon className="tool-icon" />
-          </div>
-          <div>
-            <h1>Upscaler</h1>
-            <p className="subtitle">Enhance and upscale images 2x directly in your browser using local AI (Free & Offline).</p>
-          </div>
-        </div>
-      </header>
+      <div className="page-header">
+        <SparklesIcon style={{width: 32, height: 32, color: 'var(--accent-color)'}}/>
+        <h1>Upscaler</h1>
+      </div>
+      <p style={{marginBottom: '2rem'}}>Enhance and upscale images 2x directly in your browser using local AI (Free & Offline).</p>
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
         {slots.map(slot => (
