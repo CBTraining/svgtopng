@@ -111,7 +111,6 @@ function App() {
             const blob = item.getAsFile();
             if (blob) {
               e.preventDefault();
-              window.dispatchEvent(new CustomEvent('burst', { detail: { x: 50, y: window.innerHeight / 2 } }));
               processImageBlob(blob);
               handled = true;
               break;
@@ -304,6 +303,7 @@ function App() {
 
   const handleDownload = () => {
     if (pendingBlob && filename) {
+      window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'vertical', x: 0 } }));
       const url = URL.createObjectURL(pendingBlob);
       const a = document.createElement('a');
       a.href = url;

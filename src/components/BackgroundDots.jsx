@@ -16,22 +16,12 @@ export default function BackgroundDots() {
 
     const handleBurst = (e) => {
       bursts.push({
-        x: e.detail.x,
-        y: e.detail.y,
+        type: e.detail.type || 'radial',
+        x: e.detail.x || 0,
+        y: e.detail.y || 0,
         radius: 0,
         alpha: 1
       });
-      
-      // Also push away dots violently!
-      for (let dot of dots) {
-        const dx = e.detail.x - dot.x;
-        const dy = e.detail.y - dot.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 400) {
-           dot.targetRadius = 6 - (dist / 400) * 4;
-           dot.radius += (400 - dist) * 0.05; // Immediate pop
-        }
-      }
     };
     window.addEventListener('burst', handleBurst);
 
@@ -83,6 +73,16 @@ export default function BackgroundDots() {
       // Parse out the turquoise accent color visually
       const accentRGB = '64, 224, 208'; // #40E0D0
       const baseRGB = '255, 255, 255';
+
+      // Update bursts
+      for (let i = bursts.length - 1; i >= 0; i--) {
+        const b = bursts[i];
+        b.radius += 20; // expand fast
+        b.alpha -= 0.015; // fade out
+        if (b.alpha <= 0) {
+          bursts.splice(i, 1);
+        }
+      }
       
       for (let i = 0; i < dots.length; i++) {
         const dot = dots[i];
@@ -102,6 +102,26 @@ export default function BackgroundDots() {
         // Easing to go back to normal slowly (trailing effect)
         // A lower multiplier makes it shrink slower
         dot.radius += (dot.targetRadius - dot.radius) * 0.035; 
+
+        // Shockwave interaction overriding normal radius temporarily
+        for (const b of bursts) {
+           if (b.type === 'radial') {
+             const bdx = b.x - dot.x;
+             const bdy = b.y - dot.y;
+             const bdist = Math.sqrt(bdx * bdx + bdy * bdy);
+             const distToWave = Math.abs(bdist - b.radius);
+             if (distToWave < 80) {
+               const push = (80 - distToWave) / 80; // 0 to 1
+               dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
+             }
+           } else if (b.type === 'vertical') {
+             const distToWave = Math.abs(dot.x - b.radius);
+             if (distToWave < 120) {
+               const push = (120 - distToWave) / 120;
+               dot.radius = Math.max(dot.radius, dot.baseRadius + push * 8 * b.alpha);
+             }
+           }
+        } 
         
         // Render optimization: only fill arcs if they are actively visible/glowing, 
         // otherwise use fillRect for the tiny 1px dots for massive performance boost
@@ -118,22 +138,7 @@ export default function BackgroundDots() {
         }
       }
 
-      // Draw bursts
-      for (let i = bursts.length - 1; i >= 0; i--) {
-        const b = bursts[i];
-        b.radius += 15; // expand fast
-        b.alpha -= 0.03; // fade out
-        
-        if (b.alpha <= 0) {
-          bursts.splice(i, 1);
-        } else {
-          ctx.beginPath();
-          ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-          ctx.lineWidth = 2;
-          ctx.strokeStyle = `rgba(${accentRGB}, ${b.alpha * 0.5})`;
-          ctx.stroke();
-        }
-      }
+
       
       animationFrameId = requestAnimationFrame(draw);
     };

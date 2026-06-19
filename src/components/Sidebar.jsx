@@ -75,6 +75,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
     setIsDragging(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'vertical', x: 0 } }));
       const file = e.dataTransfer.files[0];
       processDroppedFile(file);
     }

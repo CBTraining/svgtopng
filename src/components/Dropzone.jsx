@@ -11,7 +11,7 @@ export default function Dropzone({ onDrop, accept = "*", title = "Upload File", 
       const rect = dropzoneRef.current.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
-      window.dispatchEvent(new CustomEvent('burst', { detail: { x, y } }));
+      window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'radial', x, y } }));
     }
   };
 
