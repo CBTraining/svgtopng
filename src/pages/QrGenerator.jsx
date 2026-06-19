@@ -2,6 +2,26 @@ import { useState, useEffect, useRef } from 'react';
 import { QrCodeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
 import QRCodeStyling from 'qr-code-styling';
 
+function ColorSwatches({ colors, onSelect }) {
+  if (!colors || colors.length === 0) return null;
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
+      {colors.slice(0, 10).map((c, i) => (
+        <div 
+          key={i}
+          onClick={() => onSelect(c)}
+          style={{
+            width: '20px', height: '20px', borderRadius: '4px', 
+            backgroundColor: c, cursor: 'pointer', border: '1px solid var(--border-color)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+          }}
+          title={c}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function QrGenerator() {
   const [data, setData] = useState('Place your URL here');
   const [size, setSize] = useState(300);
@@ -10,11 +30,19 @@ export default function QrGenerator() {
   const [color1, setColor1] = useState('#40E0D0');
   const [color2, setColor2] = useState('#12a5d1');
   const [isRounded, setIsRounded] = useState(true);
+  const [savedColors, setSavedColors] = useState([]);
   
   const qrRef = useRef(null);
   const qrCodeInstance = useRef(null);
 
   useEffect(() => {
+    const saved = localStorage.getItem('colorPickerHistory');
+    if (saved) {
+      try {
+        setSavedColors(JSON.parse(saved));
+      } catch (e) {}
+    }
+
     qrCodeInstance.current = new QRCodeStyling({
       width: size,
       height: size,
@@ -134,18 +162,24 @@ export default function QrGenerator() {
             
             {isGradient ? (
               <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                <input 
-                  type="color" 
-                  value={color1} 
-                  onChange={(e) => setColor1(e.target.value)} 
-                  style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
-                />
-                <input 
-                  type="color" 
-                  value={color2} 
-                  onChange={(e) => setColor2(e.target.value)} 
-                  style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
-                />
+                <div style={{ flex: 1 }}>
+                  <input 
+                    type="color" 
+                    value={color1} 
+                    onChange={(e) => setColor1(e.target.value)} 
+                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
+                  />
+                  <ColorSwatches colors={savedColors} onSelect={setColor1} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <input 
+                    type="color" 
+                    value={color2} 
+                    onChange={(e) => setColor2(e.target.value)} 
+                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
+                  />
+                  <ColorSwatches colors={savedColors} onSelect={setColor2} />
+                </div>
               </div>
             ) : (
               <div style={{ marginTop: '0.5rem' }}>
@@ -155,6 +189,7 @@ export default function QrGenerator() {
                   onChange={(e) => setSingleColor(e.target.value)} 
                   style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
                 />
+                <ColorSwatches colors={savedColors} onSelect={setSingleColor} />
               </div>
             )}
           </div>
