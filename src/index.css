@@ -145,6 +145,7 @@ input[type="radio"] {
 
 .btn:hover {
   background-color: #3a3a3a;
+  color: #ffffff;
   transform: translateY(-1px);
 }
 
