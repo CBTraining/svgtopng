@@ -111,6 +111,7 @@ function App() {
             const blob = item.getAsFile();
             if (blob) {
               e.preventDefault();
+              window.dispatchEvent(new CustomEvent('burst', { detail: { x: 50, y: window.innerHeight / 2 } }));
               processImageBlob(blob);
               handled = true;
               break;

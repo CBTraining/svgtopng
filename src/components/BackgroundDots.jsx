@@ -8,10 +8,32 @@ export default function BackgroundDots() {
     const ctx = canvas.getContext('2d', { alpha: true });
     let animationFrameId;
     let dots = [];
+    let bursts = []; // { x, y, radius, alpha }
     const spacing = 26; // Space between dots
     let width, height;
     
     let mouse = { x: -1000, y: -1000 };
+
+    const handleBurst = (e) => {
+      bursts.push({
+        x: e.detail.x,
+        y: e.detail.y,
+        radius: 0,
+        alpha: 1
+      });
+      
+      // Also push away dots violently!
+      for (let dot of dots) {
+        const dx = e.detail.x - dot.x;
+        const dy = e.detail.y - dot.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 400) {
+           dot.targetRadius = 6 - (dist / 400) * 4;
+           dot.radius += (400 - dist) * 0.05; // Immediate pop
+        }
+      }
+    };
+    window.addEventListener('burst', handleBurst);
 
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
@@ -95,6 +117,23 @@ export default function BackgroundDots() {
           ctx.fillRect(dot.x - 1.5, dot.y - 1.5, 3, 3);
         }
       }
+
+      // Draw bursts
+      for (let i = bursts.length - 1; i >= 0; i--) {
+        const b = bursts[i];
+        b.radius += 15; // expand fast
+        b.alpha -= 0.03; // fade out
+        
+        if (b.alpha <= 0) {
+          bursts.splice(i, 1);
+        } else {
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = `rgba(${accentRGB}, ${b.alpha * 0.5})`;
+          ctx.stroke();
+        }
+      }
       
       animationFrameId = requestAnimationFrame(draw);
     };
@@ -105,6 +144,7 @@ export default function BackgroundDots() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', init);
+      window.removeEventListener('burst', handleBurst);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);

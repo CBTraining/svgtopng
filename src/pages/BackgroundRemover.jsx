@@ -41,10 +41,16 @@ function BackgroundRemoverSlot({ slot }) {
     }
   };
 
+  const [isClosing, setIsClosing] = useState(false);
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => removeSlot(TOOL_ID, slot.id), 200);
+  };
+
   return (
-    <div className="glass-panel controls" style={{ position: 'relative', marginBottom: '2rem' }}>
+    <div className={`glass-panel controls animate-pop-in ${isClosing ? 'animate-pop-out' : ''}`} style={{ position: 'relative', marginBottom: '2rem' }}>
       <button 
-        onClick={() => removeSlot(TOOL_ID, slot.id)} 
+        onClick={handleClose} 
         style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '50%', padding: '0.25rem', cursor: 'pointer', zIndex: 10 }}
         title="Close Slot"
       >

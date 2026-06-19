@@ -17,7 +17,7 @@ function formatBytes(bytes, decimals = 2) {
 const TOOL_ID = 'video-to-gif';
 
 function VideoToGifSlot({ slot }) {
-  const { jobs, addJob, updateJob, removeJob, ffmpeg, isFfmpegLoaded, updateSlot, removeSlot } = useProcessing();
+  const { jobs, addJob, updateJob, removeJob, isFfmpegLoaded, updateSlot, removeSlot, createFfmpegInstance } = useProcessing();
   const videoRef = useRef(null);
 
   const myJobId = slot.id;
@@ -39,17 +39,19 @@ function VideoToGifSlot({ slot }) {
     if (isFfmpegLoaded && videoFile && originalFps === null && !slot.isProbing) {
       updateSlot(TOOL_ID, slot.id, { isProbing: true });
       const probeVideo = async () => {
+         let localFfmpeg = null;
          try {
+             localFfmpeg = await createFfmpegInstance();
              const inputName = 'probe_' + slot.id + '_' + videoFile.name.replace(/\s+/g, '_');
-             await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
+             await localFfmpeg.writeFile(inputName, await fetchFile(videoFile));
              let detectedFps = null;
              const logHandler = ({ message }) => {
                 const match = message.match(/, ([\d.]+) fps,/);
                 if (match) detectedFps = parseFloat(match[1]);
              };
-             ffmpeg.on('log', logHandler);
-             await ffmpeg.exec(['-i', inputName]);
-             ffmpeg.off('log', logHandler);
+             localFfmpeg.on('log', logHandler);
+             await localFfmpeg.exec(['-i', inputName]);
+             localFfmpeg.off('log', logHandler);
              if (detectedFps) {
                 const roundedFps = Math.round(detectedFps);
                 let newFps = fps;
@@ -64,11 +66,13 @@ function VideoToGifSlot({ slot }) {
          } catch(err) {
              console.error("Probe error", err);
              updateSlot(TOOL_ID, slot.id, { originalFps: 30 }); // fallback
+         } finally {
+             if (localFfmpeg) localFfmpeg.terminate();
          }
       };
       probeVideo();
     }
-  }, [isFfmpegLoaded, videoFile, originalFps, slot.isProbing, slot.id, updateSlot, ffmpeg, fps]);
+  }, [isFfmpegLoaded, videoFile, originalFps, slot.isProbing, slot.id, updateSlot, createFfmpegInstance, fps]);
 
   const handleVideoLoadedMetadata = () => {
     if (videoRef.current && endTime === 5 && videoRef.current.duration > 0) {
@@ -82,6 +86,7 @@ function VideoToGifSlot({ slot }) {
     
     addJob({ id: myJobId, title: 'Converting Video to GIF', type: 'video-to-gif' });
 
+    let localFfmpeg = null;
     let fullLog = '';
     const logHandler = ({ message }) => { 
       fullLog += message + '\n'; 
@@ -92,15 +97,16 @@ function VideoToGifSlot({ slot }) {
       updateJob(myJobId, { progress: progress * 100 });
     };
 
-    ffmpeg.on('log', logHandler);
-    ffmpeg.on('progress', progressHandler);
-
     try {
+      localFfmpeg = await createFfmpegInstance();
+      localFfmpeg.on('log', logHandler);
+      localFfmpeg.on('progress', progressHandler);
+
       const inputName = `input_${slot.id}_` + videoFile.name.replace(/\s+/g, '_');
       const outputName = `output_${slot.id}.gif`;
       
       // Write file to memory
-      await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
+      await localFfmpeg.writeFile(inputName, await fetchFile(videoFile));
 
       let args = ['-y']; // Force overwrite
       
@@ -123,12 +129,12 @@ function VideoToGifSlot({ slot }) {
         outputName
       );
 
-      const execResult = await ffmpeg.exec(args);
+      const execResult = await localFfmpeg.exec(args);
       if (execResult !== 0) {
         throw new Error(`FFmpeg exited with code ${execResult}. Last logs:\n${fullLog.substring(fullLog.length - 400)}`);
       }
 
-      const data = await ffmpeg.readFile(outputName);
+      const data = await localFfmpeg.readFile(outputName);
       if (data.length === 0) throw new Error("Generated GIF is 0 bytes");
 
       const blob = new Blob([data], { type: 'image/gif' });
@@ -140,15 +146,24 @@ function VideoToGifSlot({ slot }) {
       updateJob(myJobId, { status: 'error', error: err.message });
       alert("Failed to create GIF:\n" + err.message);
     } finally {
-      ffmpeg.off('log', logHandler);
-      ffmpeg.off('progress', progressHandler);
+      if (localFfmpeg) {
+        localFfmpeg.off('log', logHandler);
+        localFfmpeg.off('progress', progressHandler);
+        localFfmpeg.terminate();
+      }
     }
   };
 
+  const [isClosing, setIsClosing] = useState(false);
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => removeSlot(TOOL_ID, slot.id), 200);
+  };
+
   return (
-    <div className="glass-panel controls" style={{ position: 'relative', marginBottom: '2rem' }}>
+    <div className={`glass-panel controls animate-pop-in ${isClosing ? 'animate-pop-out' : ''}`} style={{ position: 'relative', marginBottom: '2rem' }}>
       <button 
-        onClick={() => removeSlot(TOOL_ID, slot.id)} 
+        onClick={handleClose} 
         style={{ position: 'absolute', top: '10px', right: '10px', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: '50%', padding: '0.25rem', cursor: 'pointer', zIndex: 10 }}
         title="Close Slot"
       >

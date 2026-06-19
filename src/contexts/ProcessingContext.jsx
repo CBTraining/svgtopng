@@ -35,6 +35,21 @@ export function ProcessingProvider({ children }) {
     setJobs((prev) => prev.map(job => job.id === id ? { ...job, ...updates } : job));
   };
 
+  const createFfmpegInstance = async () => {
+    const instance = new FFmpeg();
+    try {
+      const baseURL = `${import.meta.env.BASE_URL}ffmpeg`;
+      await instance.load({
+        coreURL: `${baseURL}/ffmpeg-core.js?v=2`,
+        wasmURL: `${baseURL}/ffmpeg-core.wasm?v=2`,
+      });
+      return instance;
+    } catch (err) {
+      console.error("FFmpeg failed to spawn:", err);
+      throw err;
+    }
+  };
+
   const removeJob = (id) => {
     setJobs((prev) => {
       const job = prev.find(j => j.id === id);
@@ -80,7 +95,7 @@ export function ProcessingProvider({ children }) {
   return (
     <ProcessingContext.Provider value={{ 
       jobs, addJob, updateJob, removeJob, 
-      ffmpeg: ffmpegRef.current, isFfmpegLoaded,
+      ffmpeg: ffmpegRef.current, isFfmpegLoaded, createFfmpegInstance,
       workspaces, addSlot, updateSlot, removeSlot
     }}>
       {children}
