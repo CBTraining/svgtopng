@@ -25,9 +25,16 @@ export default function BackgroundDots() {
     };
     window.addEventListener('burst', handleBurst);
 
+    let mouseInViewport = true;
+    const handleMouseLeave = () => { mouseInViewport = false; };
+    const handleMouseEnter = () => { mouseInViewport = true; };
+    window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mouseenter', handleMouseEnter);
+
     const handleMouseMove = (e) => {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
+      mouseInViewport = true;
     };
     
     // Add touch support for mobile
@@ -35,6 +42,7 @@ export default function BackgroundDots() {
       if (e.touches.length > 0) {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
+        mouseInViewport = true;
       }
     };
 
@@ -71,8 +79,21 @@ export default function BackgroundDots() {
     window.addEventListener('resize', init);
     init();
 
+    let globalOpacity = 1;
+
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
+      
+      // Update global opacity based on mouse presence
+      globalOpacity += (mouseInViewport ? (1 - globalOpacity) * 0.05 : (0 - globalOpacity) * 0.05);
+      
+      // If fully invisible, skip heavy rendering
+      if (globalOpacity < 0.01) {
+        animationFrameId = requestAnimationFrame(draw);
+        return;
+      }
+      
+      ctx.globalAlpha = globalOpacity;
       
       const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
       
@@ -198,6 +219,8 @@ export default function BackgroundDots() {
     draw();
 
     return () => {
+      window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('mouseenter', handleMouseEnter);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('resize', init);
