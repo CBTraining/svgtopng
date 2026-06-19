@@ -123,66 +123,81 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
   ];
 
   return (
-    <aside 
-      className={`sidebar glass-panel ${isDragging ? 'drag-active' : ''} ${isOpen ? 'open' : ''}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      <div className="sidebar-header">
-        <div className="logo-container" style={{ alignItems: 'center' }}>
-          <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="28" height="28" style={{ marginLeft: '6px', marginRight: '-2px' }} />
-          <h2>Web<span className="text-gradient">Tools</span></h2>
-          <span className="version">v3.01</span>
-        </div>
-        {isDragging && (
-          <div className="drop-overlay animate-fade-in">
-            <p>Drop to Convert!</p>
+    <>
+      {isOpen && (
+        <div 
+          className="sidebar-overlay animate-fade-in" 
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 999,
+            display: window.innerWidth <= 768 ? 'block' : 'none'
+          }}
+        />
+      )}
+      <aside 
+        className={`sidebar glass-panel ${isDragging ? 'drag-active' : ''} ${isOpen ? 'open' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
+        <div className="sidebar-header">
+          <div className="logo-container" style={{ alignItems: 'center' }}>
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="28" height="28" style={{ marginLeft: '6px', marginRight: '-2px' }} />
+            <h2>Web<span className="text-gradient">Tools</span></h2>
+            <span className="version">v3.01</span>
           </div>
-        )}
-      </div>
-
-        <nav className="sidebar-nav">
-          {navCategories.map((category, idx) => (
-            <div key={idx} className="nav-category">
-              {category.title !== 'General' && (
-                <h4 className="nav-category-title">{category.title}</h4>
-              )}
-              {category.items.map((item) => (
-                <NavLink 
-                  key={item.to} 
-                  to={item.to} 
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  onClick={onClose}
-                >
-                  <item.icon style={{width: '20px', height: '20px'}} />
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
+          {isDragging && (
+            <div className="drop-overlay animate-fade-in">
+              <p>Drop to Convert!</p>
             </div>
-          ))}
-        </nav>
-
-      <div style={{ padding: '1.5rem', marginTop: 'auto', borderTop: '1px solid var(--border-default)' }}>
-        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-          <button 
-            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
-            className="btn"
-            style={{ padding: '0.5rem', flexShrink: 0 }}
-            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          >
-            {theme === 'dark' ? <SunIcon style={{width: 20, height: 20}} /> : <MoonIcon style={{width: 20, height: 20}} />}
-          </button>
-          <button 
-            onClick={onManualPaste}
-            className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
-            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold' }}
-          >
-            <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />
-            Paste to PNG
-          </button>
+          )}
         </div>
-      </div>
-    </aside>
+
+          <nav className="sidebar-nav">
+            {navCategories.map((category, idx) => (
+              <div key={idx} className="nav-category">
+                {category.title !== 'General' && (
+                  <h4 className="nav-category-title">{category.title}</h4>
+                )}
+                {category.items.map((item) => (
+                  <NavLink 
+                    key={item.to} 
+                    to={item.to} 
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    onClick={onClose}
+                  >
+                    <item.icon style={{width: '20px', height: '20px'}} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            ))}
+          </nav>
+
+        <div style={{ padding: '1.5rem', marginTop: 'auto', borderTop: '1px solid var(--border-default)' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+            <button 
+              onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+              className="btn"
+              style={{ padding: '0.5rem', flexShrink: 0 }}
+              title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+            >
+              {theme === 'dark' ? <SunIcon style={{width: 20, height: 20}} /> : <MoonIcon style={{width: 20, height: 20}} />}
+            </button>
+            <button 
+              onClick={onManualPaste}
+              className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold' }}
+            >
+              <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />
+              Paste to PNG
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

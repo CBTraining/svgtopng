@@ -284,21 +284,25 @@ p {
     position: fixed;
     top: 0; left: 0; right: 0;
     height: 60px;
-    background: rgba(26, 26, 26, 0.8);
+    background: rgba(26, 26, 26, 0.8) !important;
     backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0 1rem;
     z-index: 100;
+    color: #ffffff !important;
   }
   .mobile-header button {
     background: none;
     border: none;
-    color: var(--text-primary);
+    color: #ffffff !important;
     cursor: pointer;
     padding: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .mobile-header span {
+    color: #ffffff !important;
   }
   .mobile-header button svg {
     fill: url(#accent-grad);
