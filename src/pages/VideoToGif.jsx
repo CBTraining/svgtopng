@@ -16,12 +16,14 @@ function formatBytes(bytes, decimals = 2) {
 export default function VideoToGif() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
+  const [originalFps, setOriginalFps] = useState(null);
 
   // Advanced Options
   const [quality, setQuality] = useState(80);
   const [enableCrop, setEnableCrop] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(5);
+  const [fps, setFps] = useState('15');
 
   const videoRef = useRef(null);
 
@@ -33,7 +35,7 @@ export default function VideoToGif() {
   const resultUrl = myJob?.resultUrl;
 
   // Estimation Logic
-  const targetFps = Math.floor(5 + ((quality - 1) / 99) * 15); // 5 to 20 fps
+  const targetFps = fps === 'original' ? (originalFps || 15) : parseInt(fps);
   const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560); // 240 to 800 width
   const duration = Math.max(0.1, endTime - startTime);
   // Rough GIF byte size estimation: (Width * Height * FPS * Duration) / 3.5
@@ -41,12 +43,39 @@ export default function VideoToGif() {
   const estimatedHeight = targetScale * (9 / 16);
   const estimatedBytes = (targetScale * estimatedHeight * targetFps * duration) / 3.5;
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith('video/')) {
       setVideoFile(file);
       setVideoSrc(URL.createObjectURL(file));
       if (myJob) removeJob(myJobId);
+
+      // Probe original FPS
+      if (isFfmpegLoaded) {
+         try {
+             const inputName = 'probe_' + file.name.replace(/\s+/g, '_');
+             await ffmpeg.writeFile(inputName, await fetchFile(file));
+             let detectedFps = null;
+             const logHandler = ({ message }) => {
+                const match = message.match(/, ([\d.]+) fps,/);
+                if (match) detectedFps = parseFloat(match[1]);
+             };
+             ffmpeg.on('log', logHandler);
+             await ffmpeg.exec(['-i', inputName]);
+             ffmpeg.off('log', logHandler);
+             if (detectedFps) {
+                const roundedFps = Math.round(detectedFps);
+                setOriginalFps(roundedFps);
+                // If current selected FPS is higher than source, downshift it
+                if (fps !== 'original' && parseInt(fps) > roundedFps) {
+                   if (roundedFps >= 15) setFps('15');
+                   else setFps('10');
+                }
+             }
+         } catch(err) {
+             console.error("Probe error", err);
+         }
+      }
     }
   };
 
@@ -86,11 +115,17 @@ export default function VideoToGif() {
       if (enableCrop) {
         args.push('-ss', startTime.toString(), '-to', endTime.toString());
       }
+
+      // Enforce FPS Limit based on selection & source
+      let finalFps = targetFps;
+      if (originalFps && finalFps > originalFps) {
+         finalFps = originalFps;
+      }
       
       // Convert to GIF: Generate palette, then apply
       args.push(
         '-i', inputName, 
-        '-vf', `fps=${targetFps},scale=${targetScale}:-2:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`, 
+        '-vf', `fps=${finalFps},scale=${targetScale}:-2:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse`, 
         '-loop', '0', 
         'output.gif'
       );
@@ -153,14 +188,14 @@ export default function VideoToGif() {
                 src={videoSrc} 
                 controls 
                 onLoadedMetadata={handleVideoLoadedMetadata}
-                style={{width: '100%', borderRadius: 'var(--border-radius-sm)', background: '#000', marginBottom: '1rem'}} 
+                style={{width: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', background: '#000', marginBottom: '1rem'}} 
               />
               
               {!isProcessing && !resultUrl && (
                 <div style={{marginBottom: '1.5rem'}}>
                   <div className="input-group" style={{marginBottom: '1rem'}}>
                     <label style={{display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem'}}>
-                      <span>GIF Quality</span>
+                      <span>GIF Quality (Resolution)</span>
                       <span style={{color: 'var(--accent-color)'}}>{quality}%</span>
                     </label>
                     <input 
@@ -174,6 +209,23 @@ export default function VideoToGif() {
                     <small style={{color: 'var(--text-secondary)', display: 'block', marginTop: '0.25rem'}}>
                       Higher quality yields larger file sizes.
                     </small>
+                  </div>
+
+                  <div className="input-group" style={{marginBottom: '1.5rem'}}>
+                    <label style={{display: 'block', marginBottom: '0.5rem'}}>Framerate (FPS)</label>
+                    <select 
+                      value={fps} 
+                      onChange={(e) => setFps(e.target.value)}
+                      style={{width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                    >
+                      <option value="original">Original{originalFps ? ` (${originalFps}fps)` : ''}</option>
+                      {(!originalFps || originalFps >= 30) && <option value="30">30 FPS</option>}
+                      {(!originalFps || originalFps >= 24) && <option value="24">24 FPS</option>}
+                      {(!originalFps || originalFps >= 20) && <option value="20">20 FPS</option>}
+                      {(!originalFps || originalFps >= 15) && <option value="15">15 FPS</option>}
+                      {(!originalFps || originalFps >= 10) && <option value="10">10 FPS</option>}
+                      {(!originalFps || originalFps >= 5) && <option value="5">5 FPS</option>}
+                    </select>
                   </div>
 
                   <div className="input-group" style={{marginBottom: '1.5rem', background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)'}}>
@@ -257,7 +309,7 @@ export default function VideoToGif() {
           <div className="glass-panel preview-panel">
              <h3>GIF Result</h3>
              <div className="canvas-container" style={{background: 'var(--bg-tertiary)'}}>
-               <img src={resultUrl} alt="GIF Result" style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }} />
+               <img src={resultUrl} alt="GIF Result" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
              </div>
           </div>
         )}

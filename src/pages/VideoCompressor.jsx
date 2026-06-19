@@ -17,10 +17,12 @@ function formatBytes(bytes, decimals = 2) {
 export default function VideoCompressor() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoSrc, setVideoSrc] = useState(null);
+  const [originalFps, setOriginalFps] = useState(null);
   
   // Settings
   const [quality, setQuality] = useState(50); // 1 to 100
   const [preset, setPreset] = useState('fast');
+  const [fps, setFps] = useState('original');
 
   const { jobs, addJob, updateJob, removeJob, ffmpeg, isFfmpegLoaded } = useProcessing();
 
@@ -30,12 +32,37 @@ export default function VideoCompressor() {
   const resultUrl = myJob?.resultUrl;
 
   // Estimation Logic
-  // Quality 100 -> CRF 18 (Visually lossless, ~90% size)
-  // Quality 50 -> CRF 28 (Balanced, ~40% size)
-  // Quality 1 -> CRF 38 (Low quality, ~10% size)
   const estimatedCrf = 38 - Math.round(((quality - 1) / 99) * 20);
   const estimatedSizeFactor = 0.1 + ((quality - 1) / 99) * 0.8;
   const estimatedSize = videoFile ? videoFile.size * estimatedSizeFactor : 0;
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('video/')) {
+      setVideoFile(file);
+      setVideoSrc(URL.createObjectURL(file));
+      if (myJob) removeJob(myJobId);
+
+      // Probe original FPS
+      if (isFfmpegLoaded) {
+         try {
+             const inputName = 'probe_' + file.name.replace(/\s+/g, '_');
+             await ffmpeg.writeFile(inputName, await fetchFile(file));
+             let detectedFps = null;
+             const logHandler = ({ message }) => {
+                const match = message.match(/, ([\d.]+) fps,/);
+                if (match) detectedFps = parseFloat(match[1]);
+             };
+             ffmpeg.on('log', logHandler);
+             await ffmpeg.exec(['-i', inputName]);
+             ffmpeg.off('log', logHandler);
+             if (detectedFps) setOriginalFps(Math.round(detectedFps));
+         } catch(err) {
+             console.error("Probe error", err);
+         }
+      }
+    }
+  };
 
   const processVideo = async () => {
     if (!videoFile || !isFfmpegLoaded || isProcessing) return;
@@ -63,14 +90,27 @@ export default function VideoCompressor() {
       await ffmpeg.writeFile(inputName, await fetchFile(videoFile));
 
       // Compress Video
-      const execResult = await ffmpeg.exec([
+      let args = [
         '-y', 
         '-i', inputName, 
         '-vcodec', 'libx264', 
         '-crf', estimatedCrf.toString(), 
-        '-preset', preset, 
-        'output.mp4'
-      ]);
+        '-preset', preset
+      ];
+
+      // Enforce FPS limit
+      if (fps !== 'original') {
+         let targetFps = parseInt(fps);
+         if (originalFps && targetFps > originalFps) {
+            targetFps = originalFps;
+         }
+         // -fpsmax prevents going higher than source, acting as a double-safety
+         args.push('-r', targetFps.toString(), '-fpsmax', targetFps.toString());
+      }
+
+      args.push('output.mp4');
+
+      const execResult = await ffmpeg.exec(args);
       
       if (execResult !== 0) {
         throw new Error(`FFmpeg exited with code ${execResult}. Last logs:\n${fullLog.substring(fullLog.length - 400)}`);
@@ -96,7 +136,7 @@ export default function VideoCompressor() {
   return (
     <div className="animate-fade-in">
       <div className="page-header">
-        <Compress />
+        <Compress style={{width: 32, height: 32, fill: "url(#accent-grad)"}}/>
         <h1>Video Compressor</h1>
       </div>
       <p>Compress MP4 videos instantly, fully offline in your browser.</p>
@@ -114,9 +154,7 @@ export default function VideoCompressor() {
             <Dropzone 
               onDrop={(file) => {
                 if (file && file.type.startsWith('video/')) {
-                  setVideoFile(file);
-                  setVideoSrc(URL.createObjectURL(file));
-                  if (myJob) removeJob(myJobId);
+                   handleFileUpload({target: {files: [file]}});
                 } else {
                   alert("Please upload a video file");
                 }
@@ -128,7 +166,7 @@ export default function VideoCompressor() {
             />
           ) : (
             <div className="controls">
-              <video src={videoSrc} controls style={{width: '100%', borderRadius: 'var(--border-radius-sm)', background: '#000', marginBottom: '1rem'}} />
+              <video src={videoSrc} controls style={{width: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', background: '#000', marginBottom: '1rem'}} />
               
               {!isProcessing && !resultUrl && (
                 <div style={{marginBottom: '1.5rem'}}>
@@ -147,21 +185,39 @@ export default function VideoCompressor() {
                     />
                   </div>
 
-                  <div className="input-group" style={{marginBottom: '1.5rem'}}>
-                    <label style={{display: 'block', marginBottom: '0.5rem'}}>Compression Speed (Preset)</label>
-                    <select 
-                      value={preset} 
-                      onChange={(e) => setPreset(e.target.value)}
-                      style={{width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
-                    >
-                      <option value="ultrafast">Ultrafast (Largest File, Fastest)</option>
-                      <option value="superfast">Superfast</option>
-                      <option value="veryfast">Veryfast</option>
-                      <option value="faster">Faster</option>
-                      <option value="fast">Fast (Recommended)</option>
-                      <option value="medium">Medium</option>
-                      <option value="slow">Slow (Smallest File, Slowest)</option>
-                    </select>
+                  <div style={{display: 'flex', gap: '1rem', marginBottom: '1.5rem'}}>
+                    <div className="input-group" style={{flex: 1}}>
+                      <label style={{display: 'block', marginBottom: '0.5rem'}}>Compression Speed</label>
+                      <select 
+                        value={preset} 
+                        onChange={(e) => setPreset(e.target.value)}
+                        style={{width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      >
+                        <option value="ultrafast">Ultrafast (Largest File, Fastest)</option>
+                        <option value="superfast">Superfast</option>
+                        <option value="veryfast">Veryfast</option>
+                        <option value="faster">Faster</option>
+                        <option value="fast">Fast (Recommended)</option>
+                        <option value="medium">Medium</option>
+                        <option value="slow">Slow (Smallest File, Slowest)</option>
+                      </select>
+                    </div>
+
+                    <div className="input-group" style={{flex: 1}}>
+                      <label style={{display: 'block', marginBottom: '0.5rem'}}>Framerate (FPS)</label>
+                      <select 
+                        value={fps} 
+                        onChange={(e) => setFps(e.target.value)}
+                        style={{width: '100%', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      >
+                        <option value="original">Original{originalFps ? ` (${originalFps}fps)` : ''}</option>
+                        {(!originalFps || originalFps >= 60) && <option value="60">60 FPS</option>}
+                        {(!originalFps || originalFps >= 30) && <option value="30">30 FPS</option>}
+                        {(!originalFps || originalFps >= 24) && <option value="24">24 FPS</option>}
+                        {(!originalFps || originalFps >= 15) && <option value="15">15 FPS</option>}
+                        {(!originalFps || originalFps >= 10) && <option value="10">10 FPS</option>}
+                      </select>
+                    </div>
                   </div>
 
                   <div style={{background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '1rem'}}>

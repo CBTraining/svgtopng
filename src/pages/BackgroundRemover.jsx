@@ -81,7 +81,7 @@ export default function BackgroundRemover() {
             />
           ) : (
             <div className="controls">
-               <img src={originalSrc} alt="Original" style={{maxWidth: '100%', borderRadius: 'var(--border-radius-sm)'}} />
+               <img src={originalSrc} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
                
                {!isProcessing && !resultUrl && (
                  <button className="btn btn-primary" onClick={processImage}>
@@ -113,7 +113,7 @@ export default function BackgroundRemover() {
           <div className="glass-panel preview-panel">
              <h3>Result</h3>
              <div className="canvas-container">
-                <img src={resultUrl} alt="No Background" style={{ maxWidth: '100%', maxHeight: '60vh', objectFit: 'contain' }} />
+                <img src={resultUrl} alt="No Background" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
              </div>
           </div>
         )}
