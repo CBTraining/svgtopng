@@ -109,6 +109,11 @@
 .nav-link svg {
   transform: translateY(-1px);
   fill: url(#accent-grad);
+  transition: transform var(--transition-fast);
+}
+
+.nav-link:hover svg {
+  transform: scale(1.2) rotate(8deg);
 }
 
 .nav-link:hover {
