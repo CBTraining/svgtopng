@@ -150,11 +150,11 @@ export default function BackgroundDots() {
              }
            } else if (b.type === 'vertical') {
              const distToWave = Math.abs(dot.x - b.radius);
-             if (distToWave < 120) {
-               const push = (120 - distToWave) / 120;
+             if (distToWave < 40) {
+               const push = (40 - distToWave) / 40;
                dot.radius = Math.max(dot.radius, dot.baseRadius + push * 0.2 * b.alpha);
                // Push to the right
-               dot.vx += push * 10 * b.alpha;
+               dot.vx += push * 3.3 * b.alpha;
              }
            }
         } 
