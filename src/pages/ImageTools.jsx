@@ -6,9 +6,10 @@ import './ImageTools.css'; // Will create
 export default function ImageTools() {
   const [imageFile, setImageFile] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [width, setWidth] = useState(800);
   const [radius, setRadius] = useState(0);
-  const [quality, setQuality] = useState(0.8);
+  const [quality, setQuality] = useState(1);
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -64,6 +65,9 @@ export default function ImageTools() {
       }
       
       ctx.drawImage(img, 0, 0, width, newHeight);
+      
+      const dataUrl = canvas.toDataURL(quality < 1 ? 'image/jpeg' : 'image/png', parseFloat(quality));
+      setPreviewUrl(dataUrl);
     };
     img.src = imageSrc;
   }, [imageSrc, width, radius]);
@@ -171,7 +175,8 @@ export default function ImageTools() {
           <div className="glass-panel preview-panel">
             <h3>Preview</h3>
             <div className="canvas-container">
-              <canvas ref={canvasRef} className="preview-canvas" />
+              {previewUrl && <img src={previewUrl} className="preview-canvas" alt="Preview" />}
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
             </div>
           </div>
         )}
