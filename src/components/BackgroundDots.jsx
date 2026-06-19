@@ -162,7 +162,7 @@ export default function BackgroundDots() {
         if (targetIntensity > dot.intensity) {
             dot.intensity += (targetIntensity - dot.intensity) * 0.4; // Light up fast
         } else {
-            dot.intensity += (targetIntensity - dot.intensity) * 0.02; // Fade out very slowly
+            dot.intensity += (targetIntensity - dot.intensity) * 0.08; // Fade out moderately fast
         }
         const totalIntensity = dot.intensity;
 
