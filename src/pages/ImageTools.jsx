@@ -110,7 +110,8 @@ export default function ImageTools() {
         <div className="glass-panel tool-controls">
           {!imageSrc ? (
             <Dropzone 
-              onDrop={(file) => {
+              onDrop={(files) => {
+                const file = Array.isArray(files) ? files[0] : files;
                 if (file && file.type.startsWith('image/')) {
                   const reader = new FileReader();
                   reader.onload = (e) => setImageSrc(e.target.result);

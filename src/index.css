@@ -26,6 +26,17 @@
   --transition-normal: 0.3s ease;
 }
 
+[data-theme="light"] {
+  --bg-primary: #f5f7fa;
+  --bg-secondary: rgba(255, 255, 255, 0.85);
+  --bg-tertiary: rgba(240, 240, 245, 0.85);
+  
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  
+  --border-color: #e5e7eb;
+}
+
 @keyframes pop-in {
   0% { opacity: 0; transform: scale(0.9); }
   100% { opacity: 1; transform: scale(1); }

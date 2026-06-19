@@ -9,8 +9,9 @@ import {
   CommandLineIcon, 
   Square3Stack3DIcon,
   EyeDropperIcon,
-  QrCodeIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  SunIcon,
+  MoonIcon
 } from '@heroicons/react/24/solid';
 import { useState, useEffect } from 'react';
 import './Sidebar.css';
@@ -18,6 +19,12 @@ import './Sidebar.css';
 export default function Sidebar({ isOpen, onClose, onManualPaste }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     const handleError = () => {
@@ -156,14 +163,24 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
         </nav>
 
       <div style={{ padding: '1.5rem', marginTop: 'auto', borderTop: '1px solid var(--border-default)' }}>
-        <button 
-          onClick={onManualPaste}
-          className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
-          style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold' }}
-        >
-          <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />
-          Paste to PNG
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+          <button 
+            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
+            className="btn"
+            style={{ padding: '0.5rem', flexShrink: 0 }}
+            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          >
+            {theme === 'dark' ? <SunIcon style={{width: 20, height: 20}} /> : <MoonIcon style={{width: 20, height: 20}} />}
+          </button>
+          <button 
+            onClick={onManualPaste}
+            className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
+            style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold' }}
+          >
+            <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />
+            Paste to PNG
+          </button>
+        </div>
       </div>
     </aside>
   );
