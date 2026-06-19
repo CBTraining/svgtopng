@@ -100,6 +100,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
       title: 'Graphics',
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Tools' },
+        { to: '/image-upscaler', icon: SparklesIcon, label: 'AI Upscaler' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
         { to: '/svg-converter', icon: CommandLineIcon, label: 'SVG Converter' }
