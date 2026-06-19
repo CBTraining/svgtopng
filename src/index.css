@@ -30,6 +30,13 @@
   
   --transition-fast: 0.15s ease;
   --transition-normal: 0.3s ease;
+  
+  color-scheme: dark;
+}
+
+::selection {
+  background-color: var(--accent-glow);
+  color: var(--text-primary);
 }
 
 [data-theme="light"] {
@@ -47,6 +54,8 @@
   --panel-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   
   --border-color: #e5e7eb;
+  
+  color-scheme: light;
 }
 
 @keyframes pop-in {
@@ -181,6 +190,7 @@ input[type="radio"] {
   color: var(--text-primary);
   font-family: var(--font-family);
   transition: border-color var(--transition-fast);
+  accent-color: var(--accent-color);
 }
 
 .input-field:focus {
