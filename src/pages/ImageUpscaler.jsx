@@ -143,7 +143,7 @@ export default function ImageUpscaler() {
             <SparklesIcon className="tool-icon" />
           </div>
           <div>
-            <h1>AI Image Upscaler</h1>
+            <h1>Upscaler</h1>
             <p className="subtitle">Enhance and upscale images 2x directly in your browser using local AI (Free & Offline).</p>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function ImageUpscaler() {
 
       <div style={{ marginTop: slots.length > 0 ? '2rem' : '0' }}>
         <Dropzone 
-          onFiles={(files) => {
+          onDrop={(files) => {
             files.forEach(file => {
               if (file.type.startsWith('image/')) {
                 addSlot(TOOL_ID, file);
@@ -163,8 +163,7 @@ export default function ImageUpscaler() {
             });
           }} 
           accept="image/*" 
-          multiple={true} 
-          placeholder="Drop images to upscale..."
+          title="Drop images to upscale..."
         />
       </div>
     </div>
