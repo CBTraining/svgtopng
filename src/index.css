@@ -170,13 +170,14 @@ input[type="radio"] {
 
 .btn-primary {
   background: var(--accent-gradient);
-  color: #000;
+  color: #fff;
   font-weight: 600;
   box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .btn-primary:hover {
-  background-color: var(--accent-hover);
+  background: var(--accent-gradient);
+  color: #fff;
   box-shadow: 0 0 20px var(--accent-glow);
 }
 

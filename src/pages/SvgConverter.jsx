@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download } from '@heroicons/react/24/solid';
+import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
 
 export default function SvgConverter() {
   const [svgText, setSvgText] = useState('');
@@ -9,6 +9,7 @@ export default function SvgConverter() {
   const [keepProportions, setKeepProportions] = useState(true);
   const canvasRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     if (!svgText.trim() || !svgText.includes('<svg')) return;
@@ -90,6 +91,22 @@ export default function SvgConverter() {
     a.click();
   };
 
+  const handleCopy = async () => {
+    if (!previewUrl) return;
+    try {
+      const response = await fetch(previewUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy", err);
+      alert("Failed to copy image to clipboard.");
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -167,9 +184,15 @@ export default function SvgConverter() {
                  <canvas ref={canvasRef} style={{ display: 'none' }} />
                  <img src={previewUrl} alt="SVG Preview" style={{ maxWidth: '100%', maxHeight: '400px', border: '1px solid var(--border-color)' }} />
               </div>
-              <button className="btn btn-primary" onClick={handleDownload}>
-                <Download style={{width: "18px", height: "18px"}} /> Download PNG
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <button className="btn btn-primary" onClick={handleDownload}>
+                  <Download style={{width: "18px", height: "18px"}} /> Download PNG
+                </button>
+                <button className="btn" onClick={handleCopy}>
+                  {copySuccess ? <Check style={{width: "18px", height: "18px"}} /> : <ClipboardDocumentIcon style={{width: "18px", height: "18px"}} />} 
+                  {copySuccess ? 'Copied!' : 'Copy PNG'}
+                </button>
+              </div>
             </div>
           ) : (
              <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
