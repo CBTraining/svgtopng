@@ -71,10 +71,12 @@ export default function HtmlPreview() {
   if (device === 'tablet') previewWidth = '768px';
   if (device === 'mobile') previewWidth = '375px';
 
-  // Inject meta tags into the preview HTML to prevent extensions (like Dark Reader) 
-  // or Chrome's Auto Dark Mode from forcefully inverting the user's custom HTML.
+  // Inject meta tags and a baseline white background into the preview HTML.
+  // This prevents Chrome Auto Dark Mode or extensions from making the blank canvas black,
+  // but since it's at the top of the head, the user's custom CSS will easily override it.
   let previewHtml = htmlCode;
-  const antiDarkMeta = '<meta name="color-scheme" content="light"><meta name="darkreader-lock">';
+  const antiDarkMeta = '<meta name="color-scheme" content="only light"><meta name="darkreader-lock"><style>html, body { background-color: #ffffff; color: #000000; }</style>';
+  
   if (previewHtml.includes('<head>')) {
     previewHtml = previewHtml.replace('<head>', '<head>' + antiDarkMeta);
   } else if (previewHtml.toLowerCase().includes('<html>')) {
@@ -196,7 +198,10 @@ export default function HtmlPreview() {
           overflow: 'auto',
           padding: '2rem'
         }} className="custom-scrollbar">
-          <div style={{
+          <div 
+            className="preview-iframe-wrapper"
+            data-darkreader-inline-bgcolor
+            style={{
             width: previewWidth,
             height: '100%',
             backgroundColor: '#ffffff', // Browsers default to white background
@@ -211,6 +216,7 @@ export default function HtmlPreview() {
             <iframe
               srcDoc={previewHtml}
               title="HTML Preview"
+              data-darkreader-inline-bgcolor
               style={{
                 width: '100%',
                 flex: 1,

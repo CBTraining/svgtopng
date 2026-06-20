@@ -211,3 +211,35 @@
   background-color: #ff4444 !important;
   color: white !important;
 }
+
+@media (max-height: 800px) {
+  .sidebar-header {
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .nav-category {
+    margin-bottom: 0.1rem;
+    gap: 0.1rem;
+  }
+  .nav-category-title {
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
+  }
+  .nav-link {
+    padding: 0.35rem 1rem;
+  }
+}
+
+@media (max-height: 650px) {
+  .sidebar-header {
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+  .nav-link {
+    padding: 0.2rem 1rem;
+    font-size: 0.9rem;
+  }
+  .nav-category-title {
+    display: none;
+  }
+}

@@ -58,6 +58,18 @@
   color-scheme: light;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+.preview-iframe-wrapper {
+  background-color: #ffffff !important;
+}
+
+.preview-iframe-wrapper iframe {
+  background-color: #ffffff !important;
+}
+
 @keyframes pop-in {
   0% { opacity: 0; transform: scale(0.9); }
   100% { opacity: 1; transform: scale(1); }
