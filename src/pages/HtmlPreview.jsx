@@ -212,19 +212,17 @@ function HtmlPreview() {
       </div>
 
       {/* Main Content Split */}
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div className="html-preview-split">
         {/* Code Editor Side */}
-        <div style={{ 
-          width: showCode ? '50%' : '0%', 
-          minWidth: showCode ? '300px' : '0px',
-          opacity: showCode ? 1 : 0,
-          borderRight: showCode ? '1px solid var(--border-color)' : 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: 'var(--bg-primary)',
-          overflow: 'hidden',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-        }}>
+        <div 
+          className={`html-preview-code-side ${showCode ? 'is-visible' : 'is-hidden'}`}
+          style={{ 
+            width: showCode ? '50%' : '0%', 
+            minWidth: showCode ? '300px' : '0px',
+            opacity: showCode ? 1 : 0,
+            borderRight: showCode ? '1px solid var(--border-color)' : 'none'
+          }}
+        >
           <div style={{ 
             flex: 1, 
             display: 'flex',
