@@ -24,7 +24,6 @@ function BackgroundRemoverSlot({ slot }) {
 
     try {
       const config = {
-        publicPath: "https://unpkg.com/@imgly/background-removal@1.7.0/dist/",
         device: "gpu", // Prioritize WebGL/WebGPU hardware acceleration
         progress: (key, current, total) => {
           if (total > 0) {
