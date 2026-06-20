@@ -29,54 +29,57 @@ export default function SidebarClock() {
   const minutesBin = minutes.toString(2).padStart(6, '0').split('').map(b => b === '1');
   const secondsBin = seconds.toString(2).padStart(6, '0').split('').map(b => b === '1');
 
-  const renderDot = (active, key) => (
-    <div
-      key={key}
-      style={{
-        width: '6px',
-        height: '6px',
-        borderRadius: '50%',
-        backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
-        boxShadow: active ? '0 0 5px var(--accent-glow)' : 'none',
-        transition: 'all 0.2s ease'
-      }}
-    />
-  );
+  const allBits = [...hoursBin, ...minutesBin, ...secondsBin];
 
   return (
     <div className="sidebar-clock hidden-on-mobile" style={{
       padding: '0 1.5rem 1.5rem 1.5rem',
       display: 'flex',
       flexDirection: 'column',
+      alignItems: 'center',
       gap: '0.25rem',
       borderBottom: '1px solid var(--border-color)',
-      marginBottom: '1rem'
+      marginBottom: '1rem',
+      textAlign: 'center'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ 
-          fontSize: '1.25rem', 
-          fontWeight: 'bold', 
-          color: 'var(--text-primary)',
-          letterSpacing: '1px'
-        }}>
-          {timeStr}
-        </div>
-        
-        {/* Binary Clock Widget */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-end', opacity: 0.8 }} title="Binary Clock (H, M, S)">
-          {/* Hours: 4 bits right-aligned */}
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {hoursBin.map((active, i) => renderDot(active, `h-${i}`))}
-          </div>
-          {/* Minutes: 6 bits */}
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {minutesBin.map((active, i) => renderDot(active, `m-${i}`))}
-          </div>
-          {/* Seconds: 6 bits */}
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {secondsBin.map((active, i) => renderDot(active, `s-${i}`))}
-          </div>
-        </div>
+      {/* Binary Clock Widget - 16 dots in a circle */}
+      <div 
+        style={{ position: 'relative', width: '56px', height: '56px', marginBottom: '0.5rem', opacity: 0.9 }} 
+        title="Binary Clock (H, M, S)"
+      >
+        {allBits.map((active, i) => {
+          // Calculate position on a circle (start at top, go clockwise)
+          const angle = (i / 16) * Math.PI * 2 - (Math.PI / 2);
+          const radius = 22; // Distance from center
+          const x = Math.cos(angle) * radius + 28 - 3; // 28 is center, 3 is half dot width
+          const y = Math.sin(angle) * radius + 28 - 3;
+          
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                left: `${x}px`,
+                top: `${y}px`,
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
+                boxShadow: active ? '0 0 6px var(--accent-glow)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            />
+          );
+        })}
+      </div>
+
+      <div style={{ 
+        fontSize: '1.25rem', 
+        fontWeight: 'bold', 
+        color: 'var(--text-primary)',
+        letterSpacing: '1px'
+      }}>
+        {timeStr}
       </div>
       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
         {dateStr}
