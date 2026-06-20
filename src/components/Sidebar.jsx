@@ -13,7 +13,8 @@ import {
   ClipboardDocumentIcon,
   SunIcon,
   MoonIcon,
-  ClockIcon
+  ClockIcon,
+  ArrowsPointingOutIcon
 } from '@heroicons/react/24/solid';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
 import SidebarClock from './SidebarClock';
@@ -103,7 +104,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
       title: 'Graphics',
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Tools' },
-        { to: '/image-upscaler', icon: SparklesIcon, label: 'Upscaler' },
+        { to: '/image-upscaler', icon: ArrowsPointingOutIcon, label: 'Upscaler' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
         { to: '/svg-converter', icon: CommandLineIcon, label: 'SVG Converter' }
