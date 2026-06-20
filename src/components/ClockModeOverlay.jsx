@@ -71,14 +71,14 @@ export default function ClockModeOverlay({ onClose }) {
       </div>
 
       {/* Main Content: Scaled to viewport */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4vw', zIndex: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4vmin', zIndex: 10 }}>
         {/* Binary Clock Widget - 16 dots in a circle */}
         <div 
-          style={{ position: 'relative', width: '20vw', height: '20vw', opacity: 0.9, flexShrink: 0 }} 
+          style={{ position: 'relative', width: '20vmin', height: '20vmin', opacity: 0.9, flexShrink: 0 }} 
         >
           {allBits.map((active, i) => {
             const angle = (i / 16) * Math.PI * 2 - (Math.PI / 2);
-            const radius = 8; // vw
+            const radius = 8; // vmin
             const x = Math.cos(angle) * radius + 10 - 0.75; // 10 is center, 0.75 is half dot width
             const y = Math.sin(angle) * radius + 10 - 0.75;
             
@@ -87,13 +87,13 @@ export default function ClockModeOverlay({ onClose }) {
                 key={i}
                 style={{
                   position: 'absolute',
-                  left: `${x}vw`,
-                  top: `${y}vw`,
-                  width: '1.5vw',
-                  height: '1.5vw',
+                  left: `${x}vmin`,
+                  top: `${y}vmin`,
+                  width: '1.5vmin',
+                  height: '1.5vmin',
                   borderRadius: '50%',
                   backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
-                  boxShadow: active ? '0 0 2vw var(--accent-glow)' : 'none',
+                  boxShadow: active ? '0 0 2vmin var(--accent-glow)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
               />
@@ -103,22 +103,18 @@ export default function ClockModeOverlay({ onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           <div style={{ 
-            fontSize: '8vw', 
+            fontSize: '8vmin', 
             fontWeight: 'bold', 
             color: 'var(--text-primary)',
-            letterSpacing: '0.2vw',
+            letterSpacing: '0.2vmin',
             lineHeight: 1
           }}>
             {timeStr}
           </div>
-          <div style={{ fontSize: '2.5vw', color: 'var(--text-muted)', marginTop: '1.5vw' }}>
+          <div style={{ fontSize: '2.5vmin', color: 'var(--text-muted)', marginTop: '1.5vmin' }}>
             {dateStr}
           </div>
         </div>
-      </div>
-      
-      <div style={{ position: 'absolute', bottom: '2rem', color: 'var(--text-muted)', fontSize: '1rem', opacity: 0.5 }}>
-        Click anywhere to return to WebTools
       </div>
     </div>
   );
