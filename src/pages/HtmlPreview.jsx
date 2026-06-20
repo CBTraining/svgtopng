@@ -180,7 +180,7 @@ export default function HtmlPreview() {
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
-          backgroundColor: '#111827', // Dark backdrop to emphasize the preview area
+          backgroundColor: 'var(--bg-tertiary)', // Adaptive backdrop to emphasize the preview area
           overflow: 'auto',
           padding: '2rem'
         }} className="custom-scrollbar">
@@ -189,8 +189,8 @@ export default function HtmlPreview() {
             height: '100%',
             backgroundColor: '#ffffff', // Browsers default to white background
             borderRadius: device === 'desktop' ? '4px' : '24px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-            border: device === 'desktop' ? 'none' : '12px solid #374151',
+            boxShadow: 'var(--panel-shadow)',
+            border: device === 'desktop' ? '1px solid var(--border-color)' : '12px solid var(--border-color)',
             overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             display: 'flex',
@@ -203,7 +203,8 @@ export default function HtmlPreview() {
                 width: '100%',
                 flex: 1,
                 border: 'none',
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                colorScheme: 'light'
               }}
               sandbox="allow-scripts allow-modals"
             />
