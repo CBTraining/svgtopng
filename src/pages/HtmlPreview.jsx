@@ -1,0 +1,215 @@
+import { useState, useEffect } from 'react';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-core';
+import 'prismjs/components/prism-markup'; // HTML syntax
+import beautify from 'js-beautify';
+import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon } from '@heroicons/react/24/outline';
+
+const defaultHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 { color: #0284c7; }
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hello, World!</h1>
+    <p>This is a live HTML preview tool.</p>
+  </div>
+</body>
+</html>`;
+
+export default function HtmlPreview() {
+  const [htmlCode, setHtmlCode] = useState(() => {
+    return localStorage.getItem('html-preview-code') || defaultHtml;
+  });
+  const [device, setDevice] = useState('desktop'); // desktop, tablet, mobile
+  const [showCode, setShowCode] = useState(true);
+
+  useEffect(() => {
+    localStorage.setItem('html-preview-code', htmlCode);
+  }, [htmlCode]);
+
+  const handleCleanUp = () => {
+    const formatted = beautify.html(htmlCode, {
+      indent_size: 2,
+      preserve_newlines: true,
+      max_preserve_newlines: 2,
+      wrap_line_length: 0,
+      end_with_newline: true
+    });
+    setHtmlCode(formatted);
+  };
+
+  const highlightWithPrism = (code) => {
+    return Prism.highlight(code, Prism.languages.markup, 'markup');
+  };
+
+  let previewWidth = '100%';
+  if (device === 'tablet') previewWidth = '768px';
+  if (device === 'mobile') previewWidth = '375px';
+
+  return (
+    <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: 0, overflow: 'hidden' }}>
+      {/* Header Toolbar */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: '1rem',
+        borderBottom: '1px solid var(--border-color)',
+        backgroundColor: 'var(--bg-secondary)',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button className="btn" onClick={() => setShowCode(!showCode)} title="Toggle Code Editor">
+            {showCode ? <EyeSlashIcon width={20} /> : <EyeIcon width={20} />}
+            {showCode ? 'Hide Code' : 'Show Code'}
+          </button>
+          
+          {showCode && (
+            <button className="btn btn-primary" onClick={handleCleanUp}>
+              <SparklesIcon width={20} />
+              Clean Up
+            </button>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+          <button 
+            className="btn" 
+            style={{ 
+              background: device === 'desktop' ? 'var(--accent-color)' : 'transparent',
+              color: device === 'desktop' ? '#fff' : 'var(--text-secondary)'
+            }}
+            onClick={() => setDevice('desktop')}
+            title="Desktop View"
+          >
+            <ComputerDesktopIcon width={20} />
+          </button>
+          <button 
+            className="btn" 
+            style={{ 
+              background: device === 'tablet' ? 'var(--accent-color)' : 'transparent',
+              color: device === 'tablet' ? '#fff' : 'var(--text-secondary)'
+            }}
+            onClick={() => setDevice('tablet')}
+            title="Tablet View"
+          >
+            <DeviceTabletIcon width={20} />
+          </button>
+          <button 
+            className="btn" 
+            style={{ 
+              background: device === 'mobile' ? 'var(--accent-color)' : 'transparent',
+              color: device === 'mobile' ? '#fff' : 'var(--text-secondary)'
+            }}
+            onClick={() => setDevice('mobile')}
+            title="Mobile View"
+          >
+            <DevicePhoneMobileIcon width={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Split */}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        {/* Code Editor Side */}
+        {showCode && (
+          <div style={{ 
+            width: '50%', 
+            minWidth: '300px',
+            borderRight: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'var(--bg-primary)',
+            overflow: 'auto'
+          }}>
+            <div style={{ 
+              flex: 1, 
+              padding: '1rem',
+              fontFamily: '"Fira Code", "Consolas", monospace',
+              fontSize: '14px',
+            }} className="custom-scrollbar prism-theme-custom">
+              <Editor
+                value={htmlCode}
+                onValueChange={code => setHtmlCode(code)}
+                highlight={highlightWithPrism}
+                padding={15}
+                style={{
+                  fontFamily: '"Fira Code", "Consolas", monospace',
+                  fontSize: 14,
+                  minHeight: '100%',
+                  outline: 'none',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)'
+                }}
+                textareaClassName="custom-scrollbar"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Preview Side */}
+        <div style={{ 
+          flex: 1, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          backgroundColor: '#111827', // Dark backdrop to emphasize the preview area
+          overflow: 'auto',
+          padding: '2rem'
+        }} className="custom-scrollbar">
+          <div style={{
+            width: previewWidth,
+            height: '100%',
+            backgroundColor: '#ffffff', // Browsers default to white background
+            borderRadius: device === 'desktop' ? '4px' : '24px',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+            border: device === 'desktop' ? 'none' : '12px solid #374151',
+            overflow: 'hidden',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <iframe
+              srcDoc={htmlCode}
+              title="HTML Preview"
+              style={{
+                width: '100%',
+                flex: 1,
+                border: 'none',
+                backgroundColor: '#ffffff'
+              }}
+              sandbox="allow-scripts allow-modals"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

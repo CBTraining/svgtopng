@@ -14,7 +14,8 @@ import {
   SunIcon,
   MoonIcon,
   ClockIcon,
-  ArrowsPointingOutIcon
+  ArrowsPointingOutIcon,
+  WindowIcon
 } from '@heroicons/react/24/solid';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
 import SidebarClock from './SidebarClock';
@@ -123,7 +124,8 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
       items: [
         { to: '/qr-generator', icon: QrCodeIcon, label: 'QR Generator' },
         { to: '/json-saver', icon: CodeBracketSquareIcon, label: 'JSON Saver' },
-        { to: '/timezone-converter', icon: ClockIcon, label: 'Timezone Converter' }
+        { to: '/timezone-converter', icon: ClockIcon, label: 'Timezone Converter' },
+        { to: '/html-preview', icon: WindowIcon, label: 'HTML Preview' }
       ]
     }
   ];

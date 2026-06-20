@@ -13,6 +13,7 @@ import ColorPicker from './pages/ColorPicker';
 import QrGenerator from './pages/QrGenerator';
 import ImageUpscaler from './pages/ImageUpscaler';
 import TimezoneConverter from './pages/TimezoneConverter';
+import HtmlPreview from './pages/HtmlPreview';
 import BackgroundDots from './components/BackgroundDots';
 import { ProcessingProvider } from './contexts/ProcessingContext';
 import BackgroundJobsWidget from './components/BackgroundJobsWidget';
@@ -415,6 +416,7 @@ function App() {
               <Route path="/json-saver" element={<JsonSaver />} />
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/image-upscaler" element={<ImageUpscaler />} />
+              <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
           </main>
 
