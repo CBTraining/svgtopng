@@ -109,7 +109,7 @@ export default function ClockModeOverlay({ onClose, onDropFile }) {
              height: '18vmax',
              borderRadius: '50%',
              backgroundColor: active ? 'var(--accent-color)' : 'transparent',
-             border: active ? 'none' : '2px solid var(--text-muted)',
+             border: active ? 'none' : '2px solid #333333',
              filter: active ? 'blur(40px)' : 'none',
              transition: 'all 1s ease-in-out',
              transform: active ? 'scale(1.2)' : 'scale(1)'
@@ -143,7 +143,7 @@ export default function ClockModeOverlay({ onClose, onDropFile }) {
                   width: 'calc(5 * var(--u))',
                   height: 'calc(5 * var(--u))',
                   borderRadius: '50%',
-                  backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
+                  backgroundColor: active ? 'var(--accent-color)' : '#333333',
                   boxShadow: active ? '0 0 calc(6 * var(--u)) var(--accent-glow)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
@@ -156,14 +156,14 @@ export default function ClockModeOverlay({ onClose, onDropFile }) {
           <div style={{ 
             fontSize: 'calc(28 * var(--u))', 
             fontWeight: 'bold', 
-            color: 'var(--text-primary)',
+            color: '#ffffff',
             letterSpacing: 'calc(0.5 * var(--u))',
             lineHeight: 1,
             whiteSpace: 'nowrap'
           }}>
             {timeStr}
           </div>
-          <div style={{ fontSize: 'calc(8 * var(--u))', color: 'var(--text-muted)', marginTop: 'calc(4 * var(--u))', whiteSpace: 'nowrap' }}>
+          <div style={{ fontSize: 'calc(8 * var(--u))', color: '#a3a3a3', marginTop: 'calc(4 * var(--u))', whiteSpace: 'nowrap' }}>
             {dateStr}
           </div>
         </div>
