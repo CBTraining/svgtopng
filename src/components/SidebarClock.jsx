@@ -33,11 +33,11 @@ export default function SidebarClock({ onClick }) {
 
   return (
     <div className="sidebar-clock hidden-on-mobile" onClick={onClick} style={{
-      padding: '0 1.5rem 1.5rem 1.5rem',
+      padding: '0 1rem 1.5rem 1rem',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
-      gap: '1rem',
+      gap: '0.75rem',
       borderBottom: '1px solid var(--border-color)',
       marginBottom: '1rem',
       cursor: onClick ? 'pointer' : 'default',
@@ -83,11 +83,12 @@ export default function SidebarClock({ onClick }) {
           fontSize: '1.25rem', 
           fontWeight: 'bold', 
           color: 'var(--text-primary)',
-          letterSpacing: '1px'
+          letterSpacing: '0.5px',
+          whiteSpace: 'nowrap'
         }}>
           {timeStr}
         </div>
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
           {dateStr}
         </div>
       </div>
