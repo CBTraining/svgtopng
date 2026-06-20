@@ -125,8 +125,8 @@ function HtmlPreview() {
   };
 
   let previewWidth = '100%';
-  if (device === 'tablet') previewWidth = '768px';
-  if (device === 'mobile') previewWidth = '375px';
+  if (device === 'tablet') previewWidth = 'min(768px, 100%, calc((100vh - 140px) * (3/4)))';
+  if (device === 'mobile') previewWidth = 'min(375px, 100%, calc((100vh - 140px) * (9/19.5)))';
 
   // Inject meta tags and a baseline white background into the preview HTML.
   // This prevents Chrome Auto Dark Mode or extensions from making the blank canvas black,
