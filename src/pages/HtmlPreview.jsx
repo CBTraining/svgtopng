@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import beautify from 'js-beautify';
-import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import React from 'react';
 
 class ErrorBoundary extends React.Component {
@@ -75,9 +75,12 @@ function HtmlPreview() {
   const [htmlCode, setHtmlCode] = useState(() => {
     return localStorage.getItem('html-preview-code') || defaultHtml;
   });
+  const [debouncedHtmlCode, setDebouncedHtmlCode] = useState(htmlCode);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [device, setDevice] = useState('desktop'); // desktop, tablet, mobile
   const [showCode, setShowCode] = useState(true);
   const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {
@@ -93,7 +96,22 @@ function HtmlPreview() {
 
   useEffect(() => {
     localStorage.setItem('html-preview-code', htmlCode);
+    
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedHtmlCode(htmlCode);
+    }, 500); // 500ms debounce
+    
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
   }, [htmlCode]);
+
+  const handleForceRefresh = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    setDebouncedHtmlCode(htmlCode);
+    setRefreshKey(prev => prev + 1);
+  };
 
   const handleCleanUp = () => {
     const formatted = beautify.html(htmlCode, {
@@ -113,7 +131,7 @@ function HtmlPreview() {
   // Inject meta tags and a baseline white background into the preview HTML.
   // This prevents Chrome Auto Dark Mode or extensions from making the blank canvas black,
   // but since it's at the top of the head, the user's custom CSS will easily override it.
-  let previewHtml = htmlCode;
+  let previewHtml = debouncedHtmlCode;
   const antiDarkMeta = '<meta name="color-scheme" content="only light"><meta name="darkreader-lock"><style>html, body { background-color: #ffffff; color: #000000; }</style>';
   
   if (previewHtml.includes('<head>')) {
@@ -143,10 +161,16 @@ function HtmlPreview() {
           </button>
           
           {showCode && (
-            <button className="btn btn-primary" onClick={handleCleanUp}>
-              <SparklesIcon width={20} />
-              Clean Up
-            </button>
+            <>
+              <button className="btn" onClick={handleForceRefresh} title="Force Refresh Preview">
+                <ArrowPathIcon width={20} />
+                Refresh
+              </button>
+              <button className="btn btn-primary" onClick={handleCleanUp}>
+                <SparklesIcon width={20} />
+                Clean Up
+              </button>
+            </>
           )}
         </div>
 
@@ -252,6 +276,7 @@ function HtmlPreview() {
             flexDirection: 'column'
           }}>
             <iframe
+              key={refreshKey}
               srcDoc={previewHtml}
               title="HTML Preview"
               data-darkreader-inline-bgcolor
