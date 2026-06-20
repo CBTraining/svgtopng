@@ -36,19 +36,19 @@ export default function ColorPicker() {
       const eyeDropper = new window.EyeDropper();
       const result = await eyeDropper.open();
       const hex = result.sRGBHex.toUpperCase();
-      
-      // Fix for Chrome bug where browser acts like a popup is still open
-      setTimeout(() => {
-        window.focus();
-        if (document.activeElement) document.activeElement.blur();
-      }, 50);
-
       // Add to front of history, avoid duplicates if it's the very first one
       const newColors = [hex, ...colors.filter(c => c !== hex)];
       saveColors(newColors);
     } catch (e) {
       // User canceled the picker
       console.log("EyeDropper canceled", e);
+    } finally {
+      // Fix for Chrome bug where browser acts like a popup is still open
+      // We must run this even if the user cancels the eyedropper, otherwise the UI stays frozen.
+      setTimeout(() => {
+        window.focus();
+        if (document.activeElement) document.activeElement.blur();
+      }, 50);
     }
   };
 
