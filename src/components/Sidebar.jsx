@@ -20,7 +20,7 @@ import SidebarClock from './SidebarClock';
 import { useState, useEffect } from 'react';
 import './Sidebar.css';
 
-export default function Sidebar({ isOpen, onClose, onManualPaste }) {
+export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
@@ -161,7 +161,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
           )}
         </div>
         
-        <SidebarClock />
+        <SidebarClock onClick={onClockClick} />
 
           <nav className="sidebar-nav">
             {navCategories.map((category, idx) => (

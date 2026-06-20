@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export default function SidebarClock() {
+export default function SidebarClock({ onClick }) {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -32,27 +32,32 @@ export default function SidebarClock() {
   const allBits = [...hoursBin, ...minutesBin, ...secondsBin];
 
   return (
-    <div className="sidebar-clock hidden-on-mobile" style={{
+    <div className="sidebar-clock hidden-on-mobile" onClick={onClick} style={{
       padding: '0 1.5rem 1.5rem 1.5rem',
       display: 'flex',
-      flexDirection: 'column',
+      flexDirection: 'row',
       alignItems: 'center',
-      gap: '0.25rem',
+      gap: '1rem',
       borderBottom: '1px solid var(--border-color)',
       marginBottom: '1rem',
-      textAlign: 'center'
-    }}>
+      cursor: onClick ? 'pointer' : 'default',
+      transition: 'opacity 0.2s',
+    }}
+    onMouseEnter={(e) => { if(onClick) e.currentTarget.style.opacity = '0.7'; }}
+    onMouseLeave={(e) => { if(onClick) e.currentTarget.style.opacity = '1'; }}
+    title={onClick ? "Enter Clock Mode" : undefined}
+    >
       {/* Binary Clock Widget - 16 dots in a circle */}
       <div 
-        style={{ position: 'relative', width: '56px', height: '56px', marginBottom: '0.5rem', opacity: 0.9 }} 
+        style={{ position: 'relative', width: '48px', height: '48px', opacity: 0.9, flexShrink: 0 }} 
         title="Binary Clock (H, M, S)"
       >
         {allBits.map((active, i) => {
           // Calculate position on a circle (start at top, go clockwise)
           const angle = (i / 16) * Math.PI * 2 - (Math.PI / 2);
-          const radius = 22; // Distance from center
-          const x = Math.cos(angle) * radius + 28 - 3; // 28 is center, 3 is half dot width
-          const y = Math.sin(angle) * radius + 28 - 3;
+          const radius = 20; // Distance from center
+          const x = Math.cos(angle) * radius + 24 - 3; // 24 is center, 3 is half dot width
+          const y = Math.sin(angle) * radius + 24 - 3;
           
           return (
             <div
@@ -73,16 +78,18 @@ export default function SidebarClock() {
         })}
       </div>
 
-      <div style={{ 
-        fontSize: '1.25rem', 
-        fontWeight: 'bold', 
-        color: 'var(--text-primary)',
-        letterSpacing: '1px'
-      }}>
-        {timeStr}
-      </div>
-      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-        {dateStr}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <div style={{ 
+          fontSize: '1.25rem', 
+          fontWeight: 'bold', 
+          color: 'var(--text-primary)',
+          letterSpacing: '1px'
+        }}>
+          {timeStr}
+        </div>
+        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          {dateStr}
+        </div>
       </div>
     </div>
   );

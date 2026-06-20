@@ -16,6 +16,7 @@ import TimezoneConverter from './pages/TimezoneConverter';
 import BackgroundDots from './components/BackgroundDots';
 import { ProcessingProvider } from './contexts/ProcessingContext';
 import BackgroundJobsWidget from './components/BackgroundJobsWidget';
+import ClockModeOverlay from './components/ClockModeOverlay';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -42,6 +43,7 @@ function App() {
   const [filename, setFilename] = useState('clipboard_image');
   const [pendingBlob, setPendingBlob] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isClockMode, setIsClockMode] = useState(false);
   const [globalToast, setGlobalToast] = useState(null);
   const inputRef = useRef(null);
 
@@ -351,7 +353,9 @@ function App() {
             </div>
           )}
 
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} />
+          {isClockMode && <ClockModeOverlay onClose={() => setIsClockMode(false)} />}
+
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} onClockClick={() => setIsClockMode(true)} />
           <main className="main-content">
             <Routes>
               <Route path="/" element={<Home />} />
