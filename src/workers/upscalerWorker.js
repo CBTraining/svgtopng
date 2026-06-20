@@ -2,7 +2,9 @@ import { pipeline, env, RawImage } from '@huggingface/transformers';
 
 // Configure environment
 env.allowLocalModels = false;
-env.backends.onnx.wasm.numThreads = 1; // Limit threads to avoid freezing UI if WASM is used
+env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency 
+    ? Math.max(1, Math.min(4, navigator.hardwareConcurrency - 1)) 
+    : 1; // Limit max threads to 4 to prevent mobile freezing, but allow multicore
 
 class PipelineSingleton {
     static task = 'image-to-image';
