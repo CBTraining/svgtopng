@@ -230,8 +230,9 @@ function HtmlPreview() {
           justifyContent: 'center', 
           alignItems: 'center',
           backgroundColor: 'var(--bg-tertiary)', // Adaptive backdrop to emphasize the preview area
-          overflow: 'auto',
-          padding: '2rem'
+          overflow: device === 'desktop' ? 'hidden' : 'auto',
+          padding: device === 'desktop' ? '0' : '2rem',
+          transition: 'padding 0.3s ease'
         }} className="custom-scrollbar">
           <div 
             className="preview-iframe-wrapper"
@@ -242,9 +243,9 @@ function HtmlPreview() {
             aspectRatio: device === 'mobile' ? '9/19.5' : device === 'tablet' ? '3/4' : 'auto',
             maxHeight: device === 'desktop' ? '100%' : 'none',
             backgroundColor: '#ffffff', // Browsers default to white background
-            borderRadius: device === 'desktop' ? '4px' : '24px',
-            boxShadow: 'var(--panel-shadow)',
-            border: device === 'desktop' ? '1px solid var(--border-color)' : '12px solid var(--border-color)',
+            borderRadius: device === 'desktop' ? '0px' : '24px',
+            boxShadow: device === 'desktop' ? 'none' : 'var(--panel-shadow)',
+            border: device === 'desktop' ? 'none' : '12px solid var(--border-color)',
             overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             display: 'flex',
