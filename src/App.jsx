@@ -362,8 +362,8 @@ function App() {
           </div>
           
           {globalToast && (
-            <div className="toast animate-fade-in" style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: '#ff4444', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
-              {globalToast}
+            <div className="toast animate-fade-in" style={{ position: 'fixed', top: '20px', left: '50%', transform: 'translateX(-50%)', zIndex: 10000, background: typeof globalToast === 'object' && globalToast.type === 'success' ? 'var(--success-color, #52c41a)' : '#ff4444', color: 'white', padding: '10px 20px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }}>
+              {typeof globalToast === 'object' ? globalToast.text : globalToast}
             </div>
           )}
 
@@ -387,7 +387,7 @@ function App() {
                     a.download = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".png" : 'pngconvert.png';
                     a.click();
                     URL.revokeObjectURL(url);
-                    setGlobalToast("Image auto-converted to PNG and downloaded!");
+                    setGlobalToast({ text: "Image auto-converted to PNG and downloaded!", type: 'success' });
                   }, 'image/png');
                 };
                 img.src = URL.createObjectURL(file);
