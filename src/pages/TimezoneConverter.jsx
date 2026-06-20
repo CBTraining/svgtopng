@@ -117,15 +117,13 @@ export default function TimezoneConverter() {
   return (
     <div className="tool-page animate-fade-in">
       <header className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
           <div className="tool-icon-wrapper">
             <ClockIcon className="tool-icon" />
           </div>
-          <div>
-            <h1>Timezone Converter</h1>
-            <p style={{ marginTop: '0.25rem', color: 'var(--text-secondary)' }}>Synchronized multi-window USA timezone translation.</p>
-          </div>
+          <h1 style={{ margin: 0 }}>Timezone Converter</h1>
         </div>
+        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Synchronized multi-window USA timezone translation.</p>
       </header>
 
       {/* Live Clocks Banner */}
