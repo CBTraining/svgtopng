@@ -71,6 +71,18 @@ export default function HtmlPreview() {
   if (device === 'tablet') previewWidth = '768px';
   if (device === 'mobile') previewWidth = '375px';
 
+  // Inject meta tags into the preview HTML to prevent extensions (like Dark Reader) 
+  // or Chrome's Auto Dark Mode from forcefully inverting the user's custom HTML.
+  let previewHtml = htmlCode;
+  const antiDarkMeta = '<meta name="color-scheme" content="light"><meta name="darkreader-lock">';
+  if (previewHtml.includes('<head>')) {
+    previewHtml = previewHtml.replace('<head>', '<head>' + antiDarkMeta);
+  } else if (previewHtml.toLowerCase().includes('<html>')) {
+    previewHtml = previewHtml.replace(/<html[^>]*>/i, (match) => match + '<head>' + antiDarkMeta + '</head>');
+  } else {
+    previewHtml = '<head>' + antiDarkMeta + '</head>' + previewHtml;
+  }
+
   return (
     <div className="page-container animate-fade-in" style={{ display: 'flex', flexDirection: 'column', height: '100vh', padding: 0, overflow: 'hidden' }}>
       {/* Header Toolbar */}
@@ -197,7 +209,7 @@ export default function HtmlPreview() {
             flexDirection: 'column'
           }}>
             <iframe
-              srcDoc={htmlCode}
+              srcDoc={previewHtml}
               title="HTML Preview"
               style={{
                 width: '100%',
@@ -206,7 +218,7 @@ export default function HtmlPreview() {
                 backgroundColor: '#ffffff',
                 colorScheme: 'light'
               }}
-              sandbox="allow-scripts allow-modals"
+              sandbox="allow-scripts allow-modals allow-same-origin"
             />
           </div>
         </div>
