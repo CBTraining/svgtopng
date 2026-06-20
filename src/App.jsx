@@ -43,7 +43,7 @@ function App() {
   const [filename, setFilename] = useState('clipboard_image');
   const [pendingBlob, setPendingBlob] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isClockMode, setIsClockMode] = useState(false);
+  const [isClockMode, setIsClockMode] = useState(() => localStorage.getItem('isClockMode') === 'true');
   const [globalToast, setGlobalToast] = useState(null);
   const inputRef = useRef(null);
 
@@ -53,6 +53,11 @@ function App() {
       inputRef.current.focus();
     }
   }, [showModal]);
+
+  // Persist clock mode
+  useEffect(() => {
+    localStorage.setItem('isClockMode', String(isClockMode));
+  }, [isClockMode]);
 
   // Clear global toast after 3 seconds
   useEffect(() => {
