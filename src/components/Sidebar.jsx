@@ -15,6 +15,8 @@ import {
   MoonIcon,
   ClockIcon
 } from '@heroicons/react/24/solid';
+import BackgroundJobsWidget from './BackgroundJobsWidget';
+import SidebarClock from './SidebarClock';
 import { useState, useEffect } from 'react';
 import './Sidebar.css';
 
@@ -158,6 +160,8 @@ export default function Sidebar({ isOpen, onClose, onManualPaste }) {
             </div>
           )}
         </div>
+        
+        <SidebarClock />
 
           <nav className="sidebar-nav">
             {navCategories.map((category, idx) => (
