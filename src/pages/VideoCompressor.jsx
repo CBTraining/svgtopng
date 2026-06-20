@@ -145,10 +145,8 @@ function VideoCompressorSlot({ slot }) {
       if (err.message.includes('av1') && err.message.includes('Missing Sequence Header')) {
         const friendlyError = "This video appears to be an AV1 file, which isn't fully supported by our browser-based processing engine. Please try using a standard MP4 (H.264) video instead.";
         updateJob(myJobId, { status: 'error', error: friendlyError });
-        alert(friendlyError);
       } else {
         updateJob(myJobId, { status: 'error', error: err.message });
-        alert("Failed to compress video:\n" + err.message);
       }
     } finally {
       if (localFfmpeg) {

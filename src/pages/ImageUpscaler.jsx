@@ -37,7 +37,6 @@ function UpscalerSlot({ slot }) {
     workerRef.current.onerror = (err) => {
       console.error('Worker initialization or runtime error:', err);
       updateJob(myJobId, { status: 'error', error: 'Worker crashed: ' + err.message });
-      alert("Worker failed: " + err.message);
     };
 
     workerRef.current.onmessage = (event) => {
@@ -60,7 +59,6 @@ function UpscalerSlot({ slot }) {
         updateJob(myJobId, { status: 'success', resultUrl, downloadName: `upscaled-${Date.now()}.png` });
       } else if (status === 'error') {
         updateJob(myJobId, { status: 'error', error });
-        alert("Failed to upscale image. Please try again.");
       }
     };
 

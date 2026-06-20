@@ -35,10 +35,9 @@ function BackgroundRemoverSlot({ slot }) {
       const imageBlob = await removeBackground(imageFile, config);
       const rUrl = URL.createObjectURL(imageBlob);
       updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `nobg-${Date.now()}.png` });
-    } catch (err) {
-      console.error(err);
-      updateJob(myJobId, { status: 'error', error: err.message });
-      alert("Failed to remove background. Please try a different image.");
+    } catch (error) {
+      console.error(error);
+      updateJob(myJobId, { status: 'error', error: error.message });
     }
   };
 
