@@ -24,6 +24,7 @@ function BackgroundRemoverSlot({ slot }) {
 
     try {
       const config = {
+        publicPath: "https://static.imgly.com/@imgly/background-removal-data/1.7.0/dist/",
         progress: (key, current, total) => {
           if (total > 0) {
             updateJob(myJobId, { progress: (current / total) * 100, log: `Processing ${key}...` });
