@@ -33,7 +33,16 @@ export function ProcessingProvider({ children }) {
   }, []);
 
   const updateJob = useCallback((id, updates) => {
-    setJobs((prev) => prev.map(job => job.id === id ? { ...job, ...updates } : job));
+    setJobs((prev) => prev.map(job => {
+      if (job.id === id) {
+        // Revoke old resultUrl if it's being replaced or cleared
+        if ('resultUrl' in updates && job.resultUrl && updates.resultUrl !== job.resultUrl) {
+          URL.revokeObjectURL(job.resultUrl);
+        }
+        return { ...job, ...updates };
+      }
+      return job;
+    }));
   }, []);
 
   const createFfmpegInstance = async () => {
@@ -106,7 +115,16 @@ export function ProcessingProvider({ children }) {
   const updateSlot = (toolId, slotId, updates) => {
     setWorkspaces(prev => ({
       ...prev,
-      [toolId]: (prev[toolId] || []).map(slot => slot.id === slotId ? { ...slot, ...updates } : slot)
+      [toolId]: (prev[toolId] || []).map(slot => {
+        if (slot.id === slotId) {
+          // Revoke old previewUrl if it's being replaced or cleared
+          if ('previewUrl' in updates && slot.previewUrl && updates.previewUrl !== slot.previewUrl) {
+            URL.revokeObjectURL(slot.previewUrl);
+          }
+          return { ...slot, ...updates };
+        }
+        return slot;
+      })
     }));
   };
 
