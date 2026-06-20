@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Bars3Icon } from '@heroicons/react/24/solid';
 import Sidebar from './components/Sidebar';
 import ImageTools from './pages/ImageTools';
@@ -47,6 +47,16 @@ const Home = () => (
     </div>
   </div>
 );
+
+function MainContentWrapper({ children }) {
+  const location = useLocation();
+  const isHtmlPreview = location.pathname === '/html-preview';
+  return (
+    <main className={`main-content ${isHtmlPreview ? 'no-padding' : ''}`}>
+      {children}
+    </main>
+  );
+}
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -401,7 +411,7 @@ function App() {
           />}
 
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} onClockClick={() => setIsClockMode(true)} />
-          <main className="main-content">
+          <MainContentWrapper>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/image-tools" element={<ImageTools />} />
@@ -418,7 +428,7 @@ function App() {
               <Route path="/image-upscaler" element={<ImageUpscaler />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
-          </main>
+          </MainContentWrapper>
 
           <BackgroundJobsWidget />
 
