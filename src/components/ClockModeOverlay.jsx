@@ -32,13 +32,13 @@ export default function ClockModeOverlay({ onClose }) {
         backgroundColor: 'var(--bg-primary)',
         zIndex: 900, // Below drag drop (z-index 999/1000 usually)
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
+        paddingLeft: '10vw',
         cursor: 'pointer',
         overflow: 'hidden'
       }}
-      title="Click anywhere to exit Clock Mode"
     >
       {/* Creative Background: Huge pulsing background dots */}
       <div style={{
@@ -53,47 +53,47 @@ export default function ClockModeOverlay({ onClose }) {
         justifyItems: 'center',
         opacity: 0.08,
         pointerEvents: 'none',
-        gap: '4vw',
-        padding: '10vw'
+        gap: '2vmax',
+        padding: '5vmax'
       }}>
         {allBits.map((active, i) => (
            <div key={i} style={{
-             width: '12vw',
-             height: '12vw',
+             width: '18vmax',
+             height: '18vmax',
              borderRadius: '50%',
              backgroundColor: active ? 'var(--accent-color)' : 'transparent',
              border: active ? 'none' : '2px solid var(--text-muted)',
-             filter: active ? 'blur(30px)' : 'none',
+             filter: active ? 'blur(40px)' : 'none',
              transition: 'all 1s ease-in-out',
              transform: active ? 'scale(1.2)' : 'scale(1)'
            }} />
         ))}
       </div>
 
-      {/* Main Content: Scaled to viewport */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4vmin', zIndex: 10 }}>
+      {/* Main Content: Scaled to vertical height (vh) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6vh', zIndex: 10 }}>
         {/* Binary Clock Widget - 16 dots in a circle */}
         <div 
-          style={{ position: 'relative', width: '20vmin', height: '20vmin', opacity: 0.9, flexShrink: 0 }} 
+          style={{ position: 'relative', width: '30vh', height: '30vh', opacity: 0.9, flexShrink: 0 }} 
         >
           {allBits.map((active, i) => {
             const angle = (i / 16) * Math.PI * 2 - (Math.PI / 2);
-            const radius = 8; // vmin
-            const x = Math.cos(angle) * radius + 10 - 0.75; // 10 is center, 0.75 is half dot width
-            const y = Math.sin(angle) * radius + 10 - 0.75;
+            const radius = 12; // vh
+            const x = Math.cos(angle) * radius + 15 - 1.25; // 15 is center, 1.25 is half dot width
+            const y = Math.sin(angle) * radius + 15 - 1.25;
             
             return (
               <div
                 key={i}
                 style={{
                   position: 'absolute',
-                  left: `${x}vmin`,
-                  top: `${y}vmin`,
-                  width: '1.5vmin',
-                  height: '1.5vmin',
+                  left: `${x}vh`,
+                  top: `${y}vh`,
+                  width: '2.5vh',
+                  height: '2.5vh',
                   borderRadius: '50%',
                   backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
-                  boxShadow: active ? '0 0 2vmin var(--accent-glow)' : 'none',
+                  boxShadow: active ? '0 0 3vh var(--accent-glow)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
               />
@@ -103,15 +103,15 @@ export default function ClockModeOverlay({ onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           <div style={{ 
-            fontSize: '8vmin', 
+            fontSize: '12vh', 
             fontWeight: 'bold', 
             color: 'var(--text-primary)',
-            letterSpacing: '0.2vmin',
+            letterSpacing: '0.2vh',
             lineHeight: 1
           }}>
             {timeStr}
           </div>
-          <div style={{ fontSize: '2.5vmin', color: 'var(--text-muted)', marginTop: '1.5vmin' }}>
+          <div style={{ fontSize: '4vh', color: 'var(--text-muted)', marginTop: '2vh' }}>
             {dateStr}
           </div>
         </div>
