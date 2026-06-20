@@ -371,7 +371,26 @@ function App() {
             onClose={() => setIsClockMode(false)} 
             onDropFile={(file) => {
               if (file.type.startsWith('image/')) {
-                processImageBlob(file, file.name);
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  canvas.width = img.width;
+                  canvas.height = img.height;
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0);
+                  
+                  canvas.toBlob((blob) => {
+                    if (!blob) return;
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".png" : 'pngconvert.png';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    setGlobalToast("Image auto-converted to PNG and downloaded!");
+                  }, 'image/png');
+                };
+                img.src = URL.createObjectURL(file);
               } else if (file.type.startsWith('video/')) {
                 alert('Passive Video to GIF conversion via ffmpeg.wasm will trigger here!');
               } else {
