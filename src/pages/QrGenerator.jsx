@@ -2,25 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { QrCodeIcon, ArrowDownTrayIcon, TrashIcon, BookmarkSquareIcon } from '@heroicons/react/24/solid';
 import QRCodeStyling from 'qr-code-styling';
 
-function ColorSwatches({ colors, onSelect }) {
-  if (!colors || colors.length === 0) return null;
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '8px' }}>
-      {colors.slice(0, 10).map((c, i) => (
-        <div 
-          key={i}
-          onClick={() => onSelect(c)}
-          style={{
-            width: '20px', height: '20px', borderRadius: '4px', 
-            backgroundColor: c, cursor: 'pointer', border: '1px solid var(--border-color)',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-          }}
-          title={c}
-        />
-      ))}
-    </div>
-  );
-}
+
 
 function PresetGallery({ presets, onApply, onDelete }) {
   if (!presets || presets.length === 0) return null;
@@ -60,20 +42,12 @@ export default function QrGenerator() {
   const [color1, setColor1] = useState('#40E0D0');
   const [color2, setColor2] = useState('#12a5d1');
   const [isRounded, setIsRounded] = useState(true);
-  const [savedColors, setSavedColors] = useState([]);
   const [savedPresets, setSavedPresets] = useState([]);
   
   const qrRef = useRef(null);
   const qrCodeInstance = useRef(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('colorPickerHistory');
-    if (saved) {
-      try {
-        setSavedColors(JSON.parse(saved));
-      } catch (e) {}
-    }
-
     const savedP = localStorage.getItem('qrPresetsHistory');
     if (savedP) {
       try {
@@ -247,9 +221,8 @@ export default function QrGenerator() {
                     value={color1} 
                     onChange={(e) => setColor1(e.target.value)} 
                     onBlur={handleColorBlur}
-                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
+                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none', borderRadius: 'var(--border-radius)', overflow: 'hidden'}}
                   />
-                  <ColorSwatches colors={savedColors} onSelect={setColor1} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <input 
@@ -257,9 +230,8 @@ export default function QrGenerator() {
                     value={color2} 
                     onChange={(e) => setColor2(e.target.value)} 
                     onBlur={handleColorBlur}
-                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
+                    style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none', borderRadius: 'var(--border-radius)', overflow: 'hidden'}}
                   />
-                  <ColorSwatches colors={savedColors} onSelect={setColor2} />
                 </div>
               </div>
             ) : (
@@ -269,9 +241,8 @@ export default function QrGenerator() {
                   value={singleColor} 
                   onChange={(e) => setSingleColor(e.target.value)} 
                   onBlur={handleColorBlur}
-                  style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none'}}
+                  style={{width: '100%', height: '40px', cursor: 'pointer', border: 'none', background: 'none', borderRadius: 'var(--border-radius)', overflow: 'hidden'}}
                 />
-                <ColorSwatches colors={savedColors} onSelect={setSingleColor} />
               </div>
             )}
           </div>

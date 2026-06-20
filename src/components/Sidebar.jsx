@@ -210,15 +210,16 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
                 bottom: 0,
                 left: 0,
                 right: 0,
-                height: '30px',
-                background: 'linear-gradient(to top, var(--bg-secondary) 0%, transparent 100%)',
+                height: '40px',
+                background: 'linear-gradient(to top, var(--bg-secondary) 20%, transparent 100%)',
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'flex-end',
                 pointerEvents: 'none',
-                paddingBottom: '4px'
+                paddingBottom: '8px',
+                zIndex: 10
               }}>
-                <ChevronDownIcon style={{ width: 16, height: 16, color: 'var(--text-secondary)', animation: 'bounce 2s infinite' }} />
+                <ChevronDownIcon style={{ width: 24, height: 24, color: 'var(--accent-color)', animation: 'bounce 1.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
               </div>
             )}
           </div>
