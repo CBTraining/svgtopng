@@ -1,10 +1,36 @@
 import { useState, useEffect } from 'react';
-import Editor from 'react-simple-code-editor';
+import ReactSimpleCodeEditor from 'react-simple-code-editor';
+const Editor = ReactSimpleCodeEditor.default || ReactSimpleCodeEditor;
 import Prism from 'prismjs';
 import 'prismjs/components/prism-core';
 import 'prismjs/components/prism-markup'; // HTML syntax
 import beautify from 'js-beautify';
 import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon } from '@heroicons/react/24/outline';
+import React from 'react';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '2rem', color: 'red', backgroundColor: '#111' }}>
+          <h1>Something went wrong.</h1>
+          <pre>{this.state.error.toString()}</pre>
+          <pre>{this.state.error.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const defaultHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -41,7 +67,15 @@ const defaultHtml = `<!DOCTYPE html>
 </body>
 </html>`;
 
-export default function HtmlPreview() {
+export default function HtmlPreviewWrapper() {
+  return (
+    <ErrorBoundary>
+      <HtmlPreview />
+    </ErrorBoundary>
+  );
+}
+
+function HtmlPreview() {
   const [htmlCode, setHtmlCode] = useState(() => {
     return localStorage.getItem('html-preview-code') || defaultHtml;
   });
