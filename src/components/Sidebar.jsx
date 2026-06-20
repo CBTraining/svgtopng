@@ -16,8 +16,9 @@ import {
   ClockIcon,
   ArrowsPointingOutIcon,
   WindowIcon,
-  ChevronDownIcon
+  HomeIcon
 } from '@heroicons/react/24/solid';
+import { ChevronDownIcon as ChevronDownOutline } from '@heroicons/react/24/outline';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
 import SidebarClock from './SidebarClock';
 import { useState, useEffect, useRef } from 'react';
@@ -112,12 +113,6 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
   };
 
   const navCategories = [
-    {
-      title: 'General',
-      items: [
-        { to: '/', icon: Square3Stack3DIcon, label: 'Home' }
-      ]
-    },
     {
       title: 'Graphics',
       items: [
@@ -219,13 +214,22 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
                 paddingBottom: '8px',
                 zIndex: 10
               }}>
-                <ChevronDownIcon style={{ width: 24, height: 24, color: 'var(--accent-color)', animation: 'bounce 1.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
+                <ChevronDownOutline style={{ width: 24, height: 24, color: 'var(--accent-color)', animation: 'bounce 1.5s infinite', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} strokeWidth={4} />
               </div>
             )}
           </div>
 
         <div className="sidebar-footer">
           <div className="sidebar-footer-buttons">
+            <NavLink 
+              to="/"
+              className="btn"
+              style={{ padding: '0.25rem 0.5rem', flexShrink: 0, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Home"
+              onClick={onClose}
+            >
+              <HomeIcon style={{width: 18, height: 18}} />
+            </NavLink>
             <button 
               onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
               className="btn"
