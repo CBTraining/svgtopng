@@ -73,8 +73,7 @@ export default function ClockModeOverlay({ onClose, onDropFile }) {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingLeft: '10vw',
+        justifyContent: 'center',
         cursor: 'pointer',
         overflow: 'hidden'
       }}
