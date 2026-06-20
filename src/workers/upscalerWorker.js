@@ -87,13 +87,11 @@ self.addEventListener('message', async (event) => {
             upscaledBlob = await canvas.convertToBlob({ type: 'image/png' });
         }
 
-        const upscaledUrl = URL.createObjectURL(upscaledBlob);
-
         // Send the output back to the main thread
         self.postMessage({
             jobId,
             status: 'success',
-            resultUrl: upscaledUrl
+            resultBlob: upscaledBlob
         });
 
     } catch (error) {

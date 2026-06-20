@@ -40,7 +40,7 @@ function UpscalerSlot({ slot }) {
     };
 
     workerRef.current.onmessage = (event) => {
-      const { jobId, status, progressData, log, resultUrl, error } = event.data;
+      const { jobId, status, progressData, log, resultBlob, error } = event.data;
       if (jobId !== myJobId) return;
 
       if (status === 'init') {
@@ -56,6 +56,7 @@ function UpscalerSlot({ slot }) {
       } else if (status === 'processing') {
         updateJob(myJobId, { log });
       } else if (status === 'success') {
+        const resultUrl = URL.createObjectURL(resultBlob);
         updateJob(myJobId, { status: 'success', resultUrl, downloadName: `upscaled-${Date.now()}.png` });
       } else if (status === 'error') {
         updateJob(myJobId, { status: 'error', error });
