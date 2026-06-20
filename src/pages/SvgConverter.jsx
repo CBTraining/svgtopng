@@ -5,8 +5,43 @@ export default function SvgConverter() {
   const [svgText, setSvgText] = useState('');
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
+  const [aspectRatio, setAspectRatio] = useState(1);
+  const [keepProportions, setKeepProportions] = useState(true);
   const canvasRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  useEffect(() => {
+    if (!svgText.trim() || !svgText.includes('<svg')) return;
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgText, "image/svg+xml");
+      const svgEl = doc.querySelector('svg');
+      if (svgEl) {
+        let w = svgEl.getAttribute('width');
+        let h = svgEl.getAttribute('height');
+        const viewBox = svgEl.getAttribute('viewBox');
+        
+        let parsedW = w ? parseFloat(w) : null;
+        let parsedH = h ? parseFloat(h) : null;
+
+        if ((!parsedW || !parsedH) && viewBox) {
+          const parts = viewBox.split(/[ ,\n\t]+/).filter(Boolean).map(parseFloat);
+          if (parts.length === 4) {
+            parsedW = parts[2];
+            parsedH = parts[3];
+          }
+        }
+
+        if (parsedW && parsedH && parsedW > 0 && parsedH > 0) {
+          setWidth(Math.round(parsedW));
+          setHeight(Math.round(parsedH));
+          setAspectRatio(parsedW / parsedH);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to parse SVG dimensions", e);
+    }
+  }, [svgText]);
 
   useEffect(() => {
     return () => {
@@ -75,26 +110,49 @@ export default function SvgConverter() {
               placeholder="<svg>...</svg>"
             />
           </div>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <div className="control-group" style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+            <div className="control-group" style={{ flex: 1, marginBottom: 0 }}>
               <label>Output Width (px)</label>
               <input 
                 type="number" 
                 className="input-field" 
-                value={width} 
-                onChange={(e) => setWidth(Number(e.target.value))} 
+                value={width || ''} 
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setWidth(val);
+                  if (keepProportions && aspectRatio) setHeight(Math.round(val / aspectRatio));
+                }} 
               />
             </div>
-            <div className="control-group" style={{ flex: 1 }}>
+            <div className="control-group" style={{ flex: 1, marginBottom: 0 }}>
               <label>Output Height (px)</label>
               <input 
                 type="number" 
                 className="input-field" 
-                value={height} 
-                onChange={(e) => setHeight(Number(e.target.value))} 
+                value={height || ''} 
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setHeight(val);
+                  if (keepProportions && aspectRatio) setWidth(Math.round(val * aspectRatio));
+                }} 
               />
             </div>
           </div>
+          
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            <input 
+              type="checkbox" 
+              checked={keepProportions}
+              onChange={(e) => {
+                setKeepProportions(e.target.checked);
+                if (e.target.checked && width && height) {
+                  setAspectRatio(width / height);
+                }
+              }}
+              className="accent-primary"
+            />
+            Keep proportions
+          </label>
           <button className="btn btn-primary" onClick={handleConvert}>
             Render PNG
           </button>
