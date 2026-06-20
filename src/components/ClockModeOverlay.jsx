@@ -27,6 +27,7 @@ export default function ClockModeOverlay({ onClose }) {
       className="clock-mode-overlay animate-fade-in hidden-on-mobile"
       onClick={onClose}
       style={{
+        '--u': 'min(0.55vw, 1.3vh)',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: 'var(--bg-primary)',
@@ -70,30 +71,34 @@ export default function ClockModeOverlay({ onClose }) {
         ))}
       </div>
 
-      {/* Main Content: Scaled to vertical height (vh) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6vh', zIndex: 10 }}>
+      {/* Main Content: Scaled using dynamic unit --u */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'calc(10 * var(--u))', zIndex: 10 }}>
         {/* Binary Clock Widget - 16 dots in a circle */}
         <div 
-          style={{ position: 'relative', width: '30vh', height: '30vh', opacity: 0.9, flexShrink: 0 }} 
+          style={{ position: 'relative', width: 'calc(60 * var(--u))', height: 'calc(60 * var(--u))', opacity: 0.9, flexShrink: 0 }} 
         >
           {allBits.map((active, i) => {
             const angle = (i / 16) * Math.PI * 2 - (Math.PI / 2);
-            const radius = 12; // vh
-            const x = Math.cos(angle) * radius + 15 - 1.25; // 15 is center, 1.25 is half dot width
-            const y = Math.sin(angle) * radius + 15 - 1.25;
+            const radius = 24; 
+            const cx = 30;
+            const cy = 30;
+            const halfDot = 2.5;
+            
+            const x = Math.cos(angle) * radius + cx - halfDot;
+            const y = Math.sin(angle) * radius + cy - halfDot;
             
             return (
               <div
                 key={i}
                 style={{
                   position: 'absolute',
-                  left: `${x}vh`,
-                  top: `${y}vh`,
-                  width: '2.5vh',
-                  height: '2.5vh',
+                  left: `calc(${x} * var(--u))`,
+                  top: `calc(${y} * var(--u))`,
+                  width: 'calc(5 * var(--u))',
+                  height: 'calc(5 * var(--u))',
                   borderRadius: '50%',
                   backgroundColor: active ? 'var(--accent-color)' : 'var(--border-color)',
-                  boxShadow: active ? '0 0 3vh var(--accent-glow)' : 'none',
+                  boxShadow: active ? '0 0 calc(6 * var(--u)) var(--accent-glow)' : 'none',
                   transition: 'all 0.2s ease'
                 }}
               />
@@ -103,15 +108,16 @@ export default function ClockModeOverlay({ onClose }) {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
           <div style={{ 
-            fontSize: '12vh', 
+            fontSize: 'calc(28 * var(--u))', 
             fontWeight: 'bold', 
             color: 'var(--text-primary)',
-            letterSpacing: '0.2vh',
-            lineHeight: 1
+            letterSpacing: 'calc(0.5 * var(--u))',
+            lineHeight: 1,
+            whiteSpace: 'nowrap'
           }}>
             {timeStr}
           </div>
-          <div style={{ fontSize: '4vh', color: 'var(--text-muted)', marginTop: '2vh' }}>
+          <div style={{ fontSize: 'calc(8 * var(--u))', color: 'var(--text-muted)', marginTop: 'calc(4 * var(--u))', whiteSpace: 'nowrap' }}>
             {dateStr}
           </div>
         </div>
