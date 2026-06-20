@@ -41,7 +41,7 @@ export default function ClockModeOverlay({ onClose }) {
       className="clock-mode-overlay animate-fade-in hidden-on-mobile"
       onClick={onClose}
       style={{
-        '--u': 'max(3px, min(0.35vw, 0.8vh))',
+        '--u': 'max(2px, min(0.35vw, 0.8vh))',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
         backgroundColor: '#000000',
