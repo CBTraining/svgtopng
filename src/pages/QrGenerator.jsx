@@ -53,6 +53,25 @@ export default function QrGenerator() {
       try {
         setSavedPresets(JSON.parse(savedP));
       } catch (e) {}
+    } else {
+      setSavedPresets([
+        {
+          id: 'default-black',
+          isGradient: false,
+          singleColor: '#000000',
+          color1: '#000000',
+          color2: '#000000',
+          isRounded: true
+        },
+        {
+          id: 'default-white',
+          isGradient: false,
+          singleColor: '#ffffff',
+          color1: '#ffffff',
+          color2: '#ffffff',
+          isRounded: true
+        }
+      ]);
     }
 
     qrCodeInstance.current = new QRCodeStyling({
