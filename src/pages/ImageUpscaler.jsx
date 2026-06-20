@@ -74,6 +74,11 @@ function UpscalerSlot({ slot }) {
   const processImage = async () => {
     if (!imageFile || isProcessing) return;
     
+    if (resolution && Math.max(resolution.width, resolution.height) > 800) {
+      alert("Image is too large for on-device AI upscaling. Please use an image where the longest side is 800 pixels or less.");
+      return;
+    }
+    
     addJob({ id: myJobId, title: 'Upscaling Image', type: 'ai-upscaler' });
 
     workerRef.current.postMessage({
