@@ -59,7 +59,7 @@ function BackgroundRemoverSlot({ slot }) {
       </button>
 
       <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
-         <img src={previewUrl} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
+         <img src={previewUrl} alt="Original" style={{maxWidth: '100%', width: '100%', minHeight: '150px', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
          
          {!isProcessing && !resultUrl && (
            <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>

@@ -100,7 +100,7 @@ function UpscalerSlot({ slot }) {
 
       <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
          <div style={{ position: 'relative', minHeight: '200px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-           <img src={previewUrl} alt="Original" style={{maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto', filter: isProcessing ? 'blur(4px) brightness(0.7)' : 'none' }} />
+           <img src={previewUrl} alt="Original" style={{maxWidth: '100%', width: '100%', minHeight: '150px', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto', filter: isProcessing ? 'blur(4px) brightness(0.7)' : 'none' }} />
            {isProcessing && (
              <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                <div className="spinner"></div>
