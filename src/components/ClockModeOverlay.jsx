@@ -41,6 +41,15 @@ export default function ClockModeOverlay({ onClose }) {
         overflow: 'hidden'
       }}
     >
+      {/* Draggable region for Window Controls Overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 0, left: 0, right: 0,
+        height: 'env(titlebar-area-height, 30px)',
+        WebkitAppRegion: 'drag',
+        zIndex: 999
+      }} />
+
       {/* Creative Background: Huge pulsing background dots */}
       <div style={{
         position: 'absolute',

@@ -20,7 +20,16 @@ import ClockModeOverlay from './components/ClockModeOverlay';
 
 const Home = () => (
   <div className="animate-fade-in">
-    <div className="page-header" style={{ marginBottom: '0.5rem', borderBottom: 'none', paddingBottom: '0' }}>
+    {/* Draggable region for Window Controls Overlay */}
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0,
+      height: 'env(titlebar-area-height, 30px)',
+      WebkitAppRegion: 'drag',
+      zIndex: 999
+    }} />
+    
+    <div className="page-header" style={{ marginBottom: '0.5rem', borderBottom: 'none', paddingBottom: '0', paddingTop: 'env(titlebar-area-height, 0px)' }}>
       <h1>Welcome to WebTools</h1>
     </div>
     <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
