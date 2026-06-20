@@ -92,7 +92,7 @@ function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const processImageBlob = useCallback((blob) => {
+  const processImageBlob = useCallback((blob, defaultName = 'clipboard_image') => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -104,7 +104,7 @@ function App() {
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
         setPendingBlob(pngBlob);
-        setFilename('clipboard_image');
+        setFilename(defaultName);
         setShowModal(true);
       }, 'image/png');
       URL.revokeObjectURL(img.src);
@@ -367,7 +367,18 @@ function App() {
             </div>
           )}
 
-          {isClockMode && <ClockModeOverlay onClose={() => setIsClockMode(false)} />}
+          {isClockMode && <ClockModeOverlay 
+            onClose={() => setIsClockMode(false)} 
+            onDropFile={(file) => {
+              if (file.type.startsWith('image/')) {
+                processImageBlob(file, file.name);
+              } else if (file.type.startsWith('video/')) {
+                alert('Passive Video to GIF conversion via ffmpeg.wasm will trigger here!');
+              } else {
+                alert('Unsupported file type for passive conversion.');
+              }
+            }}
+          />}
 
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} onClockClick={() => setIsClockMode(true)} />
           <main className="main-content">

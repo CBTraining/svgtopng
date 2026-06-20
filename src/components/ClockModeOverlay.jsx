@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 
-export default function ClockModeOverlay({ onClose }) {
+export default function ClockModeOverlay({ onClose, onDropFile }) {
   const [time, setTime] = useState(new Date());
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setTime(new Date()), 1000);
@@ -36,15 +37,38 @@ export default function ClockModeOverlay({ onClose }) {
   const secondsBin = seconds.toString(2).padStart(6, '0').split('').map(b => b === '1');
   const allBits = [...hoursBin, ...minutesBin, ...secondsBin];
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (onDropFile) {
+        onDropFile(e.dataTransfer.files[0]);
+      }
+    }
+  };
+
   return (
     <div 
-      className="clock-mode-overlay animate-fade-in hidden-on-mobile"
+      className={`clock-mode-overlay animate-fade-in hidden-on-mobile ${isDragging ? 'dragging' : ''}`}
       onClick={onClose}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       style={{
         '--u': 'max(2px, min(0.35vw, 0.8vh))',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: '#000000',
+        backgroundColor: isDragging ? 'rgba(0, 50, 50, 0.9)' : '#000000',
         zIndex: 900, // Below drag drop (z-index 999/1000 usually)
         display: 'flex',
         flexDirection: 'row',
