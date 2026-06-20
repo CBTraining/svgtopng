@@ -175,9 +175,28 @@
     width: 280px;
     background: var(--bg-secondary);
     box-shadow: 4px 0 20px rgba(0,0,0,0.5);
+    overflow-y: auto;
   }
   .sidebar.open {
     left: 0;
+  }
+  
+  .sidebar-header {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .nav-category {
+    margin-bottom: 0.25rem;
+  }
+  
+  .nav-category-title {
+    margin-top: 0.25rem;
+    margin-bottom: 0.15rem;
+  }
+  
+  .nav-link {
+    padding: 0.5rem 1rem;
   }
 }
 
