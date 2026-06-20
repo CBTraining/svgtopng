@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-import ReactSimpleCodeEditor from 'react-simple-code-editor';
-const Editor = ReactSimpleCodeEditor.default || ReactSimpleCodeEditor;
-import Prism from 'prismjs';
-import 'prismjs/components/prism-core';
-import 'prismjs/components/prism-markup'; // HTML syntax
+import Editor from '@monaco-editor/react';
 import beautify from 'js-beautify';
 import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import React from 'react';
@@ -81,6 +77,19 @@ function HtmlPreview() {
   });
   const [device, setDevice] = useState('desktop'); // desktop, tablet, mobile
   const [showCode, setShowCode] = useState(true);
+  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
+
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          setTheme(document.documentElement.getAttribute('data-theme') || 'dark');
+        }
+      });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('html-preview-code', htmlCode);
@@ -95,10 +104,6 @@ function HtmlPreview() {
       end_with_newline: true
     });
     setHtmlCode(formatted);
-  };
-
-  const highlightWithPrism = (code) => {
-    return Prism.highlight(code, Prism.languages.markup, 'markup');
   };
 
   let previewWidth = '100%';
@@ -197,26 +202,22 @@ function HtmlPreview() {
           }}>
             <div style={{ 
               flex: 1, 
-              padding: '1rem',
-              fontFamily: '"Fira Code", "Consolas", monospace',
-              fontSize: '14px',
-            }} className="custom-scrollbar prism-theme-custom">
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
               <Editor
+                height="100%"
+                defaultLanguage="html"
+                theme={theme === 'dark' ? 'vs-dark' : 'light'}
                 value={htmlCode}
-                onValueChange={code => setHtmlCode(code)}
-                highlight={highlightWithPrism}
-                padding={15}
-                style={{
-                  fontFamily: '"Fira Code", "Consolas", monospace',
+                onChange={value => setHtmlCode(value || '')}
+                options={{
+                  minimap: { enabled: false },
+                  wordWrap: 'on',
+                  formatOnPaste: true,
                   fontSize: 14,
-                  minHeight: '100%',
-                  outline: 'none',
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: 'var(--border-radius-sm)',
-                  border: '1px solid var(--border-color)',
-                  color: 'var(--text-primary)'
+                  fontFamily: '"Fira Code", "Consolas", monospace'
                 }}
-                textareaClassName="custom-scrollbar"
               />
             </div>
           </div>
@@ -237,7 +238,9 @@ function HtmlPreview() {
             data-darkreader-inline-bgcolor
             style={{
             width: previewWidth,
-            height: '100%',
+            height: device === 'desktop' ? '100%' : 'auto',
+            aspectRatio: device === 'mobile' ? '9/19.5' : device === 'tablet' ? '3/4' : 'auto',
+            maxHeight: device === 'desktop' ? '100%' : 'none',
             backgroundColor: '#ffffff', // Browsers default to white background
             borderRadius: device === 'desktop' ? '4px' : '24px',
             boxShadow: 'var(--panel-shadow)',

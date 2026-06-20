@@ -192,17 +192,17 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
             <button 
               onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
               className="btn"
-              style={{ padding: '0.5rem', flexShrink: 0, border: '1px solid var(--border-color)' }}
+              style={{ padding: '0.25rem 0.5rem', flexShrink: 0, border: '1px solid var(--border-color)' }}
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
-              {theme === 'dark' ? <SunIcon style={{width: 20, height: 20}} /> : <MoonIcon style={{width: 20, height: 20}} />}
+              {theme === 'dark' ? <SunIcon style={{width: 18, height: 18}} /> : <MoonIcon style={{width: 18, height: 18}} />}
             </button>
             <button 
               onClick={onManualPaste}
               className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold' }}
+              style={{ padding: '0.25rem 1rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem' }}
             >
-              <ClipboardDocumentIcon style={{width: '24px', height: '24px'}} />
+              <ClipboardDocumentIcon style={{width: '18px', height: '18px'}} />
               Paste to PNG
             </button>
           </div>
