@@ -212,6 +212,18 @@
   color: white !important;
 }
 
+.sidebar-footer {
+  padding: 1rem;
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+}
+
+.sidebar-footer-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
 @media (max-height: 800px) {
   .sidebar-header {
     padding-bottom: 0.5rem;
@@ -228,6 +240,12 @@
   .nav-link {
     padding: 0.35rem 1rem;
   }
+  .sidebar-footer {
+    padding: 0.75rem;
+  }
+  .sidebar-footer-buttons {
+    margin-top: 0.25rem;
+  }
 }
 
 @media (max-height: 650px) {
@@ -241,5 +259,11 @@
   }
   .nav-category-title {
     display: none;
+  }
+  .sidebar-footer {
+    padding: 0.5rem;
+  }
+  .sidebar-footer-buttons {
+    margin-top: 0.1rem;
   }
 }

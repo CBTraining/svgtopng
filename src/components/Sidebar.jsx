@@ -187,8 +187,8 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
             ))}
           </nav>
 
-        <div style={{ padding: '1.5rem', marginTop: 'auto', borderTop: '1px solid var(--border-default)' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+        <div className="sidebar-footer">
+          <div className="sidebar-footer-buttons">
             <button 
               onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
               className="btn"
