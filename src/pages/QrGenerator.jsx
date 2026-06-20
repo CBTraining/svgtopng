@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { QrCodeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/solid';
+import { QrCodeIcon, ArrowDownTrayIcon, TrashIcon, BookmarkSquareIcon } from '@heroicons/react/24/solid';
 import QRCodeStyling from 'qr-code-styling';
 
 function ColorSwatches({ colors, onSelect }) {
@@ -22,6 +22,36 @@ function ColorSwatches({ colors, onSelect }) {
   );
 }
 
+function PresetGallery({ presets, onApply, onDelete }) {
+  if (!presets || presets.length === 0) return null;
+  return (
+    <div style={{ marginTop: '2rem' }}>
+      <h4 style={{ marginBottom: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Your Saved Presets</h4>
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        {presets.map(preset => (
+          <div key={preset.id} className="glass-panel" style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center', background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius-sm)' }}>
+            <div 
+              style={{
+                width: '40px', height: '40px', borderRadius: preset.isRounded ? '50%' : '4px',
+                background: preset.isGradient 
+                  ? `linear-gradient(135deg, ${preset.color1}, ${preset.color2})` 
+                  : preset.singleColor,
+                border: '1px solid var(--border-color)',
+                cursor: 'pointer'
+              }}
+              onClick={() => onApply(preset)}
+              title="Apply preset"
+            />
+            <button className="btn" style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', color: '#ff4444' }} onClick={() => onDelete(preset.id)} title="Delete preset">
+              <TrashIcon width={14} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function QrGenerator() {
   const [data, setData] = useState('Place your URL here');
   const [size, setSize] = useState(300);
@@ -31,6 +61,7 @@ export default function QrGenerator() {
   const [color2, setColor2] = useState('#12a5d1');
   const [isRounded, setIsRounded] = useState(true);
   const [savedColors, setSavedColors] = useState([]);
+  const [savedPresets, setSavedPresets] = useState([]);
   
   const qrRef = useRef(null);
   const qrCodeInstance = useRef(null);
@@ -40,6 +71,13 @@ export default function QrGenerator() {
     if (saved) {
       try {
         setSavedColors(JSON.parse(saved));
+      } catch (e) {}
+    }
+
+    const savedP = localStorage.getItem('qrPresetsHistory');
+    if (savedP) {
+      try {
+        setSavedPresets(JSON.parse(savedP));
       } catch (e) {}
     }
 
@@ -119,6 +157,34 @@ export default function QrGenerator() {
     }
   };
 
+  const handleSavePreset = () => {
+    const newPreset = {
+      id: Date.now().toString(),
+      isGradient,
+      singleColor,
+      color1,
+      color2,
+      isRounded
+    };
+    const updated = [...savedPresets, newPreset];
+    setSavedPresets(updated);
+    localStorage.setItem('qrPresetsHistory', JSON.stringify(updated));
+  };
+
+  const handleDeletePreset = (id) => {
+    const updated = savedPresets.filter(p => p.id !== id);
+    setSavedPresets(updated);
+    localStorage.setItem('qrPresetsHistory', JSON.stringify(updated));
+  };
+
+  const handleApplyPreset = (preset) => {
+    setIsGradient(preset.isGradient);
+    setSingleColor(preset.singleColor);
+    setColor1(preset.color1);
+    setColor2(preset.color2);
+    setIsRounded(preset.isRounded);
+  };
+
   return (
     <div className="animate-fade-in">
       <header className="page-header">
@@ -130,7 +196,12 @@ export default function QrGenerator() {
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '2rem', alignItems: 'start' }}>
         <div className="glass-panel controls">
-          <h3>Customization</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ margin: 0 }}>Customization</h3>
+            <button className="btn" onClick={handleSavePreset} title="Save current styles as a preset">
+              <BookmarkSquareIcon width={16} /> Save Preset
+            </button>
+          </div>
           
           <div className="control-group">
             <label>Payload (URL or Text)</label>
@@ -144,11 +215,11 @@ export default function QrGenerator() {
           </div>
 
           <div className="control-group" style={{marginTop: '1.5rem'}}>
-            <label>Size ({size}px)</label>
+            <label>Download Size ({size}px)</label>
             <input 
               type="range" 
               min="200" 
-              max="800" 
+              max="2000" 
               value={size} 
               onChange={(e) => setSize(Number(e.target.value))} 
               style={{width: '100%'}}
@@ -216,11 +287,13 @@ export default function QrGenerator() {
             </label>
           </div>
 
+          <PresetGallery presets={savedPresets} onApply={handleApplyPreset} onDelete={handleDeletePreset} />
+
         </div>
 
         <div className="glass-panel preview">
           <h3>Preview</h3>
-          <div style={{ 
+          <div className="qr-preview-container" style={{ 
             marginTop: '1rem', 
             background: 'var(--bg-secondary)', 
             backgroundImage: 'radial-gradient(var(--border-color) 1px, transparent 1px)',
@@ -229,7 +302,7 @@ export default function QrGenerator() {
             borderRadius: 'var(--border-radius)', 
             display: 'inline-block' 
           }}>
-            <div ref={qrRef}></div>
+            <div ref={qrRef} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}></div>
           </div>
           
           <div className="button-group" style={{marginTop: '2rem'}}>

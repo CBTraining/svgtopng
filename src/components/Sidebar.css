@@ -255,3 +255,12 @@
     margin-top: min(0.25rem, 0.5vh);
   }
 }
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

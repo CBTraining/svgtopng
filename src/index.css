@@ -464,3 +464,11 @@ p {
     border-top: none !important;
   }
 }
+
+/* QR Code Preview Constraints */
+.qr-preview-container canvas, 
+.qr-preview-container svg {
+  width: 100% !important;
+  height: auto !important;
+  max-width: 256px !important;
+}

@@ -15,22 +15,39 @@ import {
   MoonIcon,
   ClockIcon,
   ArrowsPointingOutIcon,
-  WindowIcon
+  WindowIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/solid';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
 import SidebarClock from './SidebarClock';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 
 export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const navRef = useRef(null);
+  const [canScrollDown, setCanScrollDown] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  const checkScroll = () => {
+    if (navRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = navRef.current;
+      // Show arrow if we can scroll down (allow 2px margin for rounding errors)
+      setCanScrollDown(Math.ceil(scrollTop + clientHeight) < scrollHeight - 2);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, []);
 
   useEffect(() => {
     const handleError = () => {
@@ -166,26 +183,45 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
         
         <SidebarClock onClick={onClockClick} />
 
-          <nav className="sidebar-nav">
-            {navCategories.map((category, idx) => (
-              <div key={idx} className="nav-category">
-                {category.title !== 'General' && (
-                  <h4 className="nav-category-title">{category.title}</h4>
-                )}
-                {category.items.map((item) => (
-                  <NavLink 
-                    key={item.to} 
-                    to={item.to} 
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    onClick={onClose}
-                  >
-                    <item.icon style={{width: '20px', height: '20px'}} />
-                    <span>{item.label}</span>
-                  </NavLink>
-                ))}
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <nav className="sidebar-nav" ref={navRef} onScroll={checkScroll}>
+              {navCategories.map((category, idx) => (
+                <div key={idx} className="nav-category">
+                  {category.title !== 'General' && (
+                    <h4 className="nav-category-title">{category.title}</h4>
+                  )}
+                  {category.items.map((item) => (
+                    <NavLink 
+                      key={item.to} 
+                      to={item.to} 
+                      className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                      onClick={onClose}
+                    >
+                      <item.icon style={{width: '20px', height: '20px'}} />
+                      <span>{item.label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              ))}
+            </nav>
+            {canScrollDown && (
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '30px',
+                background: 'linear-gradient(to top, var(--bg-secondary) 0%, transparent 100%)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'flex-end',
+                pointerEvents: 'none',
+                paddingBottom: '4px'
+              }}>
+                <ChevronDownIcon style={{ width: 16, height: 16, color: 'var(--text-secondary)', animation: 'bounce 2s infinite' }} />
               </div>
-            ))}
-          </nav>
+            )}
+          </div>
 
         <div className="sidebar-footer">
           <div className="sidebar-footer-buttons">
