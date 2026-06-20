@@ -8,6 +8,20 @@ export default function ClockModeOverlay({ onClose }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Dynamically turn the OS window titlebar pitch black for Clock Mode
+  useEffect(() => {
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    const originalColor = metaThemeColor ? metaThemeColor.getAttribute('content') : '#0a0a0a';
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', '#000000');
+    }
+    return () => {
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', originalColor);
+      }
+    };
+  }, []);
+
   const timeStr = time.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit', second: '2-digit' });
   const dateStr = time.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
@@ -27,10 +41,10 @@ export default function ClockModeOverlay({ onClose }) {
       className="clock-mode-overlay animate-fade-in hidden-on-mobile"
       onClick={onClose}
       style={{
-        '--u': 'max(2px, min(0.35vw, 0.8vh))',
+        '--u': 'max(3px, min(0.35vw, 0.8vh))',
         position: 'fixed',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'var(--bg-primary)',
+        backgroundColor: '#000000',
         zIndex: 900, // Below drag drop (z-index 999/1000 usually)
         display: 'flex',
         flexDirection: 'row',
