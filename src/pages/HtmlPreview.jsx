@@ -190,38 +190,38 @@ function HtmlPreview() {
       {/* Main Content Split */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Code Editor Side */}
-        {showCode && (
+        <div style={{ 
+          width: showCode ? '50%' : '0%', 
+          minWidth: showCode ? '300px' : '0px',
+          opacity: showCode ? 1 : 0,
+          borderRight: showCode ? '1px solid var(--border-color)' : 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--bg-primary)',
+          overflow: 'hidden',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
           <div style={{ 
-            width: '50%', 
-            minWidth: '300px',
-            borderRight: '1px solid var(--border-color)',
+            flex: 1, 
             display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: 'var(--bg-primary)',
-            overflow: 'auto'
+            flexDirection: 'column'
           }}>
-            <div style={{ 
-              flex: 1, 
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
-              <Editor
-                height="100%"
-                defaultLanguage="html"
-                theme={theme === 'dark' ? 'vs-dark' : 'light'}
-                value={htmlCode}
-                onChange={value => setHtmlCode(value || '')}
-                options={{
-                  minimap: { enabled: false },
-                  wordWrap: 'on',
-                  formatOnPaste: true,
-                  fontSize: 14,
-                  fontFamily: '"Fira Code", "Consolas", monospace'
-                }}
-              />
-            </div>
+            <Editor
+              height="100%"
+              defaultLanguage="html"
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
+              value={htmlCode}
+              onChange={value => setHtmlCode(value || '')}
+              options={{
+                minimap: { enabled: false },
+                wordWrap: 'on',
+                formatOnPaste: true,
+                fontSize: 14,
+                fontFamily: '"Fira Code", "Consolas", monospace'
+              }}
+            />
           </div>
-        )}
+        </div>
 
         {/* Preview Side */}
         <div style={{ 
