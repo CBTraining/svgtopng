@@ -83,7 +83,7 @@ export default function ColorPicker() {
         </div>
       </header>
 
-      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem', alignItems: 'start' }}>
         <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
           {!isSupported && (
             <div style={{ background: 'rgba(255, 50, 50, 0.1)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '2rem', color: '#ff6b6b' }}>

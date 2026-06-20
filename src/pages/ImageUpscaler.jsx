@@ -162,7 +162,7 @@ export default function ImageUpscaler() {
       </div>
       <p style={{marginBottom: '2rem'}}>Enhance and upscale images 2x directly in your browser using local AI (Free & Offline).</p>
 
-      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 350px), 1fr))', gap: '2rem', alignItems: 'start' }}>
         {slots.map(slot => (
           <UpscalerSlot key={slot.id} slot={slot} />
         ))}
