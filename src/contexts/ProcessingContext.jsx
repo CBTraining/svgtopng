@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { get, set } from 'idb-keyval';
 
 const ProcessingContext = createContext();
 
@@ -61,6 +62,39 @@ export function ProcessingProvider({ children }) {
   }, []);
 
   const [workspaces, setWorkspaces] = useState({});
+  const [isWorkspacesLoaded, setIsWorkspacesLoaded] = useState(false);
+
+  useEffect(() => {
+    get('webtools-workspaces').then(restored => {
+      if (restored) {
+        // Regenerate Blob URLs for Files since they expire on page reload
+        for (const toolId in restored) {
+          restored[toolId] = restored[toolId].map(slot => {
+            let file = slot.imageFile || slot.videoFile || slot.lottieFile || slot.file;
+            if (file && slot.previewUrl) {
+               slot.previewUrl = URL.createObjectURL(file);
+            }
+            // Reset any running jobs to error since background processes can't be restored
+            if (slot.isProbing) slot.isProbing = false;
+            return slot;
+          });
+        }
+        setWorkspaces(restored);
+      }
+      setIsWorkspacesLoaded(true);
+    }).catch(err => {
+      console.error("Failed to restore workspaces from IndexedDB:", err);
+      setIsWorkspacesLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isWorkspacesLoaded) {
+      set('webtools-workspaces', workspaces).catch(err => {
+        console.error("Failed to save workspaces to IndexedDB:", err);
+      });
+    }
+  }, [workspaces, isWorkspacesLoaded]);
 
   const addSlot = (toolId, slotData) => {
     setWorkspaces(prev => ({

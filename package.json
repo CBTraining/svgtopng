@@ -19,6 +19,7 @@
     "@huggingface/transformers": "^4.2.0",
     "@imgly/background-removal": "^1.7.0",
     "gif.js": "^0.2.0",
+    "idb-keyval": "^6.2.5",
     "lottie-web": "^5.13.0",
     "lucide-react": "^1.21.0",
     "qr-code-styling": "^1.9.2",
