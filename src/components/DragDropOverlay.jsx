@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
 import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon } from '@heroicons/react/24/outline';
-import { v4 as uuid } from 'uuid';
 
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -98,18 +97,18 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       } else if (action === 'rename-png') {
         onDropImageToModal(file);
       } else if (action === 'remove-bg') {
-        addSlot('bg-remove', { id: uuid(), imageFile: file, previewUrl: URL.createObjectURL(file) });
+        addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/bg-remover');
       } else if (action === 'upscale') {
-        addSlot('image-upscaler', { id: uuid(), imageFile: file, previewUrl: URL.createObjectURL(file) });
+        addSlot('image-upscaler', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/image-upscaler');
       }
     } else if (dragType === 'video') {
       if (action === 'convert-gif') {
-        addSlot('video-to-gif', { id: uuid(), videoFile: file, previewUrl: URL.createObjectURL(file) });
+        addSlot('video-to-gif', { id: crypto.randomUUID(), videoFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/video-to-gif');
       } else if (action === 'compress-video') {
-        addSlot('video-compressor', { id: uuid(), videoFile: file, previewUrl: URL.createObjectURL(file) });
+        addSlot('video-compressor', { id: crypto.randomUUID(), videoFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/video-compressor');
       }
     }
