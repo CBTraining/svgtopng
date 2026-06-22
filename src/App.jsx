@@ -21,6 +21,7 @@ import BackgroundJobsWidget from './components/BackgroundJobsWidget';
 import ClockModeOverlay from './components/ClockModeOverlay';
 import DiagnosticsOverlay from './components/DiagnosticsOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
+import DragDropOverlay from './components/DragDropOverlay';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -434,6 +435,32 @@ function App() {
             </Routes>
           </MainContentWrapper>
           
+          <DragDropOverlay 
+            onDropImageToModal={(file) => processImageBlob(file, file.name)}
+            onDirectDownload={(file) => {
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                canvas.toBlob((blob) => {
+                  if (!blob) return;
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".png" : 'pngconvert.png';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  setGlobalToast({ text: "Image auto-converted to PNG and downloaded!", type: 'success' });
+                }, 'image/png');
+              };
+              img.src = URL.createObjectURL(file);
+            }}
+          />
+
           {showDiagnostics && (
             <ErrorBoundary name="Diagnostics">
               <DiagnosticsOverlay />

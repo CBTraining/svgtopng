@@ -26,7 +26,6 @@ import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 
 export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, showDiagnostics, onToggleDiagnostics }) {
-  const [isDragging, setIsDragging] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const navRef = useRef(null);
@@ -60,58 +59,6 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
     return () => window.removeEventListener('paste-error', handleError);
   }, []);
 
-  // Handle Drag Events for Passive Side-bar Drops
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const processDroppedFile = async (file) => {
-    if (file.type.startsWith('image/')) {
-      // Passive Image to PNG converter
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'pngconvert.png';
-          a.click();
-          URL.revokeObjectURL(url);
-        }, 'image/png');
-      };
-      img.src = URL.createObjectURL(file);
-    } else if (file.type.startsWith('video/')) {
-      // Passive Video to GIF converter
-      // (Will implement full FFmpeg.wasm logic later, placeholder for now)
-      alert('Passive Video to GIF conversion via ffmpeg.wasm will trigger here!');
-    } else {
-      alert('Unsupported file type for passive conversion.');
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'vertical', x: 0 } }));
-      const file = e.dataTransfer.files[0];
-      processDroppedFile(file);
-    }
-  };
 
   const navCategories = [
     {
@@ -159,10 +106,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
         />
       )}
       <aside 
-        className={`sidebar glass-panel ${isDragging ? 'drag-active' : ''} ${isOpen ? 'open' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}
       >
         <div className="sidebar-header">
           <div className="logo-container" style={{ alignItems: 'center' }}>
