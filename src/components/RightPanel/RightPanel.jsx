@@ -61,19 +61,19 @@ export default function RightPanel() {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             {/* 1. Calculator */}
-            <Calculator />
+            <div className="hide-on-drag"><Calculator /></div>
 
             {/* 2. Aspect Ratio Calc */}
-            <AspectRatioCalc />
+            <div className="hide-on-drag"><AspectRatioCalc /></div>
 
             {/* 3. Alarms/Timers */}
-            <Alarms />
+            <div className="hide-on-drag"><Alarms /></div>
 
             {/* 4. Image Stash */}
-            <ImageStash />
+            <div><ImageStash /></div>
 
             {/* 5. Scratchpad */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div className="hide-on-drag" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Scratchpad</h4>
               <textarea 
                 value={scratchpad}

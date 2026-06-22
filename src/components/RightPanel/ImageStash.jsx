@@ -30,6 +30,8 @@ export default function ImageStash() {
     const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
     if (files.length === 0) return;
     
+    window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'radial', x: e.clientX, y: e.clientY } }));
+    
     const newImgs = files.map(file => ({
       id: Math.random().toString(36).substr(2, 9),
       file,

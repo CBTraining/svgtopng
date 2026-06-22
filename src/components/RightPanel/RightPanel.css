@@ -55,3 +55,7 @@
     pointer-events: auto;
   }
 }
+/* Hide other tools when dragging files */
+body.global-drag-active .hide-on-drag {
+  display: none !important;
+}

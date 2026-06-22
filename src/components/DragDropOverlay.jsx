@@ -75,6 +75,11 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     };
   }, []);
 
+  useEffect(() => {
+    document.body.classList.toggle('global-drag-active', isDragging);
+    return () => document.body.classList.remove('global-drag-active');
+  }, [isDragging]);
+
   if (!isDragging || dragType === 'none') return null;
 
   const handleZoneDrop = async (e, action) => {
@@ -83,6 +88,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     dragCounter.current = 0;
     setIsDragging(false);
     setDragType('none');
+    window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'radial', x: e.clientX, y: e.clientY } }));
     
     const file = e.dataTransfer.files[0];
     if (!file) return;
@@ -102,7 +108,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
         addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/bg-remover');
       } else if (action === 'upscale') {
-        addSlot('image-upscaler', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
+        addSlot('ai-upscaler', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/image-upscaler');
       }
     } else if (dragType === 'video') {
