@@ -15,6 +15,7 @@ import ImageUpscaler from './pages/ImageUpscaler';
 import TimezoneConverter from './pages/TimezoneConverter';
 import HtmlPreview from './pages/HtmlPreview';
 import BackgroundDots from './components/BackgroundDots';
+import RightPanel from './components/RightPanel/RightPanel';
 import { ProcessingProvider } from './contexts/ProcessingContext';
 import BackgroundJobsWidget from './components/BackgroundJobsWidget';
 import ClockModeOverlay from './components/ClockModeOverlay';
@@ -429,6 +430,7 @@ function App() {
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
           </MainContentWrapper>
+          <RightPanel />
 
           <BackgroundJobsWidget />
 
