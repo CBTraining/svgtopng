@@ -120,7 +120,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.7)',
     backdropFilter: 'blur(10px)',
-    zIndex: 99999,
+    zIndex: 9998,
     display: 'flex',
     padding: '2rem',
     alignItems: 'center',

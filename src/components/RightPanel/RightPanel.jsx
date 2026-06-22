@@ -41,6 +41,8 @@ export default function RightPanel() {
         <button 
           className="right-panel-toggle"
           onClick={() => setIsOpen(!isOpen)}
+          onMouseEnter={() => setIsOpen(true)}
+          onDragEnter={() => setIsOpen(true)}
           title="Toggle Quick Tools"
         >
           {isOpen ? <ChevronRightIcon width={24} strokeWidth={2} /> : (
