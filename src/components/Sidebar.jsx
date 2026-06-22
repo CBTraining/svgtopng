@@ -16,7 +16,8 @@ import {
   ClockIcon,
   ArrowsPointingOutIcon,
   WindowIcon,
-  HomeIcon
+  HomeIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/solid';
 import { ChevronDownIcon as ChevronDownOutline } from '@heroicons/react/24/outline';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
@@ -24,7 +25,7 @@ import SidebarClock from './SidebarClock';
 import { useState, useEffect, useRef } from 'react';
 import './Sidebar.css';
 
-export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }) {
+export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, showDiagnostics, onToggleDiagnostics }) {
   const [isDragging, setIsDragging] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
@@ -237,6 +238,14 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
               title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             >
               {theme === 'dark' ? <SunIcon style={{width: 20, height: 20}} /> : <MoonIcon style={{width: 20, height: 20}} />}
+            </button>
+            <button 
+              onClick={onToggleDiagnostics}
+              className={`btn ${showDiagnostics ? 'btn-primary' : ''}`}
+              style={{ padding: '0.25rem 0.5rem', flexShrink: 0, border: '1px solid var(--border-color)' }}
+              title="Toggle Diagnostics Overlay"
+            >
+              <ChartBarIcon style={{width: 20, height: 20}} />
             </button>
             <button 
               onClick={onManualPaste}

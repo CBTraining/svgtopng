@@ -66,6 +66,7 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isClockMode, setIsClockMode] = useState(() => localStorage.getItem('isClockMode') === 'true');
   const [globalToast, setGlobalToast] = useState(null);
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
   const inputRef = useRef(null);
 
   // Focus input when modal opens
@@ -411,7 +412,7 @@ function App() {
             }}
           />}
 
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} onClockClick={() => setIsClockMode(true)} />
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} onManualPaste={handleManualPaste} onClockClick={() => setIsClockMode(true)} showDiagnostics={showDiagnostics} onToggleDiagnostics={() => setShowDiagnostics(!showDiagnostics)} />
           <MainContentWrapper>
             <Routes>
               <Route path="/" element={<Home />} />
@@ -430,6 +431,7 @@ function App() {
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
           </MainContentWrapper>
+          {showDiagnostics && <DiagnosticsOverlay />}
           <RightPanel />
 
           <BackgroundJobsWidget />
