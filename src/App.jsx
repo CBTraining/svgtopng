@@ -19,6 +19,8 @@ import RightPanel from './components/RightPanel/RightPanel';
 import { ProcessingProvider } from './contexts/ProcessingContext';
 import BackgroundJobsWidget from './components/BackgroundJobsWidget';
 import ClockModeOverlay from './components/ClockModeOverlay';
+import DiagnosticsOverlay from './components/DiagnosticsOverlay';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Home = () => (
   <div className="animate-fade-in">

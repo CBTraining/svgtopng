@@ -247,10 +247,10 @@ function HtmlPreview() {
         <div 
           className={`html-preview-code-side ${showCode ? 'is-visible' : 'is-hidden'}`}
           style={{ 
-            width: showCode ? (layout === 'portrait' ? '100%' : '50%') : '0%', 
-            height: showCode && layout === 'portrait' ? '50%' : 'auto',
-            minWidth: showCode && layout !== 'portrait' ? '300px' : '0px',
-            minHeight: showCode && layout === 'portrait' ? '150px' : '0px',
+            width: layout === 'portrait' ? '100%' : (showCode ? '50%' : '0%'), 
+            height: layout === 'portrait' ? (showCode ? '50%' : '0%') : '100%',
+            minWidth: layout === 'portrait' ? '0px' : (showCode ? '300px' : '0px'),
+            minHeight: layout === 'portrait' ? (showCode ? '150px' : '0px') : '0px',
             opacity: showCode ? 1 : 0,
             borderRight: showCode && layout !== 'portrait' ? '1px solid var(--border-color)' : 'none',
             borderTop: showCode && layout === 'portrait' ? '1px solid var(--border-color)' : 'none'
