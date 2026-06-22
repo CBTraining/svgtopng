@@ -45,7 +45,7 @@ export default function RightPanel() {
           title="Toggle Quick Tools"
         >
           {isOpen ? <ChevronRightIcon width={24} strokeWidth={2} /> : (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
               <WrenchScrewdriverIcon width={20} />
               <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontWeight: 'normal', letterSpacing: '1px', fontSize: '0.85rem' }}>Tools (t)</div>
             </div>

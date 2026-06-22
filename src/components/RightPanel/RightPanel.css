@@ -24,11 +24,11 @@
   /* The tab that sticks out when closed */
   .right-panel-toggle {
     position: absolute;
-    left: -40px; /* Width of the tab */
+    left: -48px; /* Width of the tab */
     top: 50%;
     transform: translateY(-50%);
-    width: 40px;
-    min-height: 80px;
+    width: 48px;
+    min-height: 100px;
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-right: none;
