@@ -7,6 +7,7 @@ export default function Alarms() {
   const [alarms, setAlarms] = useState([]);
   const [newMin, setNewMin] = useState(5);
   const audioCtxRef = useRef(null);
+  const isRingingRef = useRef(false);
 
   // Initialization
   useEffect(() => {
@@ -15,7 +16,7 @@ export default function Alarms() {
       try {
         const parsed = JSON.parse(saved);
         // Reset running state on load so they don't unexpectedly continue from hours ago
-        const safe = parsed.map(a => ({ ...a, isRunning: false }));
+        const safe = parsed.map(a => ({ ...a, isRunning: false, isRinging: false }));
         setAlarms(safe);
       } catch (e) {
         setAlarms(getDefaultAlarms());
@@ -43,7 +44,7 @@ export default function Alarms() {
             const next = alarm.remainingSeconds - 1;
             if (next === 0) {
               playBeep();
-              return { ...alarm, remainingSeconds: 0, isRunning: false };
+              return { ...alarm, remainingSeconds: 0, isRunning: false, isRinging: true };
             }
             return { ...alarm, remainingSeconds: next };
           }
@@ -52,12 +53,26 @@ export default function Alarms() {
         return dirty ? updated : current;
       });
     }, 1000);
-    return () => clearInterval(interval);
+
+    const ringLoop = setInterval(() => {
+      if (isRingingRef.current) {
+        playBeep();
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(ringLoop);
+    };
   }, []);
 
+  useEffect(() => {
+    isRingingRef.current = alarms.some(a => a.isRinging);
+  }, [alarms]);
+
   const getDefaultAlarms = () => [
-    { id: '30m', title: '30 Min', totalSeconds: 30 * 60, remainingSeconds: 30 * 60, isRunning: false },
-    { id: '60m', title: '1 Hour', totalSeconds: 60 * 60, remainingSeconds: 60 * 60, isRunning: false }
+    { id: '30m', title: '30 Min', totalSeconds: 30 * 60, remainingSeconds: 30 * 60, isRunning: false, isRinging: false },
+    { id: '60m', title: '1 Hour', totalSeconds: 60 * 60, remainingSeconds: 60 * 60, isRunning: false, isRinging: false }
   ];
 
   const initAudio = () => {
@@ -105,7 +120,8 @@ export default function Alarms() {
       title: `${newMin} Min`,
       totalSeconds: sec,
       remainingSeconds: sec,
-      isRunning: false
+      isRunning: false,
+      isRinging: false
     };
     setAlarms([...alarms, newAlarm]);
   };
@@ -130,7 +146,16 @@ export default function Alarms() {
   const stopAlarm = (id) => {
     setAlarms(alarms.map(a => {
       if (a.id === id) {
-        return { ...a, remainingSeconds: a.totalSeconds, isRunning: false };
+        return { ...a, remainingSeconds: a.totalSeconds, isRunning: false, isRinging: false };
+      }
+      return a;
+    }));
+  };
+
+  const dismissAlarm = (id) => {
+    setAlarms(alarms.map(a => {
+      if (a.id === id) {
+        return { ...a, remainingSeconds: a.totalSeconds, isRinging: false };
       }
       return a;
     }));
@@ -172,42 +197,58 @@ export default function Alarms() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
         {alarms.map(alarm => (
-          <div key={alarm.id} style={{ position: 'relative', background: 'var(--bg-tertiary)', borderRadius: 'var(--border-radius-sm)', padding: '0.5rem 0.75rem', overflow: 'hidden' }}>
+          <div key={alarm.id} style={{ position: 'relative', background: alarm.isRinging ? 'var(--danger-color)' : 'var(--bg-tertiary)', borderRadius: 'var(--border-radius-sm)', padding: '0.5rem 0.75rem', overflow: 'hidden' }}>
             
             {/* Progress Bar background */}
-            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${getProgress(alarm)}%`, background: alarm.remainingSeconds === 0 ? 'var(--accent-transparent)' : 'rgba(255, 255, 255, 0.05)', transition: 'width 1s linear', zIndex: 1 }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${getProgress(alarm)}%`, background: alarm.remainingSeconds === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.05)', transition: 'width 1s linear', zIndex: 1 }} />
             
             <div style={{ position: 'relative', zIndex: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{alarm.title}</span>
-                <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: alarm.remainingSeconds === 0 ? 'var(--accent-color)' : 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
-                  {formatTime(alarm.remainingSeconds)}
-                </span>
-              </div>
               
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                <button 
-                  onClick={() => toggleAlarm(alarm.id)} 
-                  style={{ background: 'transparent', border: 'none', color: alarm.isRunning ? 'var(--text-secondary)' : 'var(--accent-color)', cursor: 'pointer', padding: '4px' }}
-                  title={alarm.isRunning ? "Pause" : "Start"}
-                >
-                  {alarm.isRunning ? <PauseIcon width={20} /> : <PlayIcon width={20} />}
-                </button>
-                <button 
-                  onClick={() => stopAlarm(alarm.id)} 
-                  style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
-                  title="Reset"
-                >
-                  <StopIcon width={20} />
-                </button>
-                <button 
-                  onClick={() => deleteAlarm(alarm.id)} 
-                  style={{ background: 'transparent', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px', marginLeft: '4px' }}
-                  title="Delete"
-                >
-                  <TrashIcon width={18} />
-                </button>
-              </div>
+              {alarm.isRinging ? (
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 'bold', color: 'white' }}>ALARM!</span>
+                  <button 
+                    onClick={() => dismissAlarm(alarm.id)}
+                    className="btn"
+                    style={{ padding: '0.25rem 0.75rem', background: 'white', color: 'var(--danger-color)', fontWeight: 'bold', border: 'none', fontSize: '0.8rem' }}
+                  >
+                    STOP ALARM
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{alarm.title}</span>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>
+                      {formatTime(alarm.remainingSeconds)}
+                    </span>
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <button 
+                      onClick={() => toggleAlarm(alarm.id)} 
+                      style={{ background: 'transparent', border: 'none', color: alarm.isRunning ? 'var(--text-secondary)' : 'var(--accent-color)', cursor: 'pointer', padding: '4px' }}
+                      title={alarm.isRunning ? "Pause" : "Start"}
+                    >
+                      {alarm.isRunning ? <PauseIcon width={20} /> : <PlayIcon width={20} />}
+                    </button>
+                    <button 
+                      onClick={() => stopAlarm(alarm.id)} 
+                      style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
+                      title="Reset"
+                    >
+                      <StopIcon width={20} />
+                    </button>
+                    <button 
+                      onClick={() => deleteAlarm(alarm.id)} 
+                      style={{ background: 'transparent', border: 'none', color: 'var(--danger-color)', cursor: 'pointer', padding: '4px', marginLeft: '4px' }}
+                      title="Delete"
+                    >
+                      <TrashIcon width={18} />
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         ))}
