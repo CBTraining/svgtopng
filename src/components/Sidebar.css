@@ -222,6 +222,8 @@
   display: flex;
   gap: 0.5rem;
   margin-top: min(0.5rem, 1vh);
+  width: 100%;
+  justify-content: center;
 }
 
 @media (max-height: 800px) {

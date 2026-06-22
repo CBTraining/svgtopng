@@ -64,10 +64,11 @@ export default function AspectRatioCalc() {
               borderRadius: 'var(--border-radius-sm)',
               padding: '0.2rem 0.5rem',
               fontSize: '0.75rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              width: '90px'
             }}
           >
-            <option value="">Presets...</option>
+            <option value="">Presets</option>
             <option value="3840x2160">UHD (3840x2160)</option>
             <option value="2560x1440">QHD (2560x1440)</option>
             <option value="1920x1200">WUXGA (1920x1200)</option>

@@ -3,6 +3,7 @@ import { ChevronLeftIcon, ChevronRightIcon, WrenchScrewdriverIcon, ClipboardDocu
 import Calculator from './Calculator';
 import AspectRatioCalc from './AspectRatioCalc';
 import ImageStash from './ImageStash';
+import Alarms from './Alarms';
 import './RightPanel.css';
 
 export default function RightPanel() {
@@ -50,10 +51,13 @@ export default function RightPanel() {
             {/* 2. Aspect Ratio Calc */}
             <AspectRatioCalc />
 
-            {/* 3. Image Stash */}
+            {/* 3. Alarms/Timers */}
+            <Alarms />
+
+            {/* 4. Image Stash */}
             <ImageStash />
 
-            {/* 4. Scratchpad */}
+            {/* 5. Scratchpad */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Scratchpad</h4>
               <textarea 
