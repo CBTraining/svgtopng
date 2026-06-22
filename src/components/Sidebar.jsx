@@ -249,11 +249,11 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
             </button>
             <button 
               onClick={onManualPaste}
-              className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
-              style={{ padding: '0.25rem 0.5rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', fontWeight: 'bold', fontSize: '0.85rem' }}
+              className={`btn ${isShaking ? 'shake-error' : ''}`}
+              style={{ padding: '0.25rem 0.5rem', flexShrink: 0, border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              title="Click to paste your clipboard and convert to PNG"
             >
-              <ClipboardDocumentIcon style={{width: 18, height: 18}} />
-              Paste to PNG
+              <ClipboardDocumentIcon style={{width: 20, height: 20}} />
             </button>
           </div>
         </div>
