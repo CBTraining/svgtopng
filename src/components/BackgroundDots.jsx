@@ -13,6 +13,7 @@ export default function BackgroundDots() {
     let width, height;
     
     let mouse = { x: -1000, y: -1000 };
+    let mouseActivity = 0; // Tracks if mouse is actively moving
 
     const handleBurst = (e) => {
       bursts.push({
@@ -35,6 +36,7 @@ export default function BackgroundDots() {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
       mouseInViewport = true;
+      mouseActivity = 1; // reset activity to max
     };
     
     // Add touch support for mobile
@@ -43,6 +45,7 @@ export default function BackgroundDots() {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
         mouseInViewport = true;
+        mouseActivity = 1;
       }
     };
 
@@ -95,6 +98,9 @@ export default function BackgroundDots() {
       
       ctx.globalAlpha = globalOpacity;
       
+      // Decay mouse activity
+      mouseActivity = Math.max(0, mouseActivity - 0.05);
+      
       const isLightMode = document.documentElement.getAttribute('data-theme') === 'light';
       
       // Parse out the turquoise accent color visually
@@ -119,9 +125,9 @@ export default function BackgroundDots() {
         const dist = Math.sqrt(dx * dx + dy * dy);
         
         // Interaction radius (wider area: 180px)
-        if (dist < 180 && dist > 0) {
+        if (dist < 180 && dist > 0 && mouseActivity > 0) {
           // Push away from mouse
-          const force = (180 - dist) / 180;
+          const force = ((180 - dist) / 180) * mouseActivity;
           dot.vx -= (dx / dist) * force * 0.8;
           dot.vy -= (dy / dist) * force * 0.8;
           
