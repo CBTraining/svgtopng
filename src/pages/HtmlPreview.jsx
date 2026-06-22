@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import beautify from 'js-beautify';
-import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { SparklesIcon, WindowIcon, DevicePhoneMobileIcon, DeviceTabletIcon, ComputerDesktopIcon, EyeSlashIcon, EyeIcon, ArrowPathIcon, ViewColumnsIcon, Bars4Icon } from '@heroicons/react/24/outline';
 import React from 'react';
 
 class ErrorBoundary extends React.Component {
@@ -78,6 +78,7 @@ function HtmlPreview() {
   const [debouncedHtmlCode, setDebouncedHtmlCode] = useState(htmlCode);
   const [refreshKey, setRefreshKey] = useState(0);
   const [device, setDevice] = useState('desktop'); // desktop, tablet, mobile
+  const [layout, setLayout] = useState('landscape'); // landscape, portrait
   const [showCode, setShowCode] = useState(true);
   const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
   const debounceTimerRef = useRef(null);
@@ -176,7 +177,33 @@ function HtmlPreview() {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+            <button 
+              className="btn" 
+              style={{ 
+                background: layout === 'landscape' ? 'var(--accent-color)' : 'transparent',
+                color: layout === 'landscape' ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setLayout('landscape')}
+              title="Landscape Layout (Code on Left)"
+            >
+              <ViewColumnsIcon width={20} />
+            </button>
+            <button 
+              className="btn" 
+              style={{ 
+                background: layout === 'portrait' ? 'var(--accent-color)' : 'transparent',
+                color: layout === 'portrait' ? '#fff' : 'var(--text-secondary)'
+              }}
+              onClick={() => setLayout('portrait')}
+              title="Portrait Layout (Code on Bottom)"
+            >
+              <Bars4Icon width={20} />
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-tertiary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
           <button 
             className="btn" 
             style={{ 
@@ -209,20 +236,24 @@ function HtmlPreview() {
             title="Mobile View"
           >
             <DevicePhoneMobileIcon width={20} />
-          </button>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Content Split */}
-      <div className="html-preview-split">
+      <div className="html-preview-split" style={{ flexDirection: layout === 'portrait' ? 'column-reverse' : 'row' }}>
         {/* Code Editor Side */}
         <div 
           className={`html-preview-code-side ${showCode ? 'is-visible' : 'is-hidden'}`}
           style={{ 
-            width: showCode ? '50%' : '0%', 
-            minWidth: showCode ? '300px' : '0px',
+            width: showCode ? (layout === 'portrait' ? '100%' : '50%') : '0%', 
+            height: showCode && layout === 'portrait' ? '50%' : 'auto',
+            minWidth: showCode && layout !== 'portrait' ? '300px' : '0px',
+            minHeight: showCode && layout === 'portrait' ? '150px' : '0px',
             opacity: showCode ? 1 : 0,
-            borderRight: showCode ? '1px solid var(--border-color)' : 'none'
+            borderRight: showCode && layout !== 'portrait' ? '1px solid var(--border-color)' : 'none',
+            borderTop: showCode && layout === 'portrait' ? '1px solid var(--border-color)' : 'none'
           }}
         >
           <div style={{ 
