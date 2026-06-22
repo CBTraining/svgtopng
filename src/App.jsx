@@ -431,7 +431,13 @@ function App() {
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
           </MainContentWrapper>
-          {showDiagnostics && <DiagnosticsOverlay />}
+          
+          {showDiagnostics && (
+            <ErrorBoundary name="Diagnostics">
+              <DiagnosticsOverlay />
+            </ErrorBoundary>
+          )}
+
           <RightPanel />
 
           <BackgroundJobsWidget />
