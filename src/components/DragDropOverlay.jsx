@@ -95,7 +95,9 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
 
     if (dragType === 'image') {
       if (action === 'download-png') {
-        onDirectDownload(file);
+        onDirectDownload(file, 'png');
+      } else if (action === 'download-webp') {
+        onDirectDownload(file, 'webp');
       } else if (action === 'rename-png') {
         onDropImageToModal(file);
       } else if (action === 'remove-bg') {
@@ -149,11 +151,12 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
 
   return (
     <div style={overlayStyle} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); setIsDragging(false); }}>
-      <div style={{ width: '100%', maxWidth: '800px', display: 'grid', gap: '1.5rem', gridTemplateColumns: dragType === 'image' ? '1fr 1fr' : (dragType === 'video' ? '1fr 1fr' : '1fr') }}>
+      <div style={{ width: '100%', maxWidth: '800px', display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         {dragType === 'image' && (
           <>
             <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-png" />
-            <Card title="Rename and download as PNG" icon={<DocumentPlusIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="rename-png" />
+            <Card title="Download as WebP" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-webp" />
+            <Card title="Rename & Download PNG" icon={<DocumentPlusIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="rename-png" />
             <Card title="Remove background" icon={<SparklesIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="remove-bg" />
             <Card title="Upscale" icon={<PhotoIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="upscale" />
           </>

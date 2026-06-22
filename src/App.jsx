@@ -437,7 +437,7 @@ function App() {
           
           <DragDropOverlay 
             onDropImageToModal={(file) => processImageBlob(file, file.name)}
-            onDirectDownload={(file) => {
+            onDirectDownload={(file, format = 'png') => {
               const img = new Image();
               img.onload = () => {
                 const canvas = document.createElement('canvas');
@@ -451,11 +451,11 @@ function App() {
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
                   a.href = url;
-                  a.download = file.name ? file.name.replace(/\.[^/.]+$/, "") + ".png" : 'pngconvert.png';
+                  a.download = file.name ? file.name.replace(/\.[^/.]+$/, "") + `.${format}` : `converted.${format}`;
                   a.click();
                   URL.revokeObjectURL(url);
-                  setGlobalToast({ text: "Image auto-converted to PNG and downloaded!", type: 'success' });
-                }, 'image/png');
+                  setGlobalToast({ text: `Image auto-converted to ${format.toUpperCase()} and downloaded!`, type: 'success' });
+                }, `image/${format}`);
               };
               img.src = URL.createObjectURL(file);
             }}
