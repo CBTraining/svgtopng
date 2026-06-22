@@ -46,7 +46,39 @@ export default function AspectRatioCalc() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-primary)', padding: '1rem', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h4 style={{ margin: 0 }}>Aspect Ratio</h4>
-        <span style={{ background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: 'var(--border-radius-sm)', fontSize: '0.8rem', fontWeight: 'bold' }}>{ratioStr}</span>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <select 
+            onChange={(e) => {
+              if (!e.target.value) return;
+              const [w, h] = e.target.value.split('x').map(Number);
+              setOrigW(w);
+              setOrigH(h);
+              setNewW(w);
+              setNewH(h);
+              e.target.value = ""; // Reset to placeholder
+            }}
+            style={{
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius-sm)',
+              padding: '0.2rem 0.5rem',
+              fontSize: '0.75rem',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="">Presets...</option>
+            <option value="3840x2160">UHD (3840x2160)</option>
+            <option value="2560x1440">QHD (2560x1440)</option>
+            <option value="1920x1200">WUXGA (1920x1200)</option>
+            <option value="1920x1080">FHD (1920x1080)</option>
+            <option value="1600x900">HD+ (1600x900)</option>
+            <option value="1280x720">HD (1280x720)</option>
+            <option value="1080x1920">Vertical HD (1080x1920)</option>
+            <option value="1024x1024">Square (1024x1024)</option>
+          </select>
+          <span style={{ background: 'var(--bg-tertiary)', padding: '0.2rem 0.5rem', borderRadius: 'var(--border-radius-sm)', fontSize: '0.8rem', fontWeight: 'bold' }}>{ratioStr}</span>
+        </div>
       </div>
       
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
