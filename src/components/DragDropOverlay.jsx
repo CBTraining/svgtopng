@@ -27,8 +27,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
                  const type = items[i].type;
                  if (type === 'image/svg+xml') {
                    setDragType('svg');
-                 } else if (type.startsWith('image/')) {
-                   setDragType('image');
+                 } else if (type.startsWith('image/') || type === '') {
+                   setDragType('image'); // Empty type occurs on Windows for .webp or unknown files, default to image tools
                  } else if (type.startsWith('video/')) {
                    setDragType('video');
                  } else {

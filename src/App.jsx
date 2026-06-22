@@ -457,6 +457,9 @@ function App() {
                   setGlobalToast({ text: `Image auto-converted to ${format.toUpperCase()} and downloaded!`, type: 'success' });
                 }, `image/${format}`);
               };
+              img.onerror = () => {
+                setGlobalToast({ text: "Error: The dragged file is not a valid image.", type: 'error' });
+              };
               img.src = URL.createObjectURL(file);
             }}
           />
