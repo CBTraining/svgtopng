@@ -241,9 +241,9 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick }
             <button 
               onClick={onManualPaste}
               className={`btn btn-primary ${isShaking ? 'shake-error' : ''}`}
-              style={{ padding: '0.25rem 1rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 'bold', fontSize: '0.9rem' }}
+              style={{ padding: '0.25rem 0.5rem', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', fontWeight: 'bold', fontSize: '0.85rem' }}
             >
-              <ClipboardDocumentIcon style={{width: 20, height: 20}} />
+              <ClipboardDocumentIcon style={{width: 18, height: 18}} />
               Paste to PNG
             </button>
           </div>

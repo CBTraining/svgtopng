@@ -20,13 +20,23 @@ export default function Calculator() {
     setIsNewNumber(true);
   };
 
+  const [lastOperation, setLastOperation] = useState('');
+
   const handleEqual = () => {
     try {
-      // safely evaluate simple math
-      const fullEquation = equation + display;
+      let fullEquation;
+      if (equation === '') {
+        if (!lastOperation) return;
+        fullEquation = display + lastOperation;
+      } else {
+        fullEquation = equation + display;
+        const parts = equation.trim().split(' ');
+        const operator = parts[parts.length - 1];
+        setLastOperation(` ${operator} ${display}`);
+      }
+
       const sanitized = fullEquation.replace(/[^0-9+\-*/.]/g, '');
       const result = new Function('return ' + sanitized)();
-      // Round to 8 decimal places max to avoid JS math float weirdness
       const rounded = Math.round(result * 100000000) / 100000000;
       setDisplay(String(rounded));
       setEquation('');
@@ -40,6 +50,7 @@ export default function Calculator() {
     setDisplay('0');
     setEquation('');
     setIsNewNumber(true);
+    setLastOperation('');
   };
 
   return (

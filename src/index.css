@@ -3,8 +3,8 @@
   --bg-secondary: rgba(26, 26, 26, 0.8);
   --bg-tertiary: rgba(45, 45, 45, 0.8);
   
-  --btn-hover-bg: #ffffff;
-  --btn-hover-color: #1a1a1a;
+  --btn-hover-bg: rgba(255, 255, 255, 0.1);
+  --btn-hover-color: #ffffff;
   
   --text-primary: #ffffff;
   --text-secondary: #d1d5db; /* Lighter grey for better visibility */
@@ -44,8 +44,8 @@
   --bg-secondary: rgba(255, 255, 255, 0.85);
   --bg-tertiary: rgba(240, 240, 245, 0.85);
   
-  --btn-hover-bg: #3a3a3a;
-  --btn-hover-color: #ffffff;
+  --btn-hover-bg: rgba(0, 0, 0, 0.05);
+  --btn-hover-color: #000000;
   
   --text-primary: #1f2937;
   --text-secondary: #4b5563;

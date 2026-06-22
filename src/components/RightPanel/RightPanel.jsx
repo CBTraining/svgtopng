@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon, WrenchScrewdriverIcon } from '@heroicons/react/24/solid';
+import { ChevronLeftIcon, ChevronRightIcon, WrenchScrewdriverIcon, ClipboardDocumentIcon } from '@heroicons/react/24/solid';
 import Calculator from './Calculator';
 import AspectRatioCalc from './AspectRatioCalc';
 import ImageStash from './ImageStash';
@@ -29,8 +29,12 @@ export default function RightPanel() {
           onClick={() => setIsOpen(!isOpen)}
           title="Toggle Quick Tools"
         >
-          {isOpen ? <ChevronRightIcon width={24} /> : <ChevronLeftIcon width={24} />}
-          {!isOpen && <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', margin: '1rem 0', fontWeight: 'bold', letterSpacing: '2px', fontSize: '0.8rem' }}>QUICK TOOLS</div>}
+          {isOpen ? <ChevronRightIcon width={24} strokeWidth={2} /> : (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+              <WrenchScrewdriverIcon width={20} />
+              <div style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontWeight: '600', letterSpacing: '1px', fontSize: '0.85rem' }}>Tools</div>
+            </div>
+          )}
         </button>
 
         <div className="right-panel-content glass-panel" style={{ borderRadius: 'var(--border-radius) 0 0 var(--border-radius)', borderRight: 'none', height: '100%', overflowY: 'auto' }}>
