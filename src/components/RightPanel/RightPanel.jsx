@@ -22,6 +22,19 @@ export default function RightPanel() {
     localStorage.setItem('webtools-scratchpad', val);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (document.activeElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+        return;
+      }
+      if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setIsOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <>
       <div className={`right-panel ${isOpen ? 'open' : 'closed'}`}>
