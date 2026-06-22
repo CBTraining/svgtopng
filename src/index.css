@@ -164,6 +164,7 @@ input[type="radio"] {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .btn svg {

@@ -152,9 +152,11 @@ function HtmlPreview() {
         padding: '1rem',
         borderBottom: '1px solid var(--border-color)',
         backgroundColor: 'var(--bg-secondary)',
-        flexShrink: 0
+        flexShrink: 0,
+        flexWrap: 'wrap',
+        gap: '1rem'
       }}>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button className="btn" onClick={() => setShowCode(!showCode)} title="Toggle Code Editor">
             {showCode ? <EyeSlashIcon width={20} /> : <EyeIcon width={20} />}
             {showCode ? 'Hide Code' : 'Show Code'}
