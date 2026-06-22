@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
 import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon } from '@heroicons/react/24/outline';
@@ -8,14 +8,14 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
   const [dragType, setDragType] = useState('none');
   const navigate = useNavigate();
   const { addSlot } = useProcessing();
+  const dragCounter = useRef(0);
   
   useEffect(() => {
-    let dragCounter = 0;
     
     const handleDragEnter = (e) => {
       e.preventDefault();
-      dragCounter++;
-      if (dragCounter === 1) {
+      dragCounter.current++;
+      if (dragCounter.current === 1) {
         setIsDragging(true);
         const items = e.dataTransfer.items;
         if (items && items.length > 0) {
@@ -44,8 +44,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
 
     const handleDragLeave = (e) => {
       e.preventDefault();
-      dragCounter--;
-      if (dragCounter === 0) {
+      dragCounter.current--;
+      if (dragCounter.current === 0) {
         setIsDragging(false);
         setDragType('none');
       }
@@ -57,7 +57,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
 
     const handleDrop = (e) => {
       e.preventDefault();
-      dragCounter = 0;
+      dragCounter.current = 0;
       setIsDragging(false);
       setDragType('none');
     };
@@ -80,7 +80,9 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
   const handleZoneDrop = async (e, action) => {
     e.preventDefault();
     e.stopPropagation();
+    dragCounter.current = 0;
     setIsDragging(false);
+    setDragType('none');
     
     const file = e.dataTransfer.files[0];
     if (!file) return;
