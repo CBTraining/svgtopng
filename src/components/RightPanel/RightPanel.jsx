@@ -41,7 +41,6 @@ export default function RightPanel() {
         <button 
           className="right-panel-toggle"
           onClick={() => setIsOpen(!isOpen)}
-          onMouseEnter={() => setIsOpen(true)}
           onDragEnter={() => setIsOpen(true)}
           title="Toggle Quick Tools"
         >
