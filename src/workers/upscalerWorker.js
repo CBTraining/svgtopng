@@ -11,11 +11,11 @@ class PipelineSingleton {
     static model = 'Xenova/swin2SR-classical-sr-x2-64';
     static instance = null;
 
-    static async getInstance(progress_callback = null) {
+    static async getInstance(progress_callback = null, useWasm = false) {
         if (this.instance === null) {
             this.instance = await pipeline(this.task, this.model, {
                 progress_callback,
-                device: 'webgpu', // Will fallback to wasm if webgpu is unsupported
+                device: useWasm ? 'wasm' : 'webgpu', // Will fallback to wasm if webgpu is unsupported
             });
         }
         return this.instance;
@@ -23,7 +23,7 @@ class PipelineSingleton {
 }
 
 self.addEventListener('message', async (event) => {
-    const { jobId, imageBlobUrl } = event.data;
+    const { jobId, imageBlobUrl, useWasm } = event.data;
 
     try {
         // Report initialization status
@@ -32,7 +32,7 @@ self.addEventListener('message', async (event) => {
         // Retrieve the image-to-image pipeline
         const upscaler = await PipelineSingleton.getInstance(x => {
             self.postMessage({ jobId, status: 'progress', progressData: x });
-        });
+        }, useWasm);
 
         self.postMessage({ jobId, status: 'processing', log: 'Processing image... This might take a minute.' });
 
@@ -45,29 +45,7 @@ self.addEventListener('message', async (event) => {
         const dataUrl = reader.readAsDataURL(imageBlob);
 
         // Run the model on the image
-        let output;
-        try {
-            output = await upscaler(dataUrl);
-        } catch (e) {
-            console.warn("WebGPU processing failed, falling back to WASM...", e);
-            self.postMessage({ jobId, status: 'processing', log: 'Hardware acceleration failed, falling back to CPU. This may take longer...' });
-            
-            // Dispose existing pipeline if possible
-            try {
-                if (upscaler && upscaler.dispose) await upscaler.dispose();
-            } catch (disposeErr) {
-                console.error("Failed to dispose pipeline:", disposeErr);
-            }
-            
-            // Reset singleton instance to force recreation
-            PipelineSingleton.instance = null;
-            
-            // Re-create pipeline explicitly with wasm
-            const fallbackUpscaler = await pipeline(PipelineSingleton.task, PipelineSingleton.model, {
-                device: 'wasm',
-            });
-            output = await fallbackUpscaler(dataUrl);
-        }
+        const output = await upscaler(dataUrl);
 
         // output is either a RawImage or an object containing a RawImage
         const resultImage = (Array.isArray(output) ? output[0] : (output.image || output));
@@ -118,10 +96,22 @@ self.addEventListener('message', async (event) => {
 
     } catch (error) {
         console.error("Upscaler Error:", error);
+        
+        const errorMsg = error.message || error.toString();
+        // If it's a WebGPU error and we weren't already using WASM, ask the main thread to retry with WASM
+        if (!useWasm && (errorMsg.includes('WebGPU') || errorMsg.includes('OrtRun'))) {
+             self.postMessage({
+                 jobId,
+                 status: 'webgpu_error',
+                 error: errorMsg
+             });
+             return;
+        }
+
         self.postMessage({
             jobId,
             status: 'error',
-            error: error.message
+            error: errorMsg
         });
     }
 });

@@ -28,18 +28,19 @@ function UpscalerSlot({ slot }) {
     }
   }, [previewUrl, resolution]);
 
-  useEffect(() => {
-    // Initialize Web Worker
-    workerRef.current = new Worker(new URL('../workers/upscalerWorker.js', import.meta.url), {
+  const initWorker = () => {
+    if (workerRef.current) workerRef.current.terminate();
+
+    const worker = new Worker(new URL('../workers/upscalerWorker.js', import.meta.url), {
       type: 'module'
     });
 
-    workerRef.current.onerror = (err) => {
+    worker.onerror = (err) => {
       console.error('Worker initialization or runtime error:', err);
       updateJob(myJobId, { status: 'error', error: 'Worker crashed: ' + err.message });
     };
 
-    workerRef.current.onmessage = (event) => {
+    worker.onmessage = (event) => {
       const { jobId, status, progressData, log, resultBlob, error } = event.data;
       if (jobId !== myJobId) return;
 
@@ -47,8 +48,6 @@ function UpscalerSlot({ slot }) {
         updateJob(myJobId, { log });
       } else if (status === 'progress') {
         if (progressData && progressData.status === 'downloading') {
-           // Downloading models
-           // transformers.js progress object: { name, file, progress, status }
            updateJob(myJobId, { 
                log: `Downloading AI Model (${progressData.file || 'weights'}): ${Math.round(progressData.progress || 0)}%` 
            });
@@ -60,8 +59,24 @@ function UpscalerSlot({ slot }) {
         updateJob(myJobId, { status: 'success', resultUrl, downloadName: `upscaled-${Date.now()}.png` });
       } else if (status === 'error') {
         updateJob(myJobId, { status: 'error', error });
+      } else if (status === 'webgpu_error') {
+        updateJob(myJobId, { log: 'Hardware acceleration failed, restarting with CPU... This will be slower.' });
+        // Recreate worker to completely clear corrupted memory
+        initWorker();
+        // Automatically retry with WASM
+        workerRef.current.postMessage({
+           jobId: myJobId,
+           imageBlobUrl: previewUrl,
+           useWasm: true
+        });
       }
     };
+
+    workerRef.current = worker;
+  };
+
+  useEffect(() => {
+    initWorker();
 
     return () => {
       if (workerRef.current) {
