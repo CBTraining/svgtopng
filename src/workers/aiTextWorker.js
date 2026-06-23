@@ -9,7 +9,7 @@ env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency
 class TextPipelineSingleton {
     static models = {
         summarize: { task: 'summarization', model: 'Xenova/distilbart-cnn-6-6' },
-        grammar: { task: 'text2text-generation', model: 'Xenova/t5-small' }
+        grammar: { task: 'text2text-generation', model: 'Xenova/grammar-synthesis-small' }
     };
     
     static instances = {};
@@ -54,8 +54,7 @@ self.addEventListener('message', async (event) => {
                 });
                 result = res[0].summary_text;
             } else if (type === 'grammar') {
-                const prompt = `fix grammar: ${text}`;
-                const res = await modelPipeline(prompt, {
+                const res = await modelPipeline(text, {
                     max_new_tokens: 200
                 });
                 result = res[0].generated_text;
