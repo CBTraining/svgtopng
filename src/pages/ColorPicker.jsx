@@ -46,9 +46,8 @@ export default function ColorPicker() {
       // Fix for Chrome bug where browser acts like a popup is still open
       // We must run this even if the user cancels the eyedropper, otherwise the UI stays frozen.
       setTimeout(() => {
-        window.focus();
         if (document.activeElement) document.activeElement.blur();
-      }, 50);
+      }, 150);
     }
   };
 

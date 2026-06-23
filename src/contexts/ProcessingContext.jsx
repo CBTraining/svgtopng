@@ -29,7 +29,7 @@ export function ProcessingProvider({ children }) {
   }, []);
 
   const addJob = useCallback((job) => {
-    setJobs((prev) => [...prev, { ...job, progress: 0, status: 'running', log: 'Starting...' }]);
+    setJobs((prev) => [...prev, { ...job, progress: 0, status: 'running', log: 'Starting...', startedAt: Date.now() }]);
   }, []);
 
   const updateJob = useCallback((id, updates) => {
