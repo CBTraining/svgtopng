@@ -6,7 +6,7 @@ export default function ColorPicker() {
   const [copiedColor, setCopiedColor] = useState(null);
   const [isDropping, setIsDropping] = useState(false);
   const [useNative, setUseNative] = useState(true);
-  const activeColorRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
   useEffect(() => {
     // Check API support and OS
@@ -23,24 +23,30 @@ export default function ColorPicker() {
         console.error("Failed to parse color history");
       }
     }
-
-    // When the native color dialog closes, the window regains focus.
-    // This allows us to capture only the FINAL color and avoid history spam while dragging.
-    const handleFocus = () => {
-      if (activeColorRef.current) {
-        const hex = activeColorRef.current.toUpperCase();
-        setColors(prev => {
-          if (prev[0] === hex) return prev; // avoid immediate duplicate
-          const newColors = [hex, ...prev.filter(c => c !== hex)];
-          localStorage.setItem('colorPickerHistory', JSON.stringify(newColors));
-          return newColors;
-        });
-        activeColorRef.current = null;
-      }
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
   }, []);
+
+  const handleFallbackColorChange = (e) => {
+    const hex = e.target.value.toUpperCase();
+    
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    debounceTimerRef.current = setTimeout(() => {
+      // Add to history
+      setColors(prev => {
+        if (prev[0] === hex) return prev; // avoid immediate duplicate
+        const newColors = [hex, ...prev.filter(c => c !== hex)];
+        localStorage.setItem('colorPickerHistory', JSON.stringify(newColors));
+        return newColors;
+      });
+      // Copy to clipboard
+      navigator.clipboard.writeText(hex).then(() => {
+        setCopiedColor(hex);
+        setTimeout(() => setCopiedColor(null), 2000);
+      }).catch(err => console.error("Clipboard copy failed", err));
+    }, 600); // 600ms pause means they have finalized their color
+  };
 
   const saveColors = (newColors) => {
     setColors(newColors);
@@ -125,7 +131,7 @@ export default function ColorPicker() {
             <div style={{ position: 'relative', display: 'inline-block' }}>
               <input 
                 type="color" 
-                onChange={(e) => activeColorRef.current = e.target.value}
+                onChange={handleFallbackColorChange}
                 style={{ 
                   position: 'absolute', 
                   inset: 0, 
