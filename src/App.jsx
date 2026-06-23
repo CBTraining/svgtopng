@@ -442,6 +442,7 @@ function App() {
               <Route path="/qr-generator" element={<QrGenerator />} />
               <Route path="/image-upscaler" element={<ImageUpscaler />} />
               <Route path="/pdf-image-extractor" element={<PdfImageExtractor />} />
+              <Route path="/ai-text" element={<AiTextAssistant />} />
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
