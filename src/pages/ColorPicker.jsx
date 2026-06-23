@@ -35,9 +35,11 @@ export default function ColorPicker() {
     }
     
     setIsDropping(true);
+    const abortController = new AbortController();
     try {
       const eyeDropper = new window.EyeDropper();
-      const result = await eyeDropper.open();
+      const result = await eyeDropper.open({ signal: abortController.signal });
+      abortController.abort(); // Force cleanup of native modal window handle on Windows 11
       const hex = result.sRGBHex.toUpperCase();
       // Add to front of history, avoid duplicates if it's the very first one
       const newColors = [hex, ...colors.filter(c => c !== hex)];
