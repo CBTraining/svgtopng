@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
-import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
 
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -27,6 +27,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
                  const type = items[i].type;
                  if (type === 'image/svg+xml') {
                    setDragType('svg');
+                 } else if (type === 'application/pdf') {
+                   setDragType('pdf');
                  } else if (type.startsWith('image/') || type === '') {
                    setDragType('image'); // Empty type occurs on Windows for .webp or unknown files, default to image tools
                  } else if (type.startsWith('video/')) {
@@ -98,6 +100,11 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       navigate('/svg-converter', { state: { svgText: text } });
       return;
     }
+    
+    if (dragType === 'pdf' && action === 'pdf-extract') {
+      navigate('/pdf-image-extractor', { state: { pdfFile: file } });
+      return;
+    }
 
     if (dragType === 'image') {
       if (action === 'download-png') {
@@ -166,6 +173,9 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
             <Card title="Convert to GIF" icon={<GifIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="convert-gif" />
             <Card title="Compress Video" icon={<FilmIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="compress-video" />
           </>
+        )}
+        {dragType === 'pdf' && (
+          <Card title="Extract PDF Images" icon={<DocumentArrowDownIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="pdf-extract" />
         )}
         {dragType === 'svg' && (
           <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-convert" />

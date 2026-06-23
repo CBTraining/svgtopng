@@ -5,6 +5,8 @@ import JSZip from 'jszip';
 import Dropzone from '../components/Dropzone';
 import { playDing } from '../utils/audio';
 
+import { useLocation } from 'react-router-dom';
+
 // Import pdfjs
 import * as pdfjsLib from 'pdfjs-dist';
 // For Vite, to get the worker URL correctly:
@@ -12,12 +14,22 @@ import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
 
 export default function PdfImageExtractor() {
+  const location = useLocation();
   const [images, setImages] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  // Handle incoming file from drag and drop
+  useEffect(() => {
+    if (location.state?.pdfFile && !isProcessing && images.length === 0) {
+      extractImages(location.state.pdfFile);
+      // Clean up the state so it doesn't re-run on reload
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Cleanup object URLs on unmount
   useEffect(() => {
@@ -236,17 +248,6 @@ export default function PdfImageExtractor() {
     <div className="animate-fade-in">
       <div className="page-header">
         <h1>PDF Image Extractor</h1>
-        <button 
-          className="icon-button"
-          onClick={() => {
-            reset();
-            setImages([]);
-          }}
-          title="Reset"
-          style={{ opacity: images.length > 0 ? 1 : 0, pointerEvents: images.length > 0 ? 'auto' : 'none' }}
-        >
-          <XMark />
-        </button>
       </div>
       
       <p>Extract all embedded images from a PDF file locally. No files are uploaded.</p>
@@ -297,6 +298,17 @@ export default function PdfImageExtractor() {
                 >
                   <DownloadIcon style={{ width: 18, height: 18, marginRight: 8 }} />
                   Download ZIP
+                </button>
+                <button 
+                  className="btn" 
+                  onClick={() => {
+                    reset();
+                    setImages([]);
+                  }}
+                  style={{ background: 'var(--bg-tertiary)', color: 'var(--danger-color)' }}
+                >
+                  <XMark style={{ width: 18, height: 18, marginRight: 8 }} />
+                  Reset
                 </button>
               </div>
             </div>
