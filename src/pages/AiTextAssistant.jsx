@@ -149,15 +149,29 @@ export default function AiTextAssistant() {
             onChange={(e) => setInputText(e.target.value)}
           />
           {modelStatus[activeTab] === 'unloaded' ? (
-            <button 
-              className="btn" 
-              style={{ marginTop: '1rem', alignSelf: 'flex-start', background: 'var(--primary-color)', color: 'white' }}
-              onClick={handleLoadModel}
-              disabled={isProcessing}
-            >
-              <ArrowDownTrayIcon style={{ width: 18, height: 18, marginRight: 8 }} />
-              {isProcessing ? 'Downloading...' : 'Download AI Model (~240MB)'}
-            </button>
+            <div style={{ marginTop: '1rem', alignSelf: 'flex-start', width: '100%' }}>
+              <button 
+                className="btn" 
+                style={{ background: 'var(--primary-color)', color: 'white', width: '100%', justifyContent: 'center' }}
+                onClick={handleLoadModel}
+                disabled={isProcessing}
+              >
+                <ArrowDownTrayIcon style={{ width: 18, height: 18, marginRight: 8 }} />
+                {isProcessing ? 'Downloading Model...' : 'Download AI Model (~240MB)'}
+              </button>
+              
+              {isProcessing && downloadProgress >= 0 && (
+                <div style={{ marginTop: '1rem', width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                    <span>{progressLog || 'Initializing...'}</span>
+                    <span>{downloadProgress}%</span>
+                  </div>
+                  <div className="progress-bar-bg" style={{ width: '100%' }}>
+                    <div className="progress-bar-fill" style={{ width: `${downloadProgress}%` }}></div>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
             <button 
               className="btn primary" 
@@ -199,8 +213,8 @@ export default function AiTextAssistant() {
             {outputText || "AI output will appear here..."}
           </div>
 
-          {/* Progress Overlay */}
-          {isProcessing && (
+          {/* Progress Overlay for generation */}
+          {isProcessing && modelStatus[activeTab] === 'ready' && (
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
               background: 'rgba(var(--bg-secondary-rgb), 0.8)',
@@ -211,11 +225,6 @@ export default function AiTextAssistant() {
             }}>
               <div className="spinner" style={{ marginBottom: '1rem' }}></div>
               <p style={{ fontWeight: 'bold' }}>{progressLog}</p>
-              {downloadProgress > 0 && downloadProgress < 100 && (
-                <div className="progress-bar-bg" style={{ width: '80%', marginTop: '1rem' }}>
-                  <div className="progress-bar-fill" style={{ width: `${downloadProgress}%` }}></div>
-                </div>
-              )}
             </div>
           )}
         </div>
