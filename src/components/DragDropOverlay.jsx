@@ -136,26 +136,23 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
 
   const Card = ({ title, icon, action }) => (
     <div 
-      onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'; }}
-      onDragLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'; }}
-      onDrop={(e) => handleZoneDrop(e, action)}
+      className="dropzone"
+      onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
+      onDragLeave={(e) => { e.currentTarget.classList.remove('active'); }}
+      onDrop={(e) => { e.currentTarget.classList.remove('active'); handleZoneDrop(e, action); }}
       style={{
-        backgroundColor: 'var(--bg-secondary)',
-        border: '2px dashed var(--border-color)',
-        borderRadius: 'var(--border-radius)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '2rem', gap: '1rem', cursor: 'pointer', transition: 'all 0.2s ease',
-        minHeight: '200px'
+        minHeight: '250px',
+        padding: '3rem 2rem'
       }}
     >
       {icon}
-      <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>{title}</h3>
+      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem' }}>{title}</h3>
     </div>
   );
 
   return (
     <div style={overlayStyle} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); setIsDragging(false); }}>
-      <div style={{ width: '100%', maxWidth: '800px', display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      <div style={{ width: '100%', maxWidth: '900px', display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
         {dragType === 'image' && (
           <>
             <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-png" />
