@@ -17,7 +17,8 @@ import {
   ArrowsPointingOutIcon,
   WindowIcon,
   HomeIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  DocumentArrowDownIcon
 } from '@heroicons/react/24/solid';
 import { ChevronDownIcon as ChevronDownOutline } from '@heroicons/react/24/outline';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
@@ -66,6 +67,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Tools' },
         { to: '/image-upscaler', icon: ArrowsPointingOutIcon, label: 'Upscaler' },
+        { to: '/pdf-image-extractor', icon: DocumentArrowDownIcon, label: 'PDF Image Extractor' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
         { to: '/svg-converter', icon: CommandLineIcon, label: 'SVG Converter' }

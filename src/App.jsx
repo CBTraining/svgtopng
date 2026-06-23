@@ -23,6 +23,8 @@ import DiagnosticsOverlay from './components/DiagnosticsOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
 
+import PdfImageExtractor from './pages/PdfImageExtractor';
+
 const Home = () => (
   <div className="animate-fade-in">
     {/* Draggable region for Window Controls Overlay */}
@@ -44,7 +46,8 @@ const Home = () => (
     <div className="glass-panel" style={{marginTop: '2rem'}}>
       <h3>Features</h3>
       <ul style={{ paddingLeft: '1.5rem', marginTop: '1rem', color: 'var(--text-secondary)' }}>
-        <li style={{marginBottom: '0.5rem'}}><strong>Global Clipboard:</strong> Ctrl+V anywhere to save clipboard images directly as PNG (now securely bypasses clipboard limits to capture images directly from Google Slides & Docs!).</li>
+        <li style={{marginBottom: '0.5rem'}}><strong>PDF Image Extraction:</strong> Pull all embedded images out of a PDF securely in your browser.</li>
+        <li style={{marginBottom: '0.5rem'}}><strong>Global Clipboard:</strong> Ctrl+V anywhere to save clipboard images directly as PNG.</li>
         <li style={{marginBottom: '0.5rem'}}><strong>Sidebar Drop:</strong> Drag & Drop images to the sidebar for instant PNG conversion.</li>
         <li style={{marginBottom: '0.5rem'}}><strong>Offline Ready:</strong> Install this PWA and use tools without an internet connection.</li>
       </ul>
@@ -428,9 +431,9 @@ function App() {
               <Route path="/json-saver" element={<JsonSaver />} />
               <Route path="/color-picker" element={<ColorPicker />} />
               <Route path="/qr-generator" element={<QrGenerator />} />
-              <Route path="/json-saver" element={<JsonSaver />} />
-              <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/image-upscaler" element={<ImageUpscaler />} />
+              <Route path="/pdf-image-extractor" element={<PdfImageExtractor />} />
+              <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
             </Routes>
           </MainContentWrapper>
