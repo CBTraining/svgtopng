@@ -157,8 +157,8 @@ export default function ColorPicker() {
         </div>
       </header>
 
-      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem', alignItems: 'start' }}>
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
+      <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="glass-panel" style={{ textAlign: 'center', padding: '1.5rem 2rem' }}>
           {!useNative && !window.EyeDropper && (
             <div style={{ background: 'rgba(255, 50, 50, 0.1)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '2rem', color: '#ff6b6b' }}>
               <strong>Browser Unsupported:</strong> The EyeDropper API is currently only supported in Chromium browsers (Chrome, Edge, Opera).
@@ -170,7 +170,7 @@ export default function ColorPicker() {
               className="btn btn-primary" 
               onClick={pickColor}
               disabled={isDropping}
-              style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
+              style={{ fontSize: '1rem', padding: '0.75rem 2rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
             >
               <EyeDropper style={{width: 24, height: 24}}/> 
               {isDropping ? 'Picking...' : 'Pick Color'}
@@ -192,7 +192,7 @@ export default function ColorPicker() {
               />
               <button 
                 className="btn btn-primary" 
-                style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px', pointerEvents: 'none' }}
+                style={{ fontSize: '1rem', padding: '0.75rem 2rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px', pointerEvents: 'none' }}
               >
                 <EyeDropper style={{width: 24, height: 24}}/> 
                 Pick Color
@@ -223,14 +223,14 @@ export default function ColorPicker() {
               <p>Your saved colors will appear here.</p>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '1rem' }}>
               {colors.map((color, i) => (
                 <div 
                   key={`${color}-${i}`}
                   onClick={() => copyToClipboard(color)}
                   style={{ 
                     background: color, 
-                    height: '100px', 
+                    height: '80px', 
                     borderRadius: 'var(--border-radius-sm)', 
                     display: 'flex', 
                     flexDirection: 'column',
@@ -240,7 +240,7 @@ export default function ColorPicker() {
                     color: '#fff',
                     textShadow: '0 1px 3px rgba(0,0,0,0.8)',
                     fontWeight: 'bold',
-                    fontSize: '1.1rem',
+                    fontSize: '1rem',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     position: 'relative',
                     boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
@@ -332,20 +332,20 @@ export default function ColorPicker() {
       )}
       
       {colors.length > 0 && (
-        <div className="glass-panel" style={{ marginTop: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+        <div className="glass-panel" style={{ marginTop: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <SwatchIcon style={{width: 24, height: 24, color: 'var(--accent-color)'}} />
-            <h3 style={{ margin: 0 }}>Color Scheme (Based on Latest)</h3>
+            <h3 style={{ margin: 0 }}>Color Swatches</h3>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
             {generateScheme(selectedColor || colors[0]).map((item, i) => (
               <div 
                 key={`${item.hex}-${i}`}
                 onClick={() => copyToClipboard(item.hex)}
                 style={{ 
                   background: item.hex, 
-                  height: '120px', 
+                  height: '80px', 
                   borderRadius: 'var(--border-radius-sm)', 
                   display: 'flex', 
                   flexDirection: 'column',
