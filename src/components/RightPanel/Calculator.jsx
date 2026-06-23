@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { ClipboardIcon, CheckIcon } from '@heroicons/react/24/outline';
 import './Calculator.css';
 
 export default function Calculator() {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
   const [isNewNumber, setIsNewNumber] = useState(true);
+  const [copied, setCopied] = useState(false);
 
   const handleNum = (num) => {
     if (isNewNumber) {
@@ -38,9 +40,15 @@ export default function Calculator() {
       const sanitized = fullEquation.replace(/[^0-9+\-*/.]/g, '');
       const result = new Function('return ' + sanitized)();
       const rounded = Math.round(result * 100000000) / 100000000;
-      setDisplay(String(rounded));
+      const strResult = String(rounded);
+      setDisplay(strResult);
       setEquation('');
       setIsNewNumber(true);
+      
+      navigator.clipboard.writeText(strResult).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }).catch(err => console.error("Clipboard copy failed", err));
     } catch (e) {
       setDisplay('Error');
     }
@@ -53,9 +61,46 @@ export default function Calculator() {
     setLastOperation('');
   };
 
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const num = parseFloat(text);
+      if (!isNaN(num)) {
+        setDisplay(String(num));
+        setIsNewNumber(true);
+      }
+    } catch (err) {
+      console.error('Failed to read clipboard contents: ', err);
+    }
+  };
+
   return (
-    <div className="calculator">
-      <div className="calc-display">
+    <div className="calculator" tabIndex={0} onPaste={handlePaste} style={{ outline: 'none' }}>
+      <div className="calc-display" style={{ position: 'relative' }}>
+        <button 
+          onClick={handlePaste} 
+          title="Paste number"
+          style={{ 
+            position: 'absolute', 
+            top: '6px', 
+            left: '6px', 
+            background: 'transparent', 
+            border: 'none', 
+            color: 'var(--text-secondary)', 
+            cursor: 'pointer',
+            padding: '2px',
+            opacity: 0.7
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+          onMouseLeave={(e) => e.currentTarget.style.opacity = 0.7}
+        >
+          <ClipboardIcon width={16} />
+        </button>
+        {copied && (
+          <div style={{ position: 'absolute', top: '6px', right: '6px', fontSize: '0.75rem', color: 'var(--success-color, #10b981)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+            <CheckIcon width={12} /> Copied
+          </div>
+        )}
         <div className="calc-equation">{equation}</div>
         <div className="calc-main">{display}</div>
       </div>
