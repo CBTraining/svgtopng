@@ -113,7 +113,7 @@ export default function ImageTools() {
       <p>Resize, round corners, and compress your images directly in the browser.</p>
 
       <div className="grid-container">
-        <div className="glass-panel tool-controls">
+        <div className="glass-panel tool-controls" style={!imageSrc ? { borderStyle: 'dashed', borderColor: 'var(--border-color)', borderWidth: '2px', background: 'transparent' } : {}}>
           {!imageSrc ? (
             <Dropzone 
               onDrop={(files) => {
@@ -125,8 +125,8 @@ export default function ImageTools() {
                 }
               }}
               title="Upload Image"
-              subtitle="Click or drag an image here"
-              icon={<UploadCloud style={{width: 48, height: 48}}/>}
+              subtitle="Drop a JPG or PNG here"
+              icon={<UploadCloud style={{width: 48, height: 48, color: 'var(--text-secondary)'}}/>}
             />
           ) : (
             <div className="controls">
