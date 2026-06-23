@@ -25,7 +25,7 @@ function VideoToGifSlot({ slot }) {
   const isProcessing = myJob?.status === 'running';
   const resultUrl = myJob?.resultUrl;
 
-  const { videoFile, previewUrl, originalFps, quality, enableCrop, startTime, endTime, fps } = slot;
+  const { videoFile, previewUrl, originalFps = null, quality = 80, enableCrop = false, startTime = 0, endTime = 5, fps = '15' } = slot;
 
   // Estimation Logic
   const targetFps = fps === 'original' ? (originalFps || 15) : parseInt(fps);
