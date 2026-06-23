@@ -24,6 +24,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
 
 import PdfImageExtractor from './pages/PdfImageExtractor';
+import AiTextAssistant from './pages/AiTextAssistant';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -46,6 +47,7 @@ const Home = () => (
     <div className="glass-panel" style={{marginTop: '2rem'}}>
       <h3>Features</h3>
       <ul style={{ paddingLeft: '1.5rem', marginTop: '1rem', color: 'var(--text-secondary)' }}>
+        <li style={{marginBottom: '0.5rem'}}><strong>Local AI Processing:</strong> Fully offline text summarization and image upscaling right in your browser.</li>
         <li style={{marginBottom: '0.5rem'}}><strong>PDF Image Extraction:</strong> Pull all embedded images out of a PDF securely in your browser.</li>
         <li style={{marginBottom: '0.5rem'}}><strong>Global Clipboard:</strong> Ctrl+V anywhere to save clipboard images directly as PNG.</li>
         <li style={{marginBottom: '0.5rem'}}><strong>Sidebar Drop:</strong> Drag & Drop images to the sidebar for instant PNG conversion.</li>
@@ -57,11 +59,18 @@ const Home = () => (
 
 function MainContentWrapper({ children }) {
   const location = useLocation();
-  const isHtmlPreview = location.pathname === '/html-preview';
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (wrapperRef.current) {
+      wrapperRef.current.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
+
   return (
-    <main className={`main-content ${isHtmlPreview ? 'no-padding' : ''}`}>
+    <div ref={wrapperRef} className="main-content">
       {children}
-    </main>
+    </div>
   );
 }
 

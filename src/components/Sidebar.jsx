@@ -63,10 +63,16 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
 
   const navCategories = [
     {
+      title: 'AI Tools',
+      items: [
+        { to: '/ai-text', icon: CommandLineIcon, label: 'AI Text Assistant' },
+        { to: '/image-upscaler', icon: ArrowsPointingOutIcon, label: 'AI Image Upscaler' }
+      ]
+    },
+    {
       title: 'Graphics',
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Tools' },
-        { to: '/image-upscaler', icon: ArrowsPointingOutIcon, label: 'Upscaler' },
         { to: '/pdf-image-extractor', icon: DocumentArrowDownIcon, label: 'PDF Image Extractor' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
