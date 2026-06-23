@@ -45,7 +45,29 @@ self.addEventListener('message', async (event) => {
         const dataUrl = reader.readAsDataURL(imageBlob);
 
         // Run the model on the image
-        const output = await upscaler(dataUrl);
+        let output;
+        try {
+            output = await upscaler(dataUrl);
+        } catch (e) {
+            console.warn("WebGPU processing failed, falling back to WASM...", e);
+            self.postMessage({ jobId, status: 'processing', log: 'Hardware acceleration failed, falling back to CPU. This may take longer...' });
+            
+            // Dispose existing pipeline if possible
+            try {
+                if (upscaler && upscaler.dispose) await upscaler.dispose();
+            } catch (disposeErr) {
+                console.error("Failed to dispose pipeline:", disposeErr);
+            }
+            
+            // Reset singleton instance to force recreation
+            PipelineSingleton.instance = null;
+            
+            // Re-create pipeline explicitly with wasm
+            const fallbackUpscaler = await pipeline(PipelineSingleton.task, PipelineSingleton.model, {
+                device: 'wasm',
+            });
+            output = await fallbackUpscaler(dataUrl);
+        }
 
         // output is either a RawImage or an object containing a RawImage
         const resultImage = (Array.isArray(output) ? output[0] : (output.image || output));
