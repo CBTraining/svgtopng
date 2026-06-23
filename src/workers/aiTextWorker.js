@@ -20,6 +20,7 @@ class TextPipelineSingleton {
             this.instances[type] = await pipeline(config.task, config.model, {
                 progress_callback,
                 device: 'wasm', // NLP runs fine on wasm, webgpu sometimes has issues with text models
+                dtype: 'fp32', // Fix ONNX parsing errors for qdq weights by forcing full precision
             });
         }
         return this.instances[type];
@@ -27,39 +28,45 @@ class TextPipelineSingleton {
 }
 
 self.addEventListener('message', async (event) => {
-    const { jobId, type, text, options } = event.data;
+    const { jobId, action, type, text, options } = event.data;
 
     try {
-        self.postMessage({ jobId, status: 'init', log: `Initializing AI ${type} model... (first run downloads ~240MB)` });
-
-        const modelPipeline = await TextPipelineSingleton.getInstance(type, (x) => {
-            self.postMessage({ jobId, status: 'progress', progressData: x });
-        });
-
-        self.postMessage({ jobId, status: 'processing', log: 'Processing text...' });
-
-        let result;
-        if (type === 'summarize') {
-            const res = await modelPipeline(text, {
-                max_new_tokens: options?.maxLength || 100,
-                min_length: options?.minLength || 30,
+        if (action === 'load') {
+            self.postMessage({ jobId, status: 'init', log: `Downloading AI ${type} model... (~240MB)` });
+            await TextPipelineSingleton.getInstance(type, (x) => {
+                self.postMessage({ jobId, status: 'progress', progressData: x });
             });
-            result = res[0].summary_text;
-        } else if (type === 'grammar') {
-            // T5 requires a prefix for tasks. For generic correction, "grammar: " or similar is often used in fine-tunes.
-            // But base T5 might try to just complete it. We will use a generic prompt.
-            const prompt = `fix grammar: ${text}`;
-            const res = await modelPipeline(prompt, {
-                max_new_tokens: 200
-            });
-            result = res[0].generated_text;
+            self.postMessage({ jobId, status: 'ready', type });
+            return;
         }
 
-        self.postMessage({
-            jobId,
-            status: 'success',
-            result: result
-        });
+        if (action === 'generate') {
+            self.postMessage({ jobId, status: 'processing', log: 'Processing text...' });
+            
+            // Should already be loaded, but getInstance ensures it is.
+            const modelPipeline = await TextPipelineSingleton.getInstance(type);
+
+            let result;
+            if (type === 'summarize') {
+                const res = await modelPipeline(text, {
+                    max_new_tokens: options?.maxLength || 100,
+                    min_length: options?.minLength || 30,
+                });
+                result = res[0].summary_text;
+            } else if (type === 'grammar') {
+                const prompt = `fix grammar: ${text}`;
+                const res = await modelPipeline(prompt, {
+                    max_new_tokens: 200
+                });
+                result = res[0].generated_text;
+            }
+
+            self.postMessage({
+                jobId,
+                status: 'success',
+                result: result
+            });
+        }
 
     } catch (error) {
         console.error("Text AI Error:", error);

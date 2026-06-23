@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ClipboardDocumentCheckIcon, DocumentTextIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentCheckIcon, DocumentTextIcon, CheckBadgeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { SparklesIcon } from '@heroicons/react/24/solid';
 import { playDing } from '../utils/audio';
 import aiTextWorkerUrl from '../workers/aiTextWorker.js?worker&url';
@@ -12,13 +12,14 @@ export default function AiTextAssistant() {
   const [progressLog, setProgressLog] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [modelStatus, setModelStatus] = useState({ summarize: 'unloaded', grammar: 'unloaded' });
   const workerRef = useRef(null);
 
   useEffect(() => {
     workerRef.current = new Worker(aiTextWorkerUrl, { type: 'module' });
 
     workerRef.current.onmessage = (e) => {
-      const { status, log, progressData, result, error } = e.data;
+      const { status, log, progressData, result, error, type } = e.data;
 
       if (status === 'init') {
         setProgressLog(log);
@@ -26,15 +27,20 @@ export default function AiTextAssistant() {
         if (progressData.status === 'downloading') {
           setProgressLog(`Downloading AI model: ${progressData.name} - ${progressData.file}`);
         } else if (progressData.status === 'progress') {
-          // progressData.progress is a percentage 0-100
           setDownloadProgress(Math.round(progressData.progress));
         } else if (progressData.status === 'done') {
           setDownloadProgress(100);
           setProgressLog(`Finished loading ${progressData.file}`);
         }
+      } else if (status === 'ready') {
+        setModelStatus(prev => ({ ...prev, [type]: 'ready' }));
+        setIsProcessing(false);
+        setProgressLog('');
+        setDownloadProgress(0);
+        playDing();
       } else if (status === 'processing') {
         setProgressLog(log);
-        setDownloadProgress(0); // clear bar for processing
+        setDownloadProgress(0);
       } else if (status === 'success') {
         setOutputText(result);
         setIsProcessing(false);
@@ -55,6 +61,18 @@ export default function AiTextAssistant() {
     };
   }, []);
 
+  const handleLoadModel = () => {
+    setErrorMsg('');
+    setIsProcessing(true);
+    setProgressLog('Starting download...');
+    setDownloadProgress(0);
+    workerRef.current.postMessage({
+      jobId: Date.now(),
+      action: 'load',
+      type: activeTab
+    });
+  };
+
   const handleProcess = () => {
     if (!inputText.trim()) {
       setErrorMsg("Please enter some text first.");
@@ -67,6 +85,7 @@ export default function AiTextAssistant() {
     
     workerRef.current.postMessage({
       jobId: Date.now(),
+      action: 'generate',
       type: activeTab,
       text: inputText,
       options: {
@@ -129,15 +148,27 @@ export default function AiTextAssistant() {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
           />
-          <button 
-            className="btn primary" 
-            style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
-            onClick={handleProcess}
-            disabled={isProcessing || !inputText.trim()}
-          >
-            <SparklesIcon style={{ width: 18, height: 18, marginRight: 8 }} />
-            {isProcessing ? 'Processing...' : (activeTab === 'summarize' ? 'Generate Summary' : 'Fix Grammar')}
-          </button>
+          {modelStatus[activeTab] === 'unloaded' ? (
+            <button 
+              className="btn" 
+              style={{ marginTop: '1rem', alignSelf: 'flex-start', background: 'var(--primary-color)', color: 'white' }}
+              onClick={handleLoadModel}
+              disabled={isProcessing}
+            >
+              <ArrowDownTrayIcon style={{ width: 18, height: 18, marginRight: 8 }} />
+              {isProcessing ? 'Downloading...' : 'Download AI Model (~240MB)'}
+            </button>
+          ) : (
+            <button 
+              className="btn primary" 
+              style={{ marginTop: '1rem', alignSelf: 'flex-start' }}
+              onClick={handleProcess}
+              disabled={isProcessing || !inputText.trim()}
+            >
+              <SparklesIcon style={{ width: 18, height: 18, marginRight: 8 }} />
+              {isProcessing ? 'Processing...' : (activeTab === 'summarize' ? 'Generate Summary' : 'Fix Grammar')}
+            </button>
+          )}
         </div>
 
         {/* Output Pane */}
