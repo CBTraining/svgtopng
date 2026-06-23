@@ -49,6 +49,7 @@ const generateScheme = (baseHex) => {
 export default function ColorPicker() {
   const [colors, setColors] = useState([]);
   const [copiedColor, setCopiedColor] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
   const [isDropping, setIsDropping] = useState(false);
   const [useNative, setUseNative] = useState(true);
   const debounceTimerRef = useRef(null);
@@ -85,6 +86,7 @@ export default function ColorPicker() {
         localStorage.setItem('colorPickerHistory', JSON.stringify(newColors));
         return newColors;
       });
+      setSelectedColor(null);
       // Copy to clipboard
       navigator.clipboard.writeText(hex).then(() => {
         setCopiedColor(hex);
@@ -111,9 +113,9 @@ export default function ColorPicker() {
       const result = await eyeDropper.open({ signal: abortController.signal });
       abortController.abort(); // Force cleanup of native modal window handle on Windows 11
       const hex = result.sRGBHex.toUpperCase();
-      // Add to front of history, avoid duplicates if it's the very first one
       const newColors = [hex, ...colors.filter(c => c !== hex)];
       saveColors(newColors);
+      setSelectedColor(null);
     } catch (e) {
       // User canceled the picker
       console.log("EyeDropper canceled", e);
@@ -127,6 +129,7 @@ export default function ColorPicker() {
     if (e) e.stopPropagation();
     navigator.clipboard.writeText(color).then(() => {
       setCopiedColor(color);
+      setSelectedColor(color);
       setTimeout(() => setCopiedColor(null), 2000);
     });
   };
@@ -336,7 +339,7 @@ export default function ColorPicker() {
           </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
-            {generateScheme(colors[0]).map((item, i) => (
+            {generateScheme(selectedColor || colors[0]).map((item, i) => (
               <div 
                 key={`${item.hex}-${i}`}
                 onClick={() => copyToClipboard(item.hex)}
