@@ -6,7 +6,7 @@ export default function ColorPicker() {
   const [copiedColor, setCopiedColor] = useState(null);
   const [isDropping, setIsDropping] = useState(false);
   const [useNative, setUseNative] = useState(true);
-  const fallbackInputRef = useRef(null);
+  const activeColorRef = useRef(null);
 
   useEffect(() => {
     // Check API support and OS
@@ -24,21 +24,22 @@ export default function ColorPicker() {
       }
     }
 
-    // Attach native change listener to fallback input
-    // Native 'change' fires only when the dialog is closed, unlike React's onChange which fires continuously while dragging
-    const el = fallbackInputRef.current;
-    if (el) {
-      const handleNativeChange = (e) => {
-        const hex = e.target.value.toUpperCase();
+    // When the native color dialog closes, the window regains focus.
+    // This allows us to capture only the FINAL color and avoid history spam while dragging.
+    const handleFocus = () => {
+      if (activeColorRef.current) {
+        const hex = activeColorRef.current.toUpperCase();
         setColors(prev => {
+          if (prev[0] === hex) return prev; // avoid immediate duplicate
           const newColors = [hex, ...prev.filter(c => c !== hex)];
           localStorage.setItem('colorPickerHistory', JSON.stringify(newColors));
           return newColors;
         });
-      };
-      el.addEventListener('change', handleNativeChange);
-      return () => el.removeEventListener('change', handleNativeChange);
-    }
+        activeColorRef.current = null;
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
   const saveColors = (newColors) => {
@@ -110,28 +111,46 @@ export default function ColorPicker() {
             </div>
           )}
           
-          <button 
-            className="btn btn-primary" 
-            onClick={useNative ? pickColor : () => fallbackInputRef.current?.click()}
-            disabled={isDropping}
-            style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
-          >
-            <EyeDropper style={{width: 24, height: 24}}/> 
-            {isDropping ? 'Picking...' : 'Pick Color'}
-          </button>
+          {useNative ? (
+            <button 
+              className="btn btn-primary" 
+              onClick={pickColor}
+              disabled={isDropping}
+              style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
+            >
+              <EyeDropper style={{width: 24, height: 24}}/> 
+              {isDropping ? 'Picking...' : 'Pick Color'}
+            </button>
+          ) : (
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <input 
+                type="color" 
+                onChange={(e) => activeColorRef.current = e.target.value}
+                style={{ 
+                  position: 'absolute', 
+                  inset: 0, 
+                  width: '100%', 
+                  height: '100%', 
+                  opacity: 0, 
+                  cursor: 'pointer',
+                  zIndex: 10
+                }}
+              />
+              <button 
+                className="btn btn-primary" 
+                style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px', pointerEvents: 'none' }}
+              >
+                <EyeDropper style={{width: 24, height: 24}}/> 
+                Pick Color
+              </button>
+            </div>
+          )}
           
           <p style={{ marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
             {useNative 
               ? "Clicking the button will open a magnifying glass. Click anywhere on your screen to capture the color."
               : "Click the button to open the color picker. You can use the eyedropper icon inside the dialog to pick from your screen."}
           </p>
-          
-          <input 
-            type="color" 
-            id="fallback-color-picker" 
-            ref={fallbackInputRef}
-            style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
-          />
         </div>
 
         <div className="glass-panel">
