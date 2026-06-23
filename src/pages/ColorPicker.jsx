@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { EyeDropperIcon as EyeDropper, DocumentDuplicateIcon as CopyIcon, CheckIcon as Check, TrashIcon as Trash } from '@heroicons/react/24/solid';
 
 export default function ColorPicker() {
   const [colors, setColors] = useState([]);
   const [copiedColor, setCopiedColor] = useState(null);
   const [isDropping, setIsDropping] = useState(false);
-  const [isSupported, setIsSupported] = useState(true);
+  const [useNative, setUseNative] = useState(true);
+  const fallbackInputRef = useRef(null);
 
   useEffect(() => {
-    // Check API support
-    if (!window.EyeDropper) {
-      setIsSupported(false);
+    // Check API support and OS
+    const isWindows = navigator.userAgent.toLowerCase().includes('windows');
+    if (!window.EyeDropper || isWindows) {
+      setUseNative(false);
     }
     // Load history
     const saved = localStorage.getItem('colorPickerHistory');
@@ -20,6 +22,22 @@ export default function ColorPicker() {
       } catch (e) {
         console.error("Failed to parse color history");
       }
+    }
+
+    // Attach native change listener to fallback input
+    // Native 'change' fires only when the dialog is closed, unlike React's onChange which fires continuously while dragging
+    const el = fallbackInputRef.current;
+    if (el) {
+      const handleNativeChange = (e) => {
+        const hex = e.target.value.toUpperCase();
+        setColors(prev => {
+          const newColors = [hex, ...prev.filter(c => c !== hex)];
+          localStorage.setItem('colorPickerHistory', JSON.stringify(newColors));
+          return newColors;
+        });
+      };
+      el.addEventListener('change', handleNativeChange);
+      return () => el.removeEventListener('change', handleNativeChange);
     }
   }, []);
 
@@ -86,7 +104,7 @@ export default function ColorPicker() {
 
       <div className="grid-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 350px), 1fr))', gap: '2rem', alignItems: 'start' }}>
         <div className="glass-panel" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-          {!isSupported && (
+          {!useNative && !window.EyeDropper && (
             <div style={{ background: 'rgba(255, 50, 50, 0.1)', padding: '1rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '2rem', color: '#ff6b6b' }}>
               <strong>Browser Unsupported:</strong> The EyeDropper API is currently only supported in Chromium browsers (Chrome, Edge, Opera).
             </div>
@@ -94,37 +112,26 @@ export default function ColorPicker() {
           
           <button 
             className="btn btn-primary" 
-            onClick={pickColor}
-            disabled={isDropping || !isSupported}
+            onClick={useNative ? pickColor : () => fallbackInputRef.current?.click()}
+            disabled={isDropping}
             style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
           >
             <EyeDropper style={{width: 24, height: 24}}/> 
-            {isDropping ? 'Picking...' : 'Pick Color from Screen'}
+            {isDropping ? 'Picking...' : 'Pick Color'}
           </button>
           
           <p style={{ marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
-            Clicking the button will open a magnifying glass. Click anywhere on your screen (even outside the browser!) to capture the color.
+            {useNative 
+              ? "Clicking the button will open a magnifying glass. Click anywhere on your screen to capture the color."
+              : "Click the button to open the color picker. You can use the eyedropper icon inside the dialog to pick from your screen."}
           </p>
           
-          <div style={{ marginTop: '1rem' }}>
-            <input 
-              type="color" 
-              id="fallback-color-picker" 
-              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
-              onChange={(e) => {
-                const hex = e.target.value.toUpperCase();
-                const newColors = [hex, ...colors.filter(c => c !== hex)];
-                saveColors(newColors);
-              }}
-            />
-            <button 
-              className="btn" 
-              onClick={() => document.getElementById('fallback-color-picker').click()}
-              style={{ background: 'transparent', border: '1px solid var(--border-color)', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
-            >
-              Alternative Picker
-            </button>
-          </div>
+          <input 
+            type="color" 
+            id="fallback-color-picker" 
+            ref={fallbackInputRef}
+            style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+          />
         </div>
 
         <div className="glass-panel">
