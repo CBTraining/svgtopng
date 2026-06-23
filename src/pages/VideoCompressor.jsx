@@ -121,7 +121,7 @@ function VideoCompressorSlot({ slot }) {
          if (originalFps && targetFps > originalFps) {
             targetFps = originalFps;
          }
-         args.push('-r', targetFps.toString(), '-fpsmax', targetFps.toString());
+         args.push('-r', targetFps.toString());
       }
 
       const outputName = `output_${slot.id}.mp4`;
