@@ -4,6 +4,7 @@ import { EyeDropperIcon as EyeDropper, DocumentDuplicateIcon as CopyIcon, CheckI
 export default function ColorPicker() {
   const [colors, setColors] = useState([]);
   const [copiedColor, setCopiedColor] = useState(null);
+  const [isDropping, setIsDropping] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
 
   useEffect(() => {
@@ -32,6 +33,8 @@ export default function ColorPicker() {
       alert("Your browser does not support the EyeDropper API. Try using Chrome or Edge.");
       return;
     }
+    
+    setIsDropping(true);
     try {
       const eyeDropper = new window.EyeDropper();
       const result = await eyeDropper.open();
@@ -43,11 +46,8 @@ export default function ColorPicker() {
       // User canceled the picker
       console.log("EyeDropper canceled", e);
     } finally {
-      // Fix for Chrome bug where browser acts like a popup is still open
-      // We must run this even if the user cancels the eyedropper, otherwise the UI stays frozen.
-      setTimeout(() => {
-        if (document.activeElement) document.activeElement.blur();
-      }, 150);
+      // Small timeout ensures the native picker fully closes before we re-enable the button
+      setTimeout(() => setIsDropping(false), 200);
     }
   };
 
@@ -93,16 +93,36 @@ export default function ColorPicker() {
           <button 
             className="btn btn-primary" 
             onClick={pickColor}
-            disabled={!isSupported}
+            disabled={isDropping || !isSupported}
             style={{ fontSize: '1.2rem', padding: '1rem 2.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.75rem', borderRadius: '50px' }}
           >
-            <EyeDropper style={{width: 24, height: 24}}/>
-            Pick Color from Screen
+            <EyeDropper style={{width: 24, height: 24}}/> 
+            {isDropping ? 'Picking...' : 'Pick Color from Screen'}
           </button>
           
           <p style={{ marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
             Clicking the button will open a magnifying glass. Click anywhere on your screen (even outside the browser!) to capture the color.
           </p>
+          
+          <div style={{ marginTop: '1rem' }}>
+            <input 
+              type="color" 
+              id="fallback-color-picker" 
+              style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+              onChange={(e) => {
+                const hex = e.target.value.toUpperCase();
+                const newColors = [hex, ...colors.filter(c => c !== hex)];
+                saveColors(newColors);
+              }}
+            />
+            <button 
+              className="btn" 
+              onClick={() => document.getElementById('fallback-color-picker').click()}
+              style={{ background: 'transparent', border: '1px solid var(--border-color)', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+            >
+              Alternative Picker
+            </button>
+          </div>
         </div>
 
         <div className="glass-panel">
