@@ -1,5 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
-import { EyeDropperIcon as EyeDropper, DocumentDuplicateIcon as CopyIcon, CheckIcon as Check, TrashIcon as Trash } from '@heroicons/react/24/solid';
+import { EyeDropperIcon as EyeDropper, DocumentDuplicateIcon as CopyIcon, CheckIcon as Check, TrashIcon as Trash, SwatchIcon } from '@heroicons/react/24/solid';
+
+const hexToHSL = (hex) => {
+  if (!hex || hex.length < 7) return [0, 0, 0];
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+  let max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h = 0, s = 0, l = (max + min) / 2;
+
+  if (max !== min) {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+};
+
+const hslToHex = (h, s, l) => {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+};
+
+const generateScheme = (baseHex) => {
+  if (!baseHex) return null;
+  const [h, s, l] = hexToHSL(baseHex);
+  
+  return [
+    { label: 'Complementary', hex: hslToHex((h + 180) % 360, s, l) },
+    { label: 'Analogous', hex: hslToHex((h + 30) % 360, s, l) },
+    { label: 'Analogous', hex: hslToHex((h + 330) % 360, s, l) },
+    { label: 'Triadic', hex: hslToHex((h + 120) % 360, s, l) },
+    { label: 'Triadic', hex: hslToHex((h + 240) % 360, s, l) }
+  ];
+};
 
 export default function ColorPicker() {
   const [colors, setColors] = useState([]);
@@ -280,6 +325,68 @@ export default function ColorPicker() {
         }}>
           <Check style={{width: 24, height: 24}}/>
           {copiedColor} copied to clipboard!
+        </div>
+      )}
+      
+      {colors.length > 0 && (
+        <div className="glass-panel" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+            <SwatchIcon style={{width: 24, height: 24, color: 'var(--accent-color)'}} />
+            <h3 style={{ margin: 0 }}>Color Scheme (Based on Latest)</h3>
+          </div>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+            {generateScheme(colors[0]).map((item, i) => (
+              <div 
+                key={`${item.hex}-${i}`}
+                onClick={() => copyToClipboard(item.hex)}
+                style={{ 
+                  background: item.hex, 
+                  height: '120px', 
+                  borderRadius: 'var(--border-radius-sm)', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: '#fff',
+                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.3)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+                }}
+              >
+                {copiedColor === item.hex ? (
+                  <span style={{display: 'flex', alignItems: 'center', gap: '0.25rem'}}>
+                    <Check style={{width: 20, height: 20}}/> Copied!
+                  </span>
+                ) : (
+                  item.hex
+                )}
+                
+                <span style={{
+                  fontSize: '0.8rem', 
+                  opacity: 0.9, 
+                  marginTop: '0.5rem',
+                  fontWeight: 'normal',
+                  background: 'rgba(0,0,0,0.3)',
+                  padding: '2px 8px',
+                  borderRadius: '10px'
+                }}>
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
