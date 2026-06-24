@@ -257,22 +257,34 @@ export default function ShapeGenerator() {
           Shape Properties
         </h3>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
           <div className="slider-group">
-            <label>Width: <span>{shapeWidth}px</span></label>
-            <input type="range" min="16" max="2048" step="16" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} />
+            <label>Width:</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="range" min="16" max="2048" step="1" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} style={{ flex: 1 }} />
+              <input type="number" min="1" max="4096" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
+            </div>
           </div>
           <div className="slider-group">
-            <label>Height: <span>{shapeHeight}px</span></label>
-            <input type="range" min="16" max="2048" step="16" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} />
+            <label>Height:</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="range" min="16" max="2048" step="1" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} style={{ flex: 1 }} />
+              <input type="number" min="1" max="4096" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
+            </div>
           </div>
           <div className="slider-group">
-            <label>Rounding: <span>{borderRadius}px</span></label>
-            <input type="range" min="0" max={Math.min(shapeWidth, shapeHeight)/2} value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
+            <label>Rounding:</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="range" min="0" max={Math.max(1, Math.min(shapeWidth, shapeHeight)/2)} step="1" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} style={{ flex: 1 }} />
+              <input type="number" min="0" max="2048" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
+            </div>
           </div>
           <div className="slider-group">
-            <label>Blur: <span>{blurRadius}px</span></label>
-            <input type="range" min="0" max="200" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} />
+            <label>Blur:</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input type="range" min="0" max="200" step="1" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} style={{ flex: 1 }} />
+              <input type="number" min="0" max="500" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
+            </div>
           </div>
         </div>
 

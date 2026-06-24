@@ -64,12 +64,16 @@ export default function GradientEditor({ stops, onChange }) {
     setSelectedIndex(newStops.length - 1);
   };
 
+  const handleDeleteSelected = () => {
+    if (stops.length <= 2) return;
+    const newStops = stops.filter((_, i) => i !== selectedIndex);
+    onChange(newStops);
+    setSelectedIndex(0);
+  };
+
   const handleDoubleClick = (e, index) => {
     e.stopPropagation();
-    if (stops.length <= 2) {
-      // Don't allow fewer than 2 stops
-      return; 
-    }
+    if (stops.length <= 2) return; 
     const newStops = stops.filter((_, i) => i !== index);
     onChange(newStops);
     setSelectedIndex(0);
@@ -130,14 +134,14 @@ export default function GradientEditor({ stops, onChange }) {
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-        Click track to add • Double-click node to delete
+        Click track to add a color node
       </div>
 
       {/* Selected Color Picker */}
       {stops[selectedIndex] && (
         <div className="color-picker-group" style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
           <label style={{ fontSize: '0.85rem' }}>Selected Node Color</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <input 
               type="color" 
               value={stops[selectedIndex].color} 
@@ -151,6 +155,14 @@ export default function GradientEditor({ stops, onChange }) {
               className="text-input" 
               style={{ flex: 1, padding: '0.25rem 0.5rem', fontSize: '0.9rem' }} 
             />
+            <button 
+              className="primary-btn outline" 
+              onClick={handleDeleteSelected}
+              disabled={stops.length <= 2}
+              style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderColor: 'var(--error-color)', color: 'var(--error-color)' }}
+            >
+              Delete Node
+            </button>
           </div>
         </div>
       )}
