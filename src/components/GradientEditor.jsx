@@ -13,6 +13,7 @@ export default function GradientEditor({ stops, onChange }) {
   const handlePointerDown = (e, index) => {
     e.stopPropagation(); // prevent triggering track click
     setSelectedIndex(index);
+    e.currentTarget.focus(); // Focus the node so it can receive keyboard events
     isDragging.current = true;
     dragIndex.current = index;
     
@@ -46,8 +47,6 @@ export default function GradientEditor({ stops, onChange }) {
     let newPos = (e.clientX - rect.left) / rect.width;
     newPos = Math.max(0, Math.min(1, newPos));
     
-    // Pick a color based on interpolation, or just a default
-    // For simplicity, default to white, or we could just use the color of the closest stop
     let closestColor = stops[0]?.color || '#ffffff';
     let minDist = 1;
     stops.forEach(s => {
@@ -64,19 +63,41 @@ export default function GradientEditor({ stops, onChange }) {
     setSelectedIndex(newStops.length - 1);
   };
 
-  const handleDeleteSelected = () => {
+  const deleteNode = (index) => {
     if (stops.length <= 2) return;
-    const newStops = stops.filter((_, i) => i !== selectedIndex);
-    onChange(newStops);
-    setSelectedIndex(0);
-  };
-
-  const handleDoubleClick = (e, index) => {
-    e.stopPropagation();
-    if (stops.length <= 2) return; 
     const newStops = stops.filter((_, i) => i !== index);
     onChange(newStops);
-    setSelectedIndex(0);
+    setSelectedIndex(Math.max(0, index - 1));
+  };
+
+  const moveNode = (index, delta) => {
+    const newStops = [...stops];
+    let newPos = newStops[index].position + delta;
+    newPos = Math.max(0, Math.min(1, newPos));
+    newStops[index] = { ...newStops[index], position: newPos };
+    onChange(newStops);
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      moveNode(index, -0.01);
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      moveNode(index, 0.01);
+    } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deleteNode(index);
+    }
+  };
+
+  const handleWheel = (e, index) => {
+    // Only scroll if we are focused on the node to prevent accidental scrolling
+    if (document.activeElement === e.currentTarget) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.02 : -0.02; // Scrolling down moves right, up moves left
+      moveNode(index, delta);
+    }
   };
 
   const updateSelectedColor = (newColor) => {
@@ -97,6 +118,41 @@ export default function GradientEditor({ stops, onChange }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', width: '100%' }}>
+      {/* Top action bar: Selected color and delete button */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem' }}>Node Color:</label>
+          {stops[selectedIndex] ? (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <input 
+                type="color" 
+                value={stops[selectedIndex].color} 
+                onChange={e => updateSelectedColor(e.target.value)} 
+                style={{ width: '40px', height: '32px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} 
+              />
+              <input 
+                type="text" 
+                value={stops[selectedIndex].color} 
+                onChange={e => updateSelectedColor(e.target.value)} 
+                className="text-input" 
+                style={{ width: '90px', padding: '0.25rem 0.5rem', fontSize: '0.9rem' }} 
+              />
+            </div>
+          ) : (
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>None selected</span>
+          )}
+        </div>
+        
+        <button 
+          className="primary-btn outline" 
+          onClick={() => deleteNode(selectedIndex)}
+          disabled={stops.length <= 2 || !stops[selectedIndex]}
+          style={{ padding: '0.25rem 0.75rem', fontSize: '0.85rem', borderColor: 'var(--error-color)', color: 'var(--error-color)' }}
+        >
+          Delete Node
+        </button>
+      </div>
+
       {/* Gradient Track */}
       <div 
         ref={trackRef}
@@ -114,8 +170,10 @@ export default function GradientEditor({ stops, onChange }) {
         {stops.map((stop, index) => (
           <div
             key={index}
+            tabIndex={0} // Make focusable for keyboard events
             onPointerDown={(e) => handlePointerDown(e, index)}
-            onDoubleClick={(e) => handleDoubleClick(e, index)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            onWheel={(e) => handleWheel(e, index)}
             style={{
               position: 'absolute',
               top: '50%',
@@ -128,44 +186,16 @@ export default function GradientEditor({ stops, onChange }) {
               border: index === selectedIndex ? '3px solid white' : '2px solid rgba(255,255,255,0.7)',
               boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
               cursor: 'grab',
-              zIndex: index === selectedIndex ? 10 : 1
+              zIndex: index === selectedIndex ? 10 : 1,
+              outline: 'none' // Remove default browser focus outline since we have our own border highlight
             }}
           />
         ))}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-        Click track to add a color node
+      
+      <div style={{ display: 'flex', justifyContent: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+        Click track to add node • Drag, use arrow keys, or mouse wheel to move
       </div>
-
-      {/* Selected Color Picker */}
-      {stops[selectedIndex] && (
-        <div className="color-picker-group" style={{ background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
-          <label style={{ fontSize: '0.85rem' }}>Selected Node Color</label>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input 
-              type="color" 
-              value={stops[selectedIndex].color} 
-              onChange={e => updateSelectedColor(e.target.value)} 
-              style={{ width: '40px', height: '32px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} 
-            />
-            <input 
-              type="text" 
-              value={stops[selectedIndex].color} 
-              onChange={e => updateSelectedColor(e.target.value)} 
-              className="text-input" 
-              style={{ flex: 1, padding: '0.25rem 0.5rem', fontSize: '0.9rem' }} 
-            />
-            <button 
-              className="primary-btn outline" 
-              onClick={handleDeleteSelected}
-              disabled={stops.length <= 2}
-              style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderColor: 'var(--error-color)', color: 'var(--error-color)' }}
-            >
-              Delete Node
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
