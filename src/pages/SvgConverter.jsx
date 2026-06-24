@@ -133,18 +133,40 @@ export default function SvgConverter() {
     }
   };
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setSvgText(event.target.result);
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
         <FileCode2 />
         <h1>SVG Icon Converter</h1>
       </div>
-      <p>Paste SVG code, scale to any dimension, and convert to a transparent PNG.</p>
+      <p>Upload or paste SVG code, scale to any dimension, and convert to a transparent PNG.</p>
 
       <div className="grid-container">
         <div className="glass-panel controls">
           <div className="control-group">
-            <label>SVG Code</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>SVG Code</label>
+              <label className="btn" style={{ fontSize: '0.85rem', padding: '0.3rem 0.6rem', cursor: 'pointer', background: 'var(--bg-tertiary)' }}>
+                Upload .svg File
+                <input 
+                  type="file" 
+                  accept=".svg" 
+                  onChange={handleFileUpload} 
+                  style={{ display: 'none' }} 
+                />
+              </label>
+            </div>
             <textarea 
               className="input-field"
               style={{ minHeight: '200px', fontFamily: 'monospace' }}
