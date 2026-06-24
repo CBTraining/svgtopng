@@ -120,6 +120,38 @@ function App() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
+  // Double-click background to toggle fullscreen
+  useEffect(() => {
+    const handleDoubleClick = (e) => {
+      if (
+        e.target.tagName.toLowerCase() === 'input' || 
+        e.target.tagName.toLowerCase() === 'button' ||
+        e.target.tagName.toLowerCase() === 'textarea' ||
+        e.target.tagName.toLowerCase() === 'a' ||
+        e.target.tagName.toLowerCase() === 'select' ||
+        e.target.closest('.glass-panel') ||
+        e.target.closest('.sidebar') ||
+        e.target.closest('.sidebar-overlay') ||
+        e.target.closest('.right-panel')
+      ) {
+        return;
+      }
+
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    };
+
+    window.addEventListener('dblclick', handleDoubleClick);
+    return () => window.removeEventListener('dblclick', handleDoubleClick);
+  }, []);
+
   const processImageBlob = useCallback((blob, defaultName = 'clipboard_image') => {
     const img = new Image();
     img.onload = () => {
