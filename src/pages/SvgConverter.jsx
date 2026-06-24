@@ -240,6 +240,22 @@ export default function SvgConverter() {
             </div>
           </div>
           
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem', marginTop: '0.5rem' }}>
+            {[16, 32, 64, 128, 256, 512].map(size => (
+              <button 
+                key={size}
+                className="btn" 
+                style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', background: 'var(--bg-tertiary)' }}
+                onClick={() => {
+                  setWidth(size);
+                  if (keepProportions && aspectRatio) setHeight(Math.round(size / aspectRatio));
+                }}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+          
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             <input 
               type="checkbox" 
