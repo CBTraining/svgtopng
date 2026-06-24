@@ -10,6 +10,12 @@ export default function SvgConverter() {
   const canvasRef = useRef(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [copySuccess, setCopySuccess] = useState(false);
+  const [applyTint, setApplyTint] = useState(false);
+  const [tintMode, setTintMode] = useState('solid'); // 'solid' or 'gradient'
+  const [solidColor, setSolidColor] = useState('#3b82f6');
+  const [gradStart, setGradStart] = useState('#ef4444');
+  const [gradEnd, setGradEnd] = useState('#3b82f6');
+  const [gradDirection, setGradDirection] = useState('to-bottom-right');
 
   useEffect(() => {
     if (!svgText.trim() || !svgText.includes('<svg')) return;
@@ -70,6 +76,26 @@ export default function SvgConverter() {
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
+      
+      if (applyTint) {
+        ctx.globalCompositeOperation = 'source-in';
+        if (tintMode === 'solid') {
+          ctx.fillStyle = solidColor;
+        } else {
+          let x0 = 0, y0 = 0, x1 = 0, y1 = 0;
+          if (gradDirection === 'to-bottom') { y1 = height; }
+          else if (gradDirection === 'to-right') { x1 = width; }
+          else if (gradDirection === 'to-bottom-right') { x1 = width; y1 = height; }
+          else if (gradDirection === 'to-top-right') { y0 = height; x1 = width; }
+          
+          const grad = ctx.createLinearGradient(x0, y0, x1, y1);
+          grad.addColorStop(0, gradStart);
+          grad.addColorStop(1, gradEnd);
+          ctx.fillStyle = grad;
+        }
+        ctx.fillRect(0, 0, width, height);
+        ctx.globalCompositeOperation = 'source-over';
+      }
       
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
@@ -156,7 +182,7 @@ export default function SvgConverter() {
             </div>
           </div>
           
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
             <input 
               type="checkbox" 
               checked={keepProportions}
@@ -170,6 +196,60 @@ export default function SvgConverter() {
             />
             Keep proportions
           </label>
+
+          {/* Color Tint Controls */}
+          <div style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: 'var(--border-radius)', marginBottom: '1.5rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.95rem', fontWeight: 'bold' }}>
+              <input 
+                type="checkbox" 
+                checked={applyTint}
+                onChange={(e) => setApplyTint(e.target.checked)}
+                className="accent-primary"
+              />
+              Override Colors
+            </label>
+            
+            {applyTint && (
+              <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <input type="radio" checked={tintMode === 'solid'} onChange={() => setTintMode('solid')} className="accent-primary" /> Solid
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <input type="radio" checked={tintMode === 'gradient'} onChange={() => setTintMode('gradient')} className="accent-primary" /> Gradient
+                  </label>
+                </div>
+
+                {tintMode === 'solid' ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input type="color" value={solidColor} onChange={(e) => setSolidColor(e.target.value)} style={{ width: '40px', height: '30px', padding: 0, border: 'none' }} />
+                    <span>Color</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input type="color" value={gradStart} onChange={(e) => setGradStart(e.target.value)} style={{ width: '40px', height: '30px', padding: 0, border: 'none' }} />
+                        <span>Start</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input type="color" value={gradEnd} onChange={(e) => setGradEnd(e.target.value)} style={{ width: '40px', height: '30px', padding: 0, border: 'none' }} />
+                        <span>End</span>
+                      </div>
+                    </div>
+                    <div>
+                      <select className="input-field" value={gradDirection} onChange={(e) => setGradDirection(e.target.value)} style={{ padding: '0.25rem', marginTop: '0.25rem' }}>
+                        <option value="to-bottom-right">Top-Left to Bottom-Right</option>
+                        <option value="to-top-right">Bottom-Left to Top-Right</option>
+                        <option value="to-right">Left to Right</option>
+                        <option value="to-bottom">Top to Bottom</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <button className="btn btn-primary" onClick={handleConvert}>
             Render PNG
           </button>
