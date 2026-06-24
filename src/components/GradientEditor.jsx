@@ -156,7 +156,7 @@ export default function GradientEditor({ stops, onChange }) {
       {/* Gradient Track */}
       <div 
         ref={trackRef}
-        onClick={handleTrackClick}
+        onPointerDown={handleTrackClick}
         style={{
           position: 'relative',
           height: '24px',
