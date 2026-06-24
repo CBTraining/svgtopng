@@ -42,19 +42,51 @@ const trimCanvas = (canvas) => {
 };
 
 export default function ShapeGenerator() {
-  const [shapeWidth, setShapeWidth] = useState(300);
-  const [shapeHeight, setShapeHeight] = useState(300);
-  const [borderRadius, setBorderRadius] = useState(64);
-  const [blurRadius, setBlurRadius] = useState(0);
+  const [shapeWidth, setShapeWidth] = useState(() => {
+    const saved = localStorage.getItem('sg_shapeWidth');
+    return saved !== null ? Number(saved) : 800;
+  });
+  const [shapeHeight, setShapeHeight] = useState(() => {
+    const saved = localStorage.getItem('sg_shapeHeight');
+    return saved !== null ? Number(saved) : 30;
+  });
+  const [borderRadius, setBorderRadius] = useState(() => {
+    const saved = localStorage.getItem('sg_borderRadius');
+    return saved !== null ? Number(saved) : 64;
+  });
+  const [blurRadius, setBlurRadius] = useState(() => {
+    const saved = localStorage.getItem('sg_blurRadius');
+    return saved !== null ? Number(saved) : 0;
+  });
 
-  const [tintMode, setTintMode] = useState('gradient'); // 'solid' or 'gradient'
-  const [solidColor, setSolidColor] = useState('#3b82f6');
+  const [tintMode, setTintMode] = useState(() => {
+    return localStorage.getItem('sg_tintMode') || 'gradient';
+  });
+  const [solidColor, setSolidColor] = useState(() => {
+    return localStorage.getItem('sg_solidColor') || '#3b82f6';
+  });
   
-  const [gradStops, setGradStops] = useState([
-    { color: '#ef4444', position: 0 },
-    { color: '#3b82f6', position: 1 }
-  ]);
-  const [gradDirection, setGradDirection] = useState('to-bottom-right');
+  const [gradStops, setGradStops] = useState(() => {
+    const saved = localStorage.getItem('sg_gradStops');
+    return saved ? JSON.parse(saved) : [
+      { color: '#ef4444', position: 0 },
+      { color: '#3b82f6', position: 1 }
+    ];
+  });
+  const [gradDirection, setGradDirection] = useState(() => {
+    return localStorage.getItem('sg_gradDirection') || 'to-bottom-right';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sg_shapeWidth', shapeWidth);
+    localStorage.setItem('sg_shapeHeight', shapeHeight);
+    localStorage.setItem('sg_borderRadius', borderRadius);
+    localStorage.setItem('sg_blurRadius', blurRadius);
+    localStorage.setItem('sg_tintMode', tintMode);
+    localStorage.setItem('sg_solidColor', solidColor);
+    localStorage.setItem('sg_gradStops', JSON.stringify(gradStops));
+    localStorage.setItem('sg_gradDirection', gradDirection);
+  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStops, gradDirection]);
 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [actualWidth, setActualWidth] = useState(0);
