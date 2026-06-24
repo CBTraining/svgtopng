@@ -171,8 +171,16 @@ export default function SvgConverter() {
     e.preventDefault();
     setIsDragging(false);
     
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
+    let file = null;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      if (e.dataTransfer.items[0].kind === 'file') {
+        file = e.dataTransfer.items[0].getAsFile();
+      }
+    } else if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      file = e.dataTransfer.files[0];
+    }
+    
+    if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
         setSvgText(event.target.result);
@@ -196,7 +204,17 @@ export default function SvgConverter() {
       <p>Upload or paste SVG code, scale to any dimension, and convert to a transparent PNG.</p>
 
       <div className="grid-container">
-        <div className="glass-panel controls">
+        <div 
+          className="glass-panel controls"
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          style={{ 
+            border: isDragging ? '2px dashed var(--primary-color)' : '',
+            backgroundColor: isDragging ? 'var(--bg-tertiary)' : ''
+          }}
+        >
           <div className="control-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <label style={{ margin: 0 }}>SVG Code</label>
@@ -214,17 +232,11 @@ export default function SvgConverter() {
               className="input-field"
               style={{ 
                 minHeight: '200px', 
-                fontFamily: 'monospace', 
-                border: isDragging ? '2px dashed var(--primary-color)' : '',
-                backgroundColor: isDragging ? 'var(--bg-tertiary)' : ''
+                fontFamily: 'monospace'
               }}
               value={svgText}
               onChange={(e) => setSvgText(e.target.value)}
-              onDragEnter={handleDragEnter}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              placeholder="<svg>...</svg> or drag & drop a .svg file here"
+              placeholder="<svg>...</svg> or drag & drop a .svg file anywhere in this panel"
             />
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
