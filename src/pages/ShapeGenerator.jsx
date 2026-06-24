@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { SparklesIcon, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
+import { RectangleGroupIcon, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
+import GradientEditor from '../components/GradientEditor';
 
 const trimCanvas = (canvas) => {
   const ctx = canvas.getContext('2d');
@@ -48,8 +49,11 @@ export default function ShapeGenerator() {
 
   const [tintMode, setTintMode] = useState('gradient'); // 'solid' or 'gradient'
   const [solidColor, setSolidColor] = useState('#3b82f6');
-  const [gradStart, setGradStart] = useState('#ef4444');
-  const [gradEnd, setGradEnd] = useState('#3b82f6');
+  
+  const [gradStops, setGradStops] = useState([
+    { color: '#ef4444', position: 0 },
+    { color: '#3b82f6', position: 1 }
+  ]);
   const [gradDirection, setGradDirection] = useState('to-bottom-right');
 
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -89,8 +93,12 @@ export default function ShapeGenerator() {
         default: x0 = 0; y0 = 0; x1 = canvas.width; y1 = canvas.height;
       }
       const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
-      gradient.addColorStop(0, gradStart);
-      gradient.addColorStop(1, gradEnd);
+      
+      const sortedStops = [...gradStops].sort((a, b) => a.position - b.position);
+      sortedStops.forEach(stop => {
+        gradient.addColorStop(stop.position, stop.color);
+      });
+      
       ctx.fillStyle = gradient;
     }
 
@@ -108,7 +116,7 @@ export default function ShapeGenerator() {
     setActualWidth(trimmed.width);
     setActualHeight(trimmed.height);
     setPreviewUrl(trimmed.toDataURL('image/png'));
-  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStart, gradEnd, gradDirection]);
+  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStops, gradDirection]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -140,156 +148,167 @@ export default function ShapeGenerator() {
     a.click();
   };
 
+  const applyGooglePreset = () => {
+    setTintMode('gradient');
+    setGradStops([
+      { color: '#4285F4', position: 0 },
+      { color: '#EA4335', position: 0.33 },
+      { color: '#FBBC04', position: 0.66 },
+      { color: '#34A853', position: 1 }
+    ]);
+  };
+
+  const applySunsetPreset = () => {
+    setTintMode('gradient');
+    setGradStops([
+      { color: '#ff7e5f', position: 0 },
+      { color: '#feb47b', position: 1 }
+    ]);
+  };
+
+  const applyOceanPreset = () => {
+    setTintMode('gradient');
+    setGradStops([
+      { color: '#2E3192', position: 0 },
+      { color: '#1BFFFF', position: 1 }
+    ]);
+  };
+
   return (
-    <div className="animate-fade-in">
-      <div className="page-header">
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div className="page-header" style={{ marginBottom: '0' }}>
         <h1>Shape Generator</h1>
       </div>
-      
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>
-        Generate perfectly rounded, gradient-filled, blurred shapes for backgrounds, icons, or avatars.
-      </p>
 
-      <div className="layout-split">
-        <div className="glass-panel controls-column">
-          <div className="control-group">
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem', color: 'var(--accent-color)' }}>
-              <SparklesIcon style={{ width: '20px', height: '20px' }} />
-              Shape Settings
-            </h3>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div className="slider-group">
-                <label>Width: <span>{shapeWidth}px</span></label>
-                <input type="range" min="16" max="2048" step="16" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} />
-              </div>
-              <div className="slider-group">
-                <label>Height: <span>{shapeHeight}px</span></label>
-                <input type="range" min="16" max="2048" step="16" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} />
-              </div>
-            </div>
+      {/* TOP: Preview Area */}
+      <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', minHeight: '300px' }}>
+        <div className="checkerboard-bg" style={{ 
+          borderRadius: '8px', 
+          overflow: 'hidden', 
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          maxWidth: '100%',
+          aspectRatio: actualWidth / actualHeight
+        }}>
+          {previewUrl && (
+            <img 
+              src={previewUrl} 
+              alt="Shape Preview" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '500px' }}
+            />
+          )}
+        </div>
+        
+        <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '2rem', width: '100%', justifyContent: 'center' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+            Output Size: <strong>{actualWidth} x {actualHeight}</strong>
+          </p>
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button className="primary-btn" onClick={handleCopy} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+              {copySuccess ? <Check style={{width: '16px', height: '16px'}} /> : <ClipboardDocumentIcon style={{width: '16px', height: '16px'}} />}
+              {copySuccess ? 'Copied!' : 'Copy PNG'}
+            </button>
+            <button className="primary-btn outline" onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+              <Download style={{width: '16px', height: '16px'}} />
+              Save PNG
+            </button>
+          </div>
+        </div>
+      </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-              <div className="slider-group">
-                <label>Rounding: <span>{borderRadius}px</span></label>
-                <input type="range" min="0" max={Math.min(shapeWidth, shapeHeight)/2} value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
-              </div>
-              <div className="slider-group">
-                <label>Blur: <span>{blurRadius}px</span></label>
-                <input type="range" min="0" max="200" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} />
-              </div>
-            </div>
-
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '2rem', marginBottom: '1rem', color: 'var(--accent-color)' }}>
-              Fill Options
-            </h3>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="tintMode" 
-                  value="solid" 
-                  checked={tintMode === 'solid'} 
-                  onChange={() => setTintMode('solid')}
-                  style={{ accentColor: 'var(--accent-color)' }}
-                />
-                Solid
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                <input 
-                  type="radio" 
-                  name="tintMode" 
-                  value="gradient" 
-                  checked={tintMode === 'gradient'} 
-                  onChange={() => setTintMode('gradient')}
-                  style={{ accentColor: 'var(--accent-color)' }}
-                />
-                Gradient
-              </label>
-            </div>
-
-            {tintMode === 'solid' ? (
-              <div className="color-picker-group">
-                <label>Color</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="color" value={solidColor} onChange={e => setSolidColor(e.target.value)} style={{ width: '50px', height: '40px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} />
-                  <input type="text" value={solidColor} onChange={e => setSolidColor(e.target.value)} className="text-input" style={{ flex: 1 }} />
-                </div>
-              </div>
-            ) : (
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <div className="color-picker-group">
-                    <label>Start Color</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input type="color" value={gradStart} onChange={e => setGradStart(e.target.value)} style={{ width: '50px', height: '40px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} />
-                      <input type="text" value={gradStart} onChange={e => setGradStart(e.target.value)} className="text-input" style={{ flex: 1 }} />
-                    </div>
-                  </div>
-                  <div className="color-picker-group">
-                    <label>End Color</label>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input type="color" value={gradEnd} onChange={e => setGradEnd(e.target.value)} style={{ width: '50px', height: '40px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} />
-                      <input type="text" value={gradEnd} onChange={e => setGradEnd(e.target.value)} className="text-input" style={{ flex: 1 }} />
-                    </div>
-                  </div>
-                </div>
-                <div className="color-picker-group" style={{ marginTop: '1rem' }}>
-                  <label>Gradient Direction</label>
-                  <select className="text-input" value={gradDirection} onChange={e => setGradDirection(e.target.value)}>
-                    <option value="to-bottom-right">Top-Left to Bottom-Right</option>
-                    <option value="to-top-left">Bottom-Right to Top-Left</option>
-                    <option value="to-top-right">Bottom-Left to Top-Right</option>
-                    <option value="to-bottom-left">Top-Right to Bottom-Left</option>
-                    <option value="to-right">Left to Right</option>
-                    <option value="to-left">Right to Left</option>
-                    <option value="to-bottom">Top to Bottom</option>
-                    <option value="to-top">Bottom to Top</option>
-                  </select>
-                </div>
-              </>
-            )}
-
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-              <button className="primary-btn" onClick={handleCopy} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                {copySuccess ? <Check style={{width: '20px', height: '20px'}} /> : <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />}
-                {copySuccess ? 'Copied!' : 'Copy PNG'}
-              </button>
-              <button className="primary-btn outline" onClick={handleDownload} style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-                <Download style={{width: '20px', height: '20px'}} />
-                Save PNG
-              </button>
-            </div>
+      {/* BOTTOM: Controls (Grid Layout) */}
+      <div className="glass-panel" style={{ padding: '2rem' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--accent-color)' }}>
+          <RectangleGroupIcon style={{ width: '20px', height: '20px' }} />
+          Shape Properties
+        </h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+          <div className="slider-group">
+            <label>Width: <span>{shapeWidth}px</span></label>
+            <input type="range" min="16" max="2048" step="16" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} />
+          </div>
+          <div className="slider-group">
+            <label>Height: <span>{shapeHeight}px</span></label>
+            <input type="range" min="16" max="2048" step="16" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} />
+          </div>
+          <div className="slider-group">
+            <label>Rounding: <span>{borderRadius}px</span></label>
+            <input type="range" min="0" max={Math.min(shapeWidth, shapeHeight)/2} value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
+          </div>
+          <div className="slider-group">
+            <label>Blur: <span>{blurRadius}px</span></label>
+            <input type="range" min="0" max="200" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} />
           </div>
         </div>
 
-        <div className="preview-column">
-          <div className="glass-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px', height: '100%' }}>
-            <div className="checkerboard-bg" style={{ 
-              borderRadius: '8px', 
-              overflow: 'hidden', 
-              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              maxWidth: '100%',
-              aspectRatio: actualWidth / actualHeight
-            }}>
-              {previewUrl && (
-                <img 
-                  src={previewUrl} 
-                  alt="Shape Preview" 
-                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                />
-              )}
-            </div>
-            
-            <p style={{ marginTop: '1rem', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-              Final Output: {actualWidth} x {actualHeight}
-            </p>
-          </div>
+        <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.1)', margin: '2rem 0' }} />
+
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--accent-color)' }}>
+          Fill Style
+        </h3>
+        
+        <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="tintMode" 
+              value="solid" 
+              checked={tintMode === 'solid'} 
+              onChange={() => setTintMode('solid')}
+              style={{ accentColor: 'var(--accent-color)' }}
+            />
+            Solid
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+            <input 
+              type="radio" 
+              name="tintMode" 
+              value="gradient" 
+              checked={tintMode === 'gradient'} 
+              onChange={() => setTintMode('gradient')}
+              style={{ accentColor: 'var(--accent-color)' }}
+            />
+            Gradient
+          </label>
         </div>
+
+        {tintMode === 'solid' ? (
+          <div className="color-picker-group" style={{ maxWidth: '300px' }}>
+            <label>Color</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input type="color" value={solidColor} onChange={e => setSolidColor(e.target.value)} style={{ width: '50px', height: '40px', padding: '0', cursor: 'pointer', background: 'none', border: 'none' }} />
+              <input type="text" value={solidColor} onChange={e => setSolidColor(e.target.value)} className="text-input" style={{ flex: 1 }} />
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Presets:</span>
+              <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applyGooglePreset}>Google</button>
+              <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applySunsetPreset}>Sunset</button>
+              <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applyOceanPreset}>Ocean</button>
+              
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Direction:</label>
+                <select className="text-input" value={gradDirection} onChange={e => setGradDirection(e.target.value)} style={{ padding: '0.25rem 0.5rem' }}>
+                  <option value="to-bottom-right">Top-Left to Bottom-Right</option>
+                  <option value="to-top-left">Bottom-Right to Top-Left</option>
+                  <option value="to-top-right">Bottom-Left to Top-Right</option>
+                  <option value="to-bottom-left">Top-Right to Bottom-Left</option>
+                  <option value="to-right">Left to Right</option>
+                  <option value="to-left">Right to Left</option>
+                  <option value="to-bottom">Top to Bottom</option>
+                  <option value="to-top">Bottom to Top</option>
+                </select>
+              </div>
+            </div>
+
+            <GradientEditor stops={gradStops} onChange={setGradStops} />
+          </div>
+        )}
       </div>
     </div>
   );
