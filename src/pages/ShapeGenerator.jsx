@@ -202,8 +202,8 @@ export default function ShapeGenerator() {
   const applyNotebookLMPreset = () => {
     setTintMode('gradient');
     setGradStops([
-      { color: '#131314', position: 0 },
-      { color: '#2C2D31', position: 1 }
+      { color: '#42f067', position: 0 },
+      { color: '#7182ff', position: 1 }
     ]);
   };
 
