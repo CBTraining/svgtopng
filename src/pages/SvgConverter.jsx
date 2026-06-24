@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
 
 export default function SvgConverter() {
@@ -57,8 +57,9 @@ export default function SvgConverter() {
     };
   }, [previewUrl]);
 
-  const handleConvert = () => {
+  const handleConvert = useCallback(() => {
     if (!svgText.trim()) return;
+    if (!canvasRef.current) return;
 
     // Check if valid SVG
     if (!svgText.includes('<svg')) {
@@ -108,7 +109,14 @@ export default function SvgConverter() {
       URL.revokeObjectURL(url);
     };
     img.src = url;
-  };
+  }, [svgText, width, height, applyTint, tintMode, solidColor, gradStart, gradEnd, gradDirection]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleConvert();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [handleConvert]);
 
   const handleDownload = () => {
     if (!previewUrl) return;
@@ -161,7 +169,7 @@ export default function SvgConverter() {
     const file = e.dataTransfer.files[0];
     if (!file) return;
     
-    if (file.name.endsWith('.svg') || file.type.includes('svg')) {
+    if (file.name.toLowerCase().endsWith('.svg') || (file.type && file.type.includes('svg'))) {
       const reader = new FileReader();
       reader.onload = (event) => {
         setSvgText(event.target.result);
@@ -324,9 +332,6 @@ export default function SvgConverter() {
               </div>
             )}
           </div>
-          <button className="btn btn-primary" onClick={handleConvert}>
-            Render PNG
-          </button>
         </div>
 
         <div className="glass-panel preview-panel">
