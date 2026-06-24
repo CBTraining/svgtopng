@@ -63,7 +63,6 @@ export default function SvgConverter() {
 
     // Check if valid SVG
     if (!svgText.includes('<svg')) {
-      alert('Invalid SVG code.');
       return;
     }
 
@@ -153,6 +152,11 @@ export default function SvgConverter() {
     reader.readAsText(file);
   };
 
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setIsDragging(true);
@@ -166,17 +170,20 @@ export default function SvgConverter() {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
     
-    if (file.name.toLowerCase().endsWith('.svg') || (file.type && file.type.includes('svg'))) {
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
       const reader = new FileReader();
       reader.onload = (event) => {
         setSvgText(event.target.result);
       };
       reader.readAsText(file);
-    } else {
-      alert("Please drop a valid .svg file");
+      return;
+    }
+    
+    const textData = e.dataTransfer.getData('text');
+    if (textData) {
+      setSvgText(textData);
     }
   };
 
@@ -213,6 +220,7 @@ export default function SvgConverter() {
               }}
               value={svgText}
               onChange={(e) => setSvgText(e.target.value)}
+              onDragEnter={handleDragEnter}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
