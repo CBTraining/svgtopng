@@ -16,6 +16,7 @@ export default function SvgConverter() {
   const [gradStart, setGradStart] = useState('#ef4444');
   const [gradEnd, setGradEnd] = useState('#3b82f6');
   const [gradDirection, setGradDirection] = useState('to-bottom-right');
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (!svgText.trim() || !svgText.includes('<svg')) return;
@@ -144,6 +145,33 @@ export default function SvgConverter() {
     reader.readAsText(file);
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    
+    if (file.name.endsWith('.svg') || file.type.includes('svg')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSvgText(event.target.result);
+      };
+      reader.readAsText(file);
+    } else {
+      alert("Please drop a valid .svg file");
+    }
+  };
+
   return (
     <div className="animate-fade-in">
       <div className="page-header">
@@ -169,10 +197,18 @@ export default function SvgConverter() {
             </div>
             <textarea 
               className="input-field"
-              style={{ minHeight: '200px', fontFamily: 'monospace' }}
+              style={{ 
+                minHeight: '200px', 
+                fontFamily: 'monospace', 
+                border: isDragging ? '2px dashed var(--primary-color)' : '',
+                backgroundColor: isDragging ? 'var(--bg-tertiary)' : ''
+              }}
               value={svgText}
               onChange={(e) => setSvgText(e.target.value)}
-              placeholder="<svg>...</svg>"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              placeholder="<svg>...</svg> or drag & drop a .svg file here"
             />
           </div>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
