@@ -77,6 +77,11 @@ export default function ShapeGenerator() {
     return localStorage.getItem('sg_gradDirection') || 'to-bottom-right';
   });
 
+  const [savedPresets, setSavedPresets] = useState(() => {
+    const saved = localStorage.getItem('sg_savedPresets');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem('sg_shapeWidth', shapeWidth);
     localStorage.setItem('sg_shapeHeight', shapeHeight);
@@ -87,6 +92,10 @@ export default function ShapeGenerator() {
     localStorage.setItem('sg_gradStops', JSON.stringify(gradStops));
     localStorage.setItem('sg_gradDirection', gradDirection);
   }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStops, gradDirection]);
+
+  useEffect(() => {
+    localStorage.setItem('sg_savedPresets', JSON.stringify(savedPresets));
+  }, [savedPresets]);
 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [actualWidth, setActualWidth] = useState(0);
@@ -190,12 +199,37 @@ export default function ShapeGenerator() {
     ]);
   };
 
-  const applySunsetPreset = () => {
+  const applyNotebookLMPreset = () => {
     setTintMode('gradient');
     setGradStops([
-      { color: '#ff7e5f', position: 0 },
-      { color: '#feb47b', position: 1 }
+      { color: '#131314', position: 0 },
+      { color: '#2C2D31', position: 1 }
     ]);
+  };
+
+  const saveCurrentAsPreset = () => {
+    const name = prompt('Enter a name for this preset:');
+    if (!name) return;
+    const newPreset = {
+      id: Date.now().toString(),
+      name,
+      tintMode,
+      solidColor,
+      gradStops,
+      gradDirection
+    };
+    setSavedPresets([...savedPresets, newPreset]);
+  };
+
+  const applyCustomPreset = (preset) => {
+    setTintMode(preset.tintMode);
+    if (preset.solidColor) setSolidColor(preset.solidColor);
+    if (preset.gradStops) setGradStops(preset.gradStops);
+    if (preset.gradDirection) setGradDirection(preset.gradDirection);
+  };
+
+  const deletePreset = (id) => {
+    setSavedPresets(savedPresets.filter(p => p.id !== id));
   };
 
   const applyOceanPreset = () => {
@@ -259,32 +293,32 @@ export default function ShapeGenerator() {
         
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
           <div className="slider-group">
-            <label>Width:</label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="range" min="16" max="2048" step="1" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} style={{ flex: 1 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Width:</label>
               <input type="number" min="1" max="4096" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
             </div>
+            <input type="range" min="16" max="2048" step="1" value={shapeWidth} onChange={e => setShapeWidth(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
           <div className="slider-group">
-            <label>Height:</label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="range" min="16" max="2048" step="1" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} style={{ flex: 1 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Height:</label>
               <input type="number" min="1" max="4096" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
             </div>
+            <input type="range" min="16" max="2048" step="1" value={shapeHeight} onChange={e => setShapeHeight(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
           <div className="slider-group">
-            <label>Rounding:</label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="range" min="0" max={Math.max(1, Math.min(shapeWidth, shapeHeight)/2)} step="1" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} style={{ flex: 1 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Rounding:</label>
               <input type="number" min="0" max="2048" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
             </div>
+            <input type="range" min="0" max={Math.max(1, Math.min(shapeWidth, shapeHeight)/2)} step="1" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
           <div className="slider-group">
-            <label>Blur:</label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-              <input type="range" min="0" max="200" step="1" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} style={{ flex: 1 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Blur:</label>
               <input type="number" min="0" max="500" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
             </div>
+            <input type="range" min="0" max="200" step="1" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
         </div>
 
@@ -332,8 +366,30 @@ export default function ShapeGenerator() {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Presets:</span>
               <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applyGooglePreset}>Google</button>
-              <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applySunsetPreset}>Sunset</button>
+              <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applyNotebookLMPreset}>NotebookLM</button>
               <button className="primary-btn outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={applyOceanPreset}>Ocean</button>
+              
+              {savedPresets.map(preset => (
+                <div key={preset.id} style={{ display: 'flex', alignItems: 'center' }}>
+                  <button 
+                    className="primary-btn outline" 
+                    style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', borderTopRightRadius: 0, borderBottomRightRadius: 0 }} 
+                    onClick={() => applyCustomPreset(preset)}
+                  >
+                    {preset.name}
+                  </button>
+                  <button 
+                    className="primary-btn outline" 
+                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', borderTopLeftRadius: 0, borderBottomLeftRadius: 0, borderLeft: 'none', color: 'var(--error-color)' }} 
+                    onClick={() => deletePreset(preset.id)}
+                    title="Delete Preset"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              
+              <button className="primary-btn" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem', marginLeft: '0.5rem' }} onClick={saveCurrentAsPreset}>+ Save Custom Preset</button>
               
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <label style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Direction:</label>
