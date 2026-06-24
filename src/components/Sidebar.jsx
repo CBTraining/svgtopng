@@ -76,6 +76,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
         { to: '/pdf-image-extractor', icon: DocumentArrowDownIcon, label: 'PDF Image Extractor' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
+        { to: '/shape-generator', icon: SparklesIcon, label: 'Shape Generator' },
         { to: '/svg-converter', icon: CommandLineIcon, label: 'SVG Converter' }
       ]
     },

@@ -25,6 +25,7 @@ import DragDropOverlay from './components/DragDropOverlay';
 
 import PdfImageExtractor from './pages/PdfImageExtractor';
 import AiTextAssistant from './pages/AiTextAssistant';
+import ShapeGenerator from './pages/ShapeGenerator';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -477,6 +478,7 @@ function App() {
               <Route path="/ai-text" element={<AiTextAssistant />} />
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
+              <Route path="/shape-generator" element={<ShapeGenerator />} />
             </Routes>
           </MainContentWrapper>
           
