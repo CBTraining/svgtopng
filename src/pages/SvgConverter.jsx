@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
 
 export default function SvgConverter() {
-  const [svgText, setSvgText] = useState('');
+  const location = useLocation();
+  const [svgText, setSvgText] = useState(location.state?.svgText || '');
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [aspectRatio, setAspectRatio] = useState(1);
@@ -17,6 +19,14 @@ export default function SvgConverter() {
   const [gradEnd, setGradEnd] = useState('#3b82f6');
   const [gradDirection, setGradDirection] = useState('to-bottom-right');
   const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.svgText) {
+      setSvgText(location.state.svgText);
+      // Clear state so a refresh doesn't keep reloading it if unwanted
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.svgText]);
 
   useEffect(() => {
     if (!svgText.trim() || !svgText.includes('<svg')) return;
