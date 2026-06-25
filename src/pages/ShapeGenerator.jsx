@@ -58,6 +58,9 @@ export default function ShapeGenerator() {
     const saved = localStorage.getItem('sg_blurRadius');
     return saved !== null ? Number(saved) : 0;
   });
+  const [glowMode, setGlowMode] = useState(() => {
+    return localStorage.getItem('sg_glowMode') === 'true';
+  });
 
   const [tintMode, setTintMode] = useState(() => {
     return localStorage.getItem('sg_tintMode') || 'gradient';
@@ -87,11 +90,12 @@ export default function ShapeGenerator() {
     localStorage.setItem('sg_shapeHeight', shapeHeight);
     localStorage.setItem('sg_borderRadius', borderRadius);
     localStorage.setItem('sg_blurRadius', blurRadius);
+    localStorage.setItem('sg_glowMode', glowMode);
     localStorage.setItem('sg_tintMode', tintMode);
     localStorage.setItem('sg_solidColor', solidColor);
     localStorage.setItem('sg_gradStops', JSON.stringify(gradStops));
     localStorage.setItem('sg_gradDirection', gradDirection);
-  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStops, gradDirection]);
+  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, glowMode, tintMode, solidColor, gradStops, gradDirection]);
 
   useEffect(() => {
     localStorage.setItem('sg_savedPresets', JSON.stringify(savedPresets));
@@ -111,12 +115,6 @@ export default function ShapeGenerator() {
     const ctx = canvas.getContext('2d');
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (blurRadius > 0) {
-      ctx.filter = `blur(${blurRadius}px)`;
-    } else {
-      ctx.filter = 'none';
-    }
 
     if (tintMode === 'solid') {
       ctx.fillStyle = solidColor;
@@ -146,9 +144,22 @@ export default function ShapeGenerator() {
     const x = padding;
     const y = padding;
     
-    ctx.beginPath();
-    ctx.roundRect(x, y, shapeWidth, shapeHeight, borderRadius);
-    ctx.fill();
+    const drawPath = () => {
+      ctx.beginPath();
+      ctx.roundRect(x, y, shapeWidth, shapeHeight, borderRadius);
+      ctx.fill();
+    };
+
+    if (glowMode && blurRadius > 0) {
+      ctx.filter = `blur(${blurRadius}px)`;
+      drawPath();
+      
+      ctx.filter = 'none';
+      drawPath();
+    } else {
+      ctx.filter = blurRadius > 0 ? `blur(${blurRadius}px)` : 'none';
+      drawPath();
+    }
 
     ctx.filter = 'none';
 
@@ -157,7 +168,7 @@ export default function ShapeGenerator() {
     setActualWidth(trimmed.width);
     setActualHeight(trimmed.height);
     setPreviewUrl(trimmed.toDataURL('image/png'));
-  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, tintMode, solidColor, gradStops, gradDirection]);
+  }, [shapeWidth, shapeHeight, borderRadius, blurRadius, glowMode, tintMode, solidColor, gradStops, gradDirection]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -320,6 +331,10 @@ export default function ShapeGenerator() {
               <input type="number" min="0" max="500" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} className="text-input" style={{ width: '80px', padding: '0.2rem 0.5rem' }} />
             </div>
             <input type="range" min="0" max="200" step="1" value={blurRadius} onChange={e => setBlurRadius(Number(e.target.value))} style={{ width: '100%' }} />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input type="checkbox" checked={glowMode} onChange={e => setGlowMode(e.target.checked)} style={{ accentColor: 'var(--accent-color)', width: '16px', height: '16px' }} />
+              Keep shape solid over blur (Glow Effect)
+            </label>
           </div>
         </div>
 
