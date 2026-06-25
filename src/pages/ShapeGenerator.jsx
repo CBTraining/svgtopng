@@ -193,9 +193,10 @@ export default function ShapeGenerator() {
     setTintMode('gradient');
     setGradStops([
       { color: '#4285F4', position: 0 },
-      { color: '#EA4335', position: 0.33 },
-      { color: '#FBBC04', position: 0.66 },
-      { color: '#34A853', position: 1 }
+      { color: '#4285F4', position: 0.4 },
+      { color: '#34A853', position: 0.6 },
+      { color: '#FBBC04', position: 0.8 },
+      { color: '#EA4335', position: 0.9 }
     ]);
   };
 
