@@ -125,6 +125,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       } else if (action === 'compress-video') {
         addSlot('video-compressor', { id: crypto.randomUUID(), videoFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/video-compressor');
+      } else if (action === 'extract-frame') {
+        navigate('/video-frame-extractor', { state: { videoFile: file } });
       }
     }
   };
@@ -170,6 +172,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
         )}
         {dragType === 'video' && (
           <>
+            <Card title="Extract Frame" icon={<FilmIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="extract-frame" />
             <Card title="Convert to GIF" icon={<GifIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="convert-gif" />
             <Card title="Compress Video" icon={<FilmIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="compress-video" />
           </>
