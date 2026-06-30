@@ -86,6 +86,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
       items: [
         { to: '/video-compressor', icon: FilmIcon, label: 'Video Compressor' },
         { to: '/video-to-gif', icon: GifIcon, label: 'Video to GIF' },
+        { to: '/video-frame-extractor', icon: FilmIcon, label: 'Video Frame Extractor' },
         { to: '/lottie-to-gif', icon: ScissorsIcon, label: 'Lottie to GIF' }
       ]
     },

@@ -26,6 +26,7 @@ import DragDropOverlay from './components/DragDropOverlay';
 import PdfImageExtractor from './pages/PdfImageExtractor';
 import AiTextAssistant from './pages/AiTextAssistant';
 import ShapeGenerator from './pages/ShapeGenerator';
+import VideoFrameExtractor from './pages/VideoFrameExtractor';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -479,6 +480,7 @@ function App() {
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
               <Route path="/shape-generator" element={<ShapeGenerator />} />
+              <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
             </Routes>
           </MainContentWrapper>
           
