@@ -16,11 +16,13 @@ export default function VideoFrameExtractor() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const location = useLocation();
+  const initFromState = useRef(false);
 
   // Handle incoming file from drag-drop overlay
   useEffect(() => {
-    if (location.state?.videoFile && !videoFile && !videoUrl) {
+    if (location.state?.videoFile && !initFromState.current) {
       const file = location.state.videoFile;
+      initFromState.current = true;
       setVideoFile(file);
       setVideoUrl(URL.createObjectURL(file));
       setIsLoading(true);
@@ -28,7 +30,7 @@ export default function VideoFrameExtractor() {
       // Clear state so it doesn't trigger again on refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, videoFile, videoUrl]);
+  }, [location.state]);
 
   // Clean up object URL when unmounting or changing file
   useEffect(() => {
