@@ -256,10 +256,9 @@ ${bgImageUrl ? `
         <h1>Component Generator</h1>
       </div>
 
-      <div className="editor-layout" style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem', alignItems: 'start' }}>
+      <div className="editor-layout" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+  {/* Preview Area */}
         
-        {/* Preview Area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="checkerboard-bg" style={{ 
             borderRadius: '16px', 
             minHeight: '500px', 
@@ -278,44 +277,12 @@ ${bgImageUrl ? `
                 <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} />
               )}
             </div>
-          </div>
 
-          {/* Code Output */}
-          <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <button 
-                className="btn" 
-                onClick={handleCopyImage} 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
-              >
-                {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
-                {copyImageSuccess ? 'Copied Image!' : 'Copy Image'}
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleCopyCode} 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
-              >
-                {copySuccess ? <Check style={{width: '16px', height: '16px'}} /> : <ClipboardDocumentIcon style={{width: '16px', height: '16px'}} />}
-                {copySuccess ? 'Copied Code!' : 'Copy Code'}
-              </button>
-            </div>
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>HTML & CSS Output</h3>
-            
-            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-              <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
-              {cssCode}{'\n'}
-              <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
-              {htmlCode}
-            </div>
-          </div>
-        </div>
-
-        {/* Controls Area */}
-        <div className="glass-panel" style={{ padding: '1.5rem', position: 'sticky', top: '2rem', maxHeight: 'calc(100vh - 4rem)', overflowY: 'auto' }}>
+  {/* Controls Area */}
+        <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Properties</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'start' }}>
             
             <div className="control-group">
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
@@ -490,7 +457,37 @@ ${bgImageUrl ? `
           </div>
         </div>
 
-      </div>
+  {/* Code Output */}
+          <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className="btn" 
+                onClick={handleCopyImage} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
+              >
+                {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
+                {copyImageSuccess ? 'Copied Image!' : 'Copy Image'}
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleCopyCode} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
+              >
+                {copySuccess ? <Check style={{width: '16px', height: '16px'}} /> : <ClipboardDocumentIcon style={{width: '16px', height: '16px'}} />}
+                {copySuccess ? 'Copied Code!' : 'Copy Code'}
+              </button>
+            </div>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>HTML & CSS Output</h3>
+            
+            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
+              {cssCode}{'\n'}
+              <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
+              {htmlCode}
+            </div>
+          </div>
+        </div>
+</div>
     </div>
   );
 }
