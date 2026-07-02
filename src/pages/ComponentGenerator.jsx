@@ -12,6 +12,7 @@ export default function ComponentGenerator() {
   const [backgroundColor, setBackgroundColor] = useState('transparent');
   const [glowHeight, setGlowHeight] = useState(30);
   const [glowBlur, setGlowBlur] = useState(15);
+  const [enableLuminance, setEnableLuminance] = useState(true);
   const [hoverAnimations, setHoverAnimations] = useState({
     float: false,
     pulse: false,
@@ -153,6 +154,24 @@ ${bgImageUrl ? `
   background-color: ${bgTint};
 }
 ` : ''}
+${enableLuminance ? `
+.luminance-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle 200px at var(--mouse-x, -200px) var(--mouse-y, -200px),
+    rgba(255, 255, 255, 0.08),
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 3;
+}
+.glow-card:hover .luminance-overlay {
+  opacity: 1;
+}` : ''}
+
 .glow-card-icon, .glow-card-content {
   position: relative;
   z-index: 3;
@@ -192,7 +211,7 @@ ${bgImageUrl ? `
 
   const htmlCode = iconLink.trim() ? `
 <a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}<div class="glow-card-icon">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
     ${iconSvg.trim().split('\n').join('\n    ')}
   </div>
   <div class="glow-card-content">
@@ -201,7 +220,7 @@ ${bgImageUrl ? `
   </div>
 </a>`.trim() : `
 <div class="glow-card">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}<div class="glow-card-icon">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
     ${iconSvg.trim().split('\n').join('\n    ')}
   </div>
   <div class="glow-card-content">
@@ -283,19 +302,19 @@ ${bgImageUrl ? `
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Properties</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '700px', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
             
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
               <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
               <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 4' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon SVG Code</label>
               <textarea 
                 className="input-field" 
@@ -305,7 +324,7 @@ ${bgImageUrl ? `
               />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 4' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon Link URL (Optional)</label>
               <input 
                 type="url" 
@@ -317,7 +336,7 @@ ${bgImageUrl ? `
               />
             </div>
 
-            <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+            <div className="control-group" style={{ gridColumn: 'span 1', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Max Width</label>
                 <input type="number" className="input-field" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
@@ -325,7 +344,7 @@ ${bgImageUrl ? `
               <input type="range" min="100" max="1000" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Min Height</label>
                 <input type="number" className="input-field" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
@@ -333,7 +352,7 @@ ${bgImageUrl ? `
               <input type="range" min="50" max="800" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
             </div>
             
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Border Radius</label>
                 <input type="number" className="input-field" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
@@ -341,7 +360,7 @@ ${bgImageUrl ? `
               <input type="range" min="0" max="200" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
             </div>
 
-            <div className="control-group" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label>Inner Glow Color</label>
               <input 
                 type="color" 
@@ -351,7 +370,7 @@ ${bgImageUrl ? `
               />
             </div>
             
-            <div className="control-group" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <label>Background Color</label>
               <input 
                 type="text" 
@@ -362,12 +381,12 @@ ${bgImageUrl ? `
               />
             </div>
 
-            <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <label style={{ display: 'block', marginBottom: '1rem' }}>Bottom Glow Colors</label>
               <GradientEditor stops={gradStops} onChange={setGradStops} />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Glow Height</label>
                 <input type="number" className="input-field" value={glowHeight} onChange={e => setGlowHeight(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
@@ -375,7 +394,7 @@ ${bgImageUrl ? `
               <input type="range" min="10" max="150" value={glowHeight} onChange={e => setGlowHeight(Number(e.target.value))} />
             </div>
 
-            <div className="control-group">
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Glow Blur Radius</label>
                 <input type="number" className="input-field" value={glowBlur} onChange={e => setGlowBlur(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
@@ -383,7 +402,7 @@ ${bgImageUrl ? `
               <input type="range" min="0" max="100" value={glowBlur} onChange={e => setGlowBlur(Number(e.target.value))} />
             </div>
 
-            <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Background Image</label>
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
                 <input 
@@ -430,7 +449,12 @@ ${bgImageUrl ? `
               )}
             </div>
 
-            <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+<div className="control-group" style={{ gridColumn: 'span 4', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
+              <label style={{ cursor: 'pointer', fontSize: '0.95rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance Effect</label>
+            </div>
+
+            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <label style={{ display: 'block', marginBottom: '1rem' }}>Hover Animations (Mix & Match)</label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                 {Object.keys(hoverAnimations).map(animKey => (
