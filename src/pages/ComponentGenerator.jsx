@@ -283,7 +283,7 @@ ${bgImageUrl ? `
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Properties</h2>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '700px', margin: '0 auto' }}>
             
             <div className="control-group">
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
