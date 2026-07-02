@@ -277,6 +277,7 @@ ${bgImageUrl ? `
                 <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} />
               )}
             </div>
+          </div>
 
   {/* Controls Area */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
@@ -487,7 +488,6 @@ ${bgImageUrl ? `
             </div>
           </div>
         </div>
-</div>
     </div>
   );
 }
