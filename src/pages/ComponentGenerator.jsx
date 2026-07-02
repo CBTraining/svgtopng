@@ -154,6 +154,7 @@ export default function ComponentGenerator() {
       const blob = await toBlob(previewRef.current, {
         width: previewRef.current.offsetWidth + 100,
         height: previewRef.current.offsetHeight + 100,
+        skipFonts: true, // Fix for SecurityError: Failed to read the 'cssRules' property
         style: {
           display: 'flex',
           alignItems: 'center',
