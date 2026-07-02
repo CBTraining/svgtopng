@@ -256,7 +256,7 @@ ${bgImageUrl ? `
         <h1>Component Generator</h1>
       </div>
 
-      <div className="editor-layout" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
   {/* Preview Area */}
         
           <div className="checkerboard-bg" style={{ 
@@ -283,7 +283,7 @@ ${bgImageUrl ? `
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Properties</h2>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
             <div className="control-group">
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
