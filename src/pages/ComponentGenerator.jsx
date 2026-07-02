@@ -35,6 +35,58 @@ export default function ComponentGenerator() {
 </svg>`);
   const [iconLink, setIconLink] = useState('');
 
+  const [presets, setPresets] = useState({});
+  const [presetName, setPresetName] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('componentGeneratorPresets');
+    if (saved) {
+      try { setPresets(JSON.parse(saved)); } catch (e) {}
+    }
+  }, []);
+
+  const savePreset = () => {
+    if (!presetName.trim()) return alert("Enter a preset name");
+    const newPresets = {
+      ...presets,
+      [presetName]: {
+        maxWidth, minHeight, borderRadius, innerShadowColor, backgroundColor,
+        glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
+        bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
+        iconSvg, iconLink, gradStops
+      }
+    };
+    setPresets(newPresets);
+    localStorage.setItem('componentGeneratorPresets', JSON.stringify(newPresets));
+    setPresetName(''); // Clear input after save
+  };
+
+  const loadPreset = (name) => {
+    if (!name) return;
+    const p = presets[name];
+    if (!p) return;
+    if (p.maxWidth !== undefined) setMaxWidth(p.maxWidth);
+    if (p.minHeight !== undefined) setMinHeight(p.minHeight);
+    if (p.borderRadius !== undefined) setBorderRadius(p.borderRadius);
+    if (p.innerShadowColor !== undefined) setInnerShadowColor(p.innerShadowColor);
+    if (p.backgroundColor !== undefined) setBackgroundColor(p.backgroundColor);
+    if (p.glowHeight !== undefined) setGlowHeight(p.glowHeight);
+    if (p.glowBlur !== undefined) setGlowBlur(p.glowBlur);
+    if (p.enableLuminance !== undefined) setEnableLuminance(p.enableLuminance);
+    if (p.hoverAnimations !== undefined) setHoverAnimations(p.hoverAnimations);
+    if (p.animIntensity !== undefined) setAnimIntensity(p.animIntensity);
+    if (p.bgImageUrl !== undefined) setBgImageUrl(p.bgImageUrl);
+    if (p.bgBrightness !== undefined) setBgBrightness(p.bgBrightness);
+    if (p.bgContrast !== undefined) setBgContrast(p.bgContrast);
+    if (p.bgTint !== undefined) setBgTint(p.bgTint);
+    if (p.cardTitle !== undefined) setCardTitle(p.cardTitle);
+    if (p.cardSubtitle !== undefined) setCardSubtitle(p.cardSubtitle);
+    if (p.iconSvg !== undefined) setIconSvg(p.iconSvg);
+    if (p.iconLink !== undefined) setIconLink(p.iconLink);
+    if (p.gradStops !== undefined) setGradStops(p.gradStops);
+  };
+
+
   const previewRef = useRef(null);
   
   const [gradStops, setGradStops] = useState([
@@ -302,6 +354,18 @@ ${enableLuminance ? `
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
           <h2 style={{ marginTop: 0, marginBottom: '1.5rem', fontSize: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>Properties</h2>
           
+
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
+            <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>Presets:</span>
+            <input type="text" className="input-field" placeholder="New Preset Name" value={presetName} onChange={e => setPresetName(e.target.value)} style={{ width: '200px', padding: '0.5rem' }} />
+            <button className="btn" onClick={savePreset}>Save</button>
+            <div style={{ flex: 1 }}></div>
+            <select className="input-field" style={{ padding: '0.5rem', width: '200px' }} onChange={e => loadPreset(e.target.value)} value="">
+              <option value="" disabled>Load Preset...</option>
+              {Object.keys(presets).map(name => <option key={name} value={name}>{name}</option>)}
+            </select>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
             
             <div className="control-group" style={{ gridColumn: 'span 2' }}>
