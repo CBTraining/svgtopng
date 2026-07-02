@@ -24,7 +24,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
 
 import PdfImageExtractor from './pages/PdfImageExtractor';
-import AiTextAssistant from './pages/AiTextAssistant';
 import ShapeGenerator from './pages/ShapeGenerator';
 import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
