@@ -261,10 +261,6 @@ ${enableLuminance ? `
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: ${iconSize + 16}px;
-  height: ${iconSize + 16}px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
 }
 
 .glow-card-icon svg {
