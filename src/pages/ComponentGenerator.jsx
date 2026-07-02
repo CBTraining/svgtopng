@@ -174,7 +174,7 @@ export default function ComponentGenerator() {
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* Allows stacking if content doesn't fit */
   gap: 16px;
   padding: 24px;
 }
@@ -292,10 +292,11 @@ ${enableLuminance ? `
 
 const iconContent = iconType === 'svg' 
     ? iconSvg.trim().split('\\n').join('\\n    ')
-    : `<span class="material-symbols-rounded" style="font-size: ${iconSize}px; color: white; font-variation-settings: 'FILL' ${iconFill ? 1 : 0};">${iconName}</span>`;
+    : `<span class="material-symbols-outlined" style="font-size: 24px; color: white;">${iconName}</span>`;
 
   const materialLink = iconType === 'material' 
-    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />\n` 
+    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+` 
     : '';
 
   const jsSnippet = enableLuminance ? `
@@ -587,6 +588,39 @@ ${materialLink}<div class="glow-card">
                 </div>
               </div>
             </div>
+</div>
+        </div>
+
+  {/* Code Output */}
+          <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className="btn" 
+                onClick={handleCopyImage} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
+              >
+                {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
+                {copyImageSuccess ? 'Copied Image!' : 'Copy Image'}
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleCopyCode} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
+              >
+                {copySuccess ? <Check style={{width: '16px', height: '16px'}} /> : <ClipboardDocumentIcon style={{width: '16px', height: '16px'}} />}
+                {copySuccess ? 'Copied Code!' : 'Copy Code'}
+              </button>
+            </div>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>HTML & CSS Output</h3>
+            
+            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+              <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
+              {cssCode}{'\n'}
+              <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
+              {htmlCode}
+            </div>
           </div>
-
-
+        </div>
+    </div>
+  );
+}
