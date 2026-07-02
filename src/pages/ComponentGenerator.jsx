@@ -22,7 +22,11 @@ export default function ComponentGenerator() {
     tilt: false,
     shiftRight: false,
     jiggle: false,
-    glowFlash: false
+    glowFlash: false,
+    colorCycle: false,
+    outerGlow: false,
+    shake: false,
+    bounce: false
   });
   const [animIntensity, setAnimIntensity] = useState(1.0);
 
@@ -36,6 +40,9 @@ export default function ComponentGenerator() {
   <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clip-rule="evenodd" />
 </svg>`);
   const [iconLink, setIconLink] = useState('');
+
+  const [showText, setShowText] = useState(true);
+  const [showIcon, setShowIcon] = useState(true);
 
   const [iconType, setIconType] = useState('svg');
   const [iconName, setIconName] = useState('star');
@@ -63,7 +70,8 @@ export default function ComponentGenerator() {
         maxWidth, maxWidthUnit, minHeight, minHeightUnit, borderRadius, innerShadowColor, backgroundColor,
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
-        iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill
+        iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill,
+        showText, showIcon
       }
     };
     setPresets(newPresets);
@@ -85,7 +93,7 @@ export default function ComponentGenerator() {
     if (p.glowHeight !== undefined) setGlowHeight(p.glowHeight);
     if (p.glowBlur !== undefined) setGlowBlur(p.glowBlur);
     if (p.enableLuminance !== undefined) setEnableLuminance(p.enableLuminance);
-    if (p.hoverAnimations !== undefined) setHoverAnimations(p.hoverAnimations);
+    if (p.hoverAnimations !== undefined) setHoverAnimations(prev => ({...prev, ...p.hoverAnimations}));
     if (p.animIntensity !== undefined) setAnimIntensity(p.animIntensity);
     if (p.bgImageUrl !== undefined) setBgImageUrl(p.bgImageUrl);
     if (p.bgBrightness !== undefined) setBgBrightness(p.bgBrightness);
@@ -100,7 +108,8 @@ export default function ComponentGenerator() {
     if (p.iconName !== undefined) setIconName(p.iconName);
     if (p.iconSize !== undefined) setIconSize(p.iconSize);
     if (p.iconFill !== undefined) setIconFill(p.iconFill);
-
+    if (p.showText !== undefined) setShowText(p.showText);
+    if (p.showIcon !== undefined) setShowIcon(p.showIcon);
 
     if (p.gradStops !== undefined) setGradStops(p.gradStops);
   };
@@ -131,12 +140,21 @@ export default function ComponentGenerator() {
   if (hoverAnimations.shiftRight) transformStr += `translateX(${8 * animIntensity}px) `;
 
   const hasTransform = transformStr.trim().length > 0;
+  let cardAnimations = [];
+  if (hoverAnimations.jiggle) cardAnimations.push(`jiggle 0.3s ease-in-out infinite`);
+  if (hoverAnimations.shake) cardAnimations.push(`shake 0.4s ease-in-out infinite`);
+  if (hoverAnimations.bounce) cardAnimations.push(`bounce 0.5s ease-in-out infinite`);
+  if (hoverAnimations.colorCycle) cardAnimations.push(`colorCycle ${5 / animIntensity}s linear infinite`);
   
-  if (hasTransform || hoverAnimations.float || hoverAnimations.jiggle) {
+  if (hasTransform || hoverAnimations.float || hoverAnimations.outerGlow || cardAnimations.length > 0) {
     animationCss += `\n.glow-card:hover {`;
     if (hasTransform) animationCss += `\n  transform: ${transformStr.trim()};`;
     if (hoverAnimations.float) animationCss += `\n  box-shadow: \n    0 ${10 * animIntensity}px ${20 * animIntensity}px rgba(0,0,0,0.5);`;
-    if (hoverAnimations.jiggle) animationCss += `\n  animation: jiggle 0.3s ease-in-out infinite;`;
+    if (hoverAnimations.outerGlow) {
+      const glowCol = sortedStops.length > 0 ? sortedStops[0].color : 'rgba(255,255,255,0.5)';
+      animationCss += `\n  box-shadow: \n    0 0 ${40 * animIntensity}px ${glowCol};`;
+    }
+    if (cardAnimations.length > 0) animationCss += `\n  animation: ${cardAnimations.join(', ')};`;
     animationCss += `\n}`;
   }
 
@@ -147,20 +165,42 @@ export default function ComponentGenerator() {
   100% { transform: rotate(${-3 * animIntensity}deg); }
 }`;
   }
+  
+  if (hoverAnimations.shake) {
+    animationCss += `\n@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(${-4 * animIntensity}px); }
+  75% { transform: translateX(${4 * animIntensity}px); }
+}`;
+  }
+  
+  if (hoverAnimations.bounce) {
+    animationCss += `\n@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(${-10 * animIntensity}px); }
+}`;
+  }
+
+  if (hoverAnimations.colorCycle) {
+    animationCss += `\n@keyframes colorCycle {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}`;
+  }
 
   if (hoverAnimations.pulse || hoverAnimations.glowFlash || hoverAnimations.float) {
     animationCss += `\n.glow-card:hover::after {`;
     if (hoverAnimations.float) animationCss += `\n  opacity: 0.8;`;
-    if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
+    if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px) saturate(${100 + (glowBlur * 2)}%);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
     if (hoverAnimations.glowFlash) animationCss += `\n  animation: glowFlash 1s infinite;`;
     animationCss += `\n}`;
   }
 
   if (hoverAnimations.glowFlash) {
     animationCss += `\n@keyframes glowFlash {
-  0% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
-  50% { filter: blur(${glowBlur + (15 * animIntensity)}px); height: ${glowHeight + (15 * animIntensity)}px; opacity: 1; }
-  100% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
+  0% { filter: blur(${glowBlur}px) saturate(${100 + (glowBlur * 2)}%); height: ${glowHeight}px; opacity: 0.5; }
+  50% { filter: blur(${glowBlur + (15 * animIntensity)}px) saturate(${100 + (glowBlur * 2)}%); height: ${glowHeight + (15 * animIntensity)}px; opacity: 1; }
+  100% { filter: blur(${glowBlur}px) saturate(${100 + (glowBlur * 2)}%); height: ${glowHeight}px; opacity: 0.5; }
 }`;
   }
 
@@ -311,14 +351,13 @@ const iconContent = iconType === 'svg'
 </script>` : '';
 
   const innerHtml = `
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
+  ${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${showIcon ? `<div class="glow-card-icon">
     ${iconContent}
-  </div>
-  <div class="glow-card-content">
-    <div class="glow-card-title">${cardTitle}</div>
-    <div class="glow-card-subtitle">${cardSubtitle}</div>
-  </div>
-  `.trim();
+  </div>\n  ` : ''}${showText ? `<div class="glow-card-content">
+    <h3 class="glow-card-title">${cardTitle}</h3>
+    <p class="glow-card-subtitle">${cardSubtitle}</p>
+  </div>` : ''}
+`.trim();
 
   const htmlCode = iconLink.trim() ? `
 ${materialLink}<a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
@@ -418,48 +457,60 @@ ${materialLink}<div class="glow-card">
             
             {/* Column 1: Content & Link */}
             <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
-                <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                <input type="checkbox" checked={showText} onChange={e => setShowText(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
+                <label style={{ fontWeight: 'bold' }}>Enable Text</label>
               </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
-                <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Click Link URL (Optional)</label>
-                <input type="url" className="input-field" placeholder="https://..." value={iconLink} onChange={e => setIconLink(e.target.value)} style={{ width: '100%' }} />
+              <div style={{ opacity: showText ? 1 : 0.5, pointerEvents: showText ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
+                  <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
+                  <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Click Link URL (Optional)</label>
+                  <input type="url" className="input-field" placeholder="https://..." value={iconLink} onChange={e => setIconLink(e.target.value)} style={{ width: '100%' }} />
+                </div>
               </div>
             </div>
 
             {/* Column 2: Icon Settings */}
             <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label>Icon Type</label>
-                  <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
-                    <option value="svg">SVG Code</option>
-                    <option value="material">Google Font (Material)</option>
-                  </select>
-                </div>
-                {iconType === 'svg' ? (
-                  <textarea className="input-field" value={iconSvg} onChange={e => setIconSvg(e.target.value)} style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <input type="text" className="input-field" placeholder="e.g. star, home" value={iconName} onChange={e => setIconName(e.target.value)} style={{ width: '100%' }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <input type="checkbox" checked={iconFill} onChange={e => setIconFill(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
-                      <label style={{ fontSize: '0.85rem' }}>Filled Icon</label>
-                    </div>
-                  </div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                <input type="checkbox" checked={showIcon} onChange={e => setShowIcon(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
+                <label style={{ fontWeight: 'bold' }}>Enable Icon</label>
               </div>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label>Icon Size</label>
-                  <input type="number" className="input-field" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} style={{ width: '60px', padding: '0.25rem' }} />
+              <div style={{ opacity: showIcon ? 1 : 0.5, pointerEvents: showIcon ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Icon Type</label>
+                    <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
+                      <option value="svg">SVG Code</option>
+                      <option value="material">Google Font (Material)</option>
+                    </select>
+                  </div>
+                  {iconType === 'svg' ? (
+                    <textarea className="input-field" value={iconSvg} onChange={e => setIconSvg(e.target.value)} style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} />
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <input type="text" className="input-field" placeholder="e.g. star, home" value={iconName} onChange={e => setIconName(e.target.value)} style={{ width: '100%' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input type="checkbox" checked={iconFill} onChange={e => setIconFill(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
+                        <label style={{ fontSize: '0.85rem' }}>Filled Icon</label>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <input type="range" min="16" max="100" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} />
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Icon Size</label>
+                    <input type="number" className="input-field" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} style={{ width: '60px', padding: '0.25rem' }} />
+                  </div>
+                  <input type="range" min="16" max="100" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} />
+                </div>
               </div>
             </div>
 
@@ -588,15 +639,45 @@ ${materialLink}<div class="glow-card">
                   <label>Hover Effects</label>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Intensity: {animIntensity.toFixed(1)}x</span>
                 </div>
-                <input type="range" min="0.1" max="3" step="0.1" value={animIntensity} onChange={e => setAnimIntensity(Number(e.target.value))} style={{ marginBottom: '1rem' }} />
+                <input type="range" min="0.1" max="10" step="0.1" value={animIntensity} onChange={e => setAnimIntensity(Number(e.target.value))} style={{ marginBottom: '1rem' }} />
                 
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {Object.entries({ float: 'Float', pulse: 'Pulse', expand: 'Expand', tilt: 'Tilt', shiftRight: 'Shift', jiggle: 'Jiggle', glowFlash: 'Flash' }).map(([key, label]) => (
-                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', background: hoverAnimations[key] ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', transition: 'all 0.2s ease' }}>
-                      <input type="checkbox" style={{ display: 'none' }} checked={hoverAnimations[key]} onChange={e => setHoverAnimations({...hoverAnimations, [key]: e.target.checked})} />
-                      {label}
-                    </label>
-                  ))}
+                  {Object.entries({ 
+                    float: 'Float', 
+                    pulse: 'Pulse', 
+                    expand: 'Expand', 
+                    tilt: 'Tilt', 
+                    shiftRight: 'Shift', 
+                    jiggle: 'Jiggle', 
+                    shake: 'Shake',
+                    bounce: 'Bounce',
+                    glowFlash: 'Flash',
+                    colorCycle: 'Color Cycle',
+                    outerGlow: 'Outer Glow'
+                  }).map(([key, label]) => {
+                    const isSelected = hoverAnimations[key];
+                    return (
+                      <label key={key} style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: '6px', 
+                        cursor: 'pointer', 
+                        background: isSelected ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)',
+                        border: isSelected ? '1px solid rgba(255,255,255,0.8)' : '1px solid transparent',
+                        color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.7)',
+                        padding: '6px 12px', 
+                        borderRadius: '16px', 
+                        fontSize: '0.8rem', 
+                        transition: 'all 0.2s ease',
+                        fontWeight: isSelected ? '600' : '400',
+                        boxShadow: isSelected ? '0 0 10px rgba(255,255,255,0.2)' : 'none'
+                      }}>
+                        <input type="checkbox" style={{ display: 'none' }} checked={isSelected} onChange={e => setHoverAnimations({...hoverAnimations, [key]: e.target.checked})} />
+                        {isSelected && <Check style={{ width: '12px', height: '12px' }} />}
+                        {label}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             </div>
