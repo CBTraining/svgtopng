@@ -26,6 +26,7 @@ import DragDropOverlay from './components/DragDropOverlay';
 import PdfImageExtractor from './pages/PdfImageExtractor';
 import AiTextAssistant from './pages/AiTextAssistant';
 import ShapeGenerator from './pages/ShapeGenerator';
+import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
 
 const Home = () => (
@@ -480,6 +481,7 @@ function App() {
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
               <Route path="/shape-generator" element={<ShapeGenerator />} />
+              <Route path="/component-generator" element={<ComponentGenerator />} />
               <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
             </Routes>
           </MainContentWrapper>

@@ -96,7 +96,8 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
         { to: '/qr-generator', icon: QrCodeIcon, label: 'QR Generator' },
         { to: '/json-saver', icon: CodeBracketSquareIcon, label: 'JSON Saver' },
         { to: '/timezone-converter', icon: ClockIcon, label: 'Timezone Converter' },
-        { to: '/html-preview', icon: WindowIcon, label: 'HTML Preview' }
+        { to: '/html-preview', icon: WindowIcon, label: 'HTML Preview' },
+        { to: '/component-generator', icon: CodeBracketSquareIcon, label: 'Component Generator' }
       ]
     }
   ];
