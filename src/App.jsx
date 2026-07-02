@@ -109,7 +109,7 @@ function App() {
   // Track mouse position for glowing card effect
   useEffect(() => {
     const handleMouseMove = (e) => {
-      const elements = document.querySelectorAll('.glass-panel, .nav-link, .sidebar');
+      const elements = document.querySelectorAll('.glass-panel, .nav-link, .sidebar, .glow-card');
       for (const el of elements) {
         const rect = el.getBoundingClientRect();
         const x = e.clientX - rect.left;

@@ -381,6 +381,11 @@ ${enableLuminance ? `
               />
             </div>
 
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
+              <label style={{ cursor: 'pointer', fontSize: '0.95rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance Effect</label>
+            </div>
+
             <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <label style={{ display: 'block', marginBottom: '1rem' }}>Bottom Glow Colors</label>
               <GradientEditor stops={gradStops} onChange={setGradStops} />
@@ -449,10 +454,7 @@ ${enableLuminance ? `
               )}
             </div>
 
-<div className="control-group" style={{ gridColumn: 'span 4', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
-              <label style={{ cursor: 'pointer', fontSize: '0.95rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance Effect</label>
-            </div>
+
 
             <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <label style={{ display: 'block', marginBottom: '1rem' }}>Hover Animations (Mix & Match)</label>
