@@ -35,6 +35,10 @@ export default function ComponentGenerator() {
 </svg>`);
   const [iconLink, setIconLink] = useState('');
 
+  const [iconType, setIconType] = useState('svg');
+  const [iconName, setIconName] = useState('star');
+
+
   const [presets, setPresets] = useState({});
   const [presetName, setPresetName] = useState('');
 
@@ -53,7 +57,7 @@ export default function ComponentGenerator() {
         maxWidth, minHeight, borderRadius, innerShadowColor, backgroundColor,
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
-        iconSvg, iconLink, gradStops
+        iconSvg, iconLink, gradStops, iconType, iconName
       }
     };
     setPresets(newPresets);
@@ -83,6 +87,10 @@ export default function ComponentGenerator() {
     if (p.cardSubtitle !== undefined) setCardSubtitle(p.cardSubtitle);
     if (p.iconSvg !== undefined) setIconSvg(p.iconSvg);
     if (p.iconLink !== undefined) setIconLink(p.iconLink);
+
+    if (p.iconType !== undefined) setIconType(p.iconType);
+    if (p.iconName !== undefined) setIconName(p.iconName);
+
     if (p.gradStops !== undefined) setGradStops(p.gradStops);
   };
 
@@ -261,25 +269,51 @@ ${enableLuminance ? `
   margin: 0;
 }${animationCss}`.trim();
 
+const iconContent = iconType === 'svg' 
+    ? iconSvg.trim().split('\\n').join('\\n    ')
+    : `<span class="material-symbols-outlined" style="font-size: 24px; color: white;">${iconName}</span>`;
+
+  const materialLink = iconType === 'material' 
+    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+` 
+    : '';
+
+  const jsSnippet = enableLuminance ? `
+<script>
+  document.querySelectorAll('.glow-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', \`\${x}px\`);
+      card.style.setProperty('--mouse-y', \`\${y}px\`);
+    });
+  });
+</script>` : '';
+
   const htmlCode = iconLink.trim() ? `
-<a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
-    ${iconSvg.trim().split('\n').join('\n    ')}
+${materialLink}<a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>
+  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>
+  ` : ''}<div class="glow-card-icon">
+    ${iconContent}
   </div>
   <div class="glow-card-content">
     <div class="glow-card-title">${cardTitle}</div>
     <div class="glow-card-subtitle">${cardSubtitle}</div>
   </div>
-</a>`.trim() : `
-<div class="glow-card">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
-    ${iconSvg.trim().split('\n').join('\n    ')}
+</a>${jsSnippet}`.trim() : `
+${materialLink}<div class="glow-card">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>
+  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>
+  ` : ''}<div class="glow-card-icon">
+    ${iconContent}
   </div>
   <div class="glow-card-content">
     <div class="glow-card-title">${cardTitle}</div>
     <div class="glow-card-subtitle">${cardSubtitle}</div>
   </div>
-</div>`.trim();
+</div>${jsSnippet}`.trim();
 
   const handleCopyCode = async () => {
     try {
@@ -341,11 +375,12 @@ ${enableLuminance ? `
             boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)'
           }}>
             <style>{cssCode}</style>
+            <div dangerouslySetInnerHTML={{ __html: materialLink }} />
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
               {iconLink.trim() ? (
-                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} style={{ textDecoration: 'none', color: 'inherit' }} />
+                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} />
               ) : (
-                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} />
+                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} />
               )}
             </div>
           </div>
@@ -378,17 +413,34 @@ ${enableLuminance ? `
               <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 4' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon SVG Code</label>
-              <textarea 
-                className="input-field" 
-                value={iconSvg} 
-                onChange={e => setIconSvg(e.target.value)} 
-                style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} 
-              />
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <label>Icon</label>
+                <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
+                  <option value="svg">SVG Code</option>
+                  <option value="material">Google Font (Material)</option>
+                </select>
+              </div>
+              {iconType === 'svg' ? (
+                <textarea 
+                  className="input-field" 
+                  value={iconSvg} 
+                  onChange={e => setIconSvg(e.target.value)} 
+                  style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} 
+                />
+              ) : (
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="e.g. star, home, settings" 
+                  value={iconName} 
+                  onChange={e => setIconName(e.target.value)} 
+                  style={{ width: '100%' }} 
+                />
+              )}
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 4' }}>
+            <div className="control-group" style={{ gridColumn: 'span 2' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon Link URL (Optional)</label>
               <input 
                 type="url" 
