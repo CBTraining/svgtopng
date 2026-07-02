@@ -12,8 +12,21 @@ export default function ComponentGenerator() {
   const [backgroundColor, setBackgroundColor] = useState('transparent');
   const [glowHeight, setGlowHeight] = useState(30);
   const [glowBlur, setGlowBlur] = useState(15);
-  const [hoverAnimation, setHoverAnimation] = useState('none');
-  
+  const [hoverAnimations, setHoverAnimations] = useState({
+    float: false,
+    pulse: false,
+    expand: false,
+    tilt: false,
+    shiftRight: false,
+    jiggle: false,
+    glowFlash: false
+  });
+  const [animIntensity, setAnimIntensity] = useState(1.0);
+
+  const [bgImageUrl, setBgImageUrl] = useState('');
+  const [bgBrightness, setBgBrightness] = useState(100);
+  const [bgContrast, setBgContrast] = useState(100);
+  const [bgTint, setBgTint] = useState('transparent');
   const [cardTitle, setCardTitle] = useState('Content Title');
   const [cardSubtitle, setCardSubtitle] = useState('Content description.');
   const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="color: white;">
@@ -39,58 +52,43 @@ export default function ComponentGenerator() {
   const gradientString = `linear-gradient(\n    90deg, \n    ${sortedStops.map(s => `${s.color} ${Math.round(s.position * 100)}%`).join(',\n    ')}\n  )`;
 
   let animationCss = '';
-  if (hoverAnimation === 'float') {
-    animationCss = `\n
-.glow-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 
-    inset 0 4px 30px ${innerShadowColor},
-    inset 0 0 0 1px ${innerShadowColor},
-    0 10px 20px rgba(0,0,0,0.5);
-}
-.glow-card:hover::before {
-  opacity: 0.8;
+  let transformStr = '';
+  if (hoverAnimations.float) transformStr += `translateY(${-5 * animIntensity}px) `;
+  if (hoverAnimations.expand) transformStr += `scale(${1 + (0.02 * animIntensity)}) `;
+  if (hoverAnimations.tilt) transformStr += `perspective(1000px) rotateX(${2 * animIntensity}deg) rotateY(${-2 * animIntensity}deg) `;
+  if (hoverAnimations.shiftRight) transformStr += `translateX(${8 * animIntensity}px) `;
+
+  const hasTransform = transformStr.trim().length > 0;
+  
+  if (hasTransform || hoverAnimations.float || hoverAnimations.jiggle) {
+    animationCss += `\n.glow-card:hover {`;
+    if (hasTransform) animationCss += `\n  transform: ${transformStr.trim()};`;
+    if (hoverAnimations.float) animationCss += `\n  box-shadow: \n    0 ${10 * animIntensity}px ${20 * animIntensity}px rgba(0,0,0,0.5);`;
+    if (hoverAnimations.jiggle) animationCss += `\n  animation: jiggle 0.3s ease-in-out infinite;`;
+    animationCss += `\n}`;
+  }
+
+  if (hoverAnimations.jiggle) {
+    animationCss += `\n@keyframes jiggle {
+  0% { transform: rotate(${-3 * animIntensity}deg); }
+  50% { transform: rotate(${3 * animIntensity}deg); }
+  100% { transform: rotate(${-3 * animIntensity}deg); }
 }`;
-  } else if (hoverAnimation === 'pulse') {
-    animationCss = `\n
-.glow-card:hover::before {
-  filter: blur(${glowBlur + 10}px);
-  height: ${glowHeight + 10}px;
-}`;
-  } else if (hoverAnimation === 'expand') {
-    animationCss = `\n
-.glow-card:hover {
-  transform: scale(1.02);
-}`;
-  } else if (hoverAnimation === 'tilt') {
-    animationCss = `\n
-.glow-card:hover {
-  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.01);
-}`;
-  } else if (hoverAnimation === 'shift-right') {
-    animationCss = `\n
-.glow-card:hover {
-  transform: translateX(8px);
-}`;
-  } else if (hoverAnimation === 'jiggle') {
-    animationCss = `\n
-@keyframes jiggle {
-  0% { transform: rotate(-3deg); }
-  50% { transform: rotate(3deg); }
-  100% { transform: rotate(-3deg); }
-}
-.glow-card:hover {
-  animation: jiggle 0.3s ease-in-out infinite;
-}`;
-  } else if (hoverAnimation === 'glow-flash') {
-    animationCss = `\n
-@keyframes glowFlash {
+  }
+
+  if (hoverAnimations.pulse || hoverAnimations.glowFlash || hoverAnimations.float) {
+    animationCss += `\n.glow-card:hover::after {`;
+    if (hoverAnimations.float) animationCss += `\n  opacity: 0.8;`;
+    if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
+    if (hoverAnimations.glowFlash) animationCss += `\n  animation: glowFlash 1s infinite;`;
+    animationCss += `\n}`;
+  }
+
+  if (hoverAnimations.glowFlash) {
+    animationCss += `\n@keyframes glowFlash {
   0% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
-  50% { filter: blur(${glowBlur + 15}px); height: ${glowHeight + 15}px; opacity: 1; }
+  50% { filter: blur(${glowBlur + (15 * animIntensity)}px); height: ${glowHeight + (15 * animIntensity)}px; opacity: 1; }
   100% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
-}
-.glow-card:hover::before {
-  animation: glowFlash 1s infinite;
 }`;
   }
 
@@ -101,9 +99,6 @@ export default function ComponentGenerator() {
   min-height: ${minHeight}px;
   background-color: ${backgroundColor};
   border-radius: ${borderRadius}px;
-  box-shadow: 
-    inset 0 4px 30px ${innerShadowColor},
-    inset 0 0 0 1px ${innerShadowColor};
   position: relative;
   overflow: hidden;
   z-index: 1;
@@ -112,6 +107,55 @@ export default function ComponentGenerator() {
   align-items: center;
   gap: 16px;
   padding: 24px;
+}
+
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: 
+    inset 0 4px 30px ${innerShadowColor},
+    inset 0 0 0 1px ${innerShadowColor};
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.glow-card::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: -5%;
+  width: 110%;
+  height: ${glowHeight}px;
+  background: ${gradientString};
+  filter: blur(${glowBlur}px);
+  z-index: 0;
+  opacity: 1;
+  transition: all 0.3s ease;
+}
+
+${bgImageUrl ? `
+.glow-card-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('${bgImageUrl}');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(${bgBrightness}%) contrast(${bgContrast}%);
+  z-index: 1;
+}
+
+.glow-card-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: ${bgTint};
+}
+` : ''}
+.glow-card-icon, .glow-card-content {
+  position: relative;
+  z-index: 3;
 }
 
 .glow-card-icon {
@@ -144,25 +188,11 @@ export default function ComponentGenerator() {
   font-size: 0.9rem;
   opacity: 0.8;
   margin: 0;
-}
-
-.glow-card::before {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: -5%;
-  width: 110%;
-  height: ${glowHeight}px;
-  background: ${gradientString};
-  filter: blur(${glowBlur}px);
-  z-index: -1;
-  opacity: 1;
-  transition: all 0.3s ease;
 }${animationCss}`.trim();
 
   const htmlCode = iconLink.trim() ? `
 <a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
-  <div class="glow-card-icon">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}<div class="glow-card-icon">
     ${iconSvg.trim().split('\n').join('\n    ')}
   </div>
   <div class="glow-card-content">
@@ -171,7 +201,7 @@ export default function ComponentGenerator() {
   </div>
 </a>`.trim() : `
 <div class="glow-card">
-  <div class="glow-card-icon">
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}<div class="glow-card-icon">
     ${iconSvg.trim().split('\n').join('\n    ')}
   </div>
   <div class="glow-card-content">
@@ -386,22 +416,75 @@ export default function ComponentGenerator() {
             </div>
 
             <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Hover Animation</label>
-              <select 
-                className="input-field" 
-                value={hoverAnimation} 
-                onChange={e => setHoverAnimation(e.target.value)}
-                style={{ width: '100%' }}
-              >
-                <option value="none">None</option>
-                <option value="float">Float Up</option>
-                <option value="pulse">Pulse Glow</option>
-                <option value="expand">Expand Scale</option>
-                <option value="tilt">3D Tilt</option>
-                <option value="shift-right">Shift Right</option>
-                <option value="jiggle">Jiggle</option>
-                <option value="glow-flash">Glow Flash</option>
-              </select>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Background Image</label>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Image URL" 
+                  value={bgImageUrl} 
+                  onChange={e => setBgImageUrl(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <label className="btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '0.5rem' }}>
+                  <PhotoIcon width="16" />
+                  Upload
+                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => setBgImageUrl(event.target.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }} />
+                </label>
+              </div>
+
+              {bgImageUrl && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.85rem' }}>Tint Overlay Color</label>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }} onClick={() => setBgTint('transparent')}>Clear</button>
+                      <input type="color" value={bgTint === 'transparent' ? '#000000' : bgTint.substring(0, 7)} onChange={e => setBgTint(e.target.value + '80')} style={{ width: '30px', height: '30px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} title="Picks color at 50% opacity" />
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><label style={{ fontSize: '0.85rem' }}>Brightness</label><span style={{ fontSize: '0.85rem' }}>{bgBrightness}%</span></div>
+                    <input type="range" min="0" max="200" value={bgBrightness} onChange={e => setBgBrightness(Number(e.target.value))} />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><label style={{ fontSize: '0.85rem' }}>Contrast</label><span style={{ fontSize: '0.85rem' }}>{bgContrast}%</span></div>
+                    <input type="range" min="0" max="200" value={bgContrast} onChange={e => setBgContrast(Number(e.target.value))} />
+                  </div>
+                  <button className="btn" style={{ marginTop: '0.5rem' }} onClick={() => setBgImageUrl('')}>Remove Image</button>
+                </div>
+              )}
+            </div>
+
+            <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+              <label style={{ display: 'block', marginBottom: '1rem' }}>Hover Animations (Mix & Match)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                {Object.keys(hoverAnimations).map(animKey => (
+                  <label key={animKey} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={hoverAnimations[animKey]} 
+                      onChange={e => setHoverAnimations(prev => ({ ...prev, [animKey]: e.target.checked }))} 
+                      style={{ accentColor: 'var(--primary-color)' }}
+                    />
+                    {animKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ marginTop: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Animation Intensity</label>
+                  <span style={{ fontSize: '0.9rem' }}>{animIntensity.toFixed(1)}x</span>
+                </div>
+                <input type="range" min="0.1" max="3" step="0.1" value={animIntensity} onChange={e => setAnimIntensity(Number(e.target.value))} />
+              </div>
             </div>
 
           </div>
