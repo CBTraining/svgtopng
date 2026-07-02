@@ -19,6 +19,7 @@ export default function ComponentGenerator() {
   const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: white;">
   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
 </svg>`);
+  const [iconLink, setIconLink] = useState('');
 
   const previewRef = useRef(null);
   
@@ -61,6 +62,36 @@ export default function ComponentGenerator() {
 .glow-card:hover {
   transform: scale(1.02);
 }`;
+  } else if (hoverAnimation === 'tilt') {
+    animationCss = `\n
+.glow-card:hover {
+  transform: perspective(1000px) rotateX(2deg) rotateY(-2deg) scale(1.01);
+}`;
+  } else if (hoverAnimation === 'shift-right') {
+    animationCss = `\n
+.glow-card:hover {
+  transform: translateX(8px);
+}`;
+  } else if (hoverAnimation === 'jiggle') {
+    animationCss = `\n
+@keyframes jiggle {
+  0% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
+  100% { transform: rotate(-3deg); }
+}
+.glow-card:hover {
+  animation: jiggle 0.3s ease-in-out infinite;
+}`;
+  } else if (hoverAnimation === 'glow-flash') {
+    animationCss = `\n
+@keyframes glowFlash {
+  0% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
+  50% { filter: blur(${glowBlur + 15}px); height: ${glowHeight + 15}px; opacity: 1; }
+  100% { filter: blur(${glowBlur}px); height: ${glowHeight}px; opacity: 0.5; }
+}
+.glow-card:hover::before {
+  animation: glowFlash 1s infinite;
+}`;
   }
 
   const cssCode = `
@@ -92,6 +123,22 @@ export default function ComponentGenerator() {
   height: 40px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.glow-card-icon a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.glow-card-icon:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
 .glow-card-content {
@@ -132,7 +179,7 @@ export default function ComponentGenerator() {
   const htmlCode = `
 <div class="glow-card">
   <div class="glow-card-icon">
-    ${iconSvg.trim()}
+    ${iconLink.trim() ? `<a href="${iconLink}" target="_blank" rel="noopener noreferrer">\n      ${iconSvg.trim().split('\\n').join('\\n      ')}\n    </a>` : iconSvg.trim()}
   </div>
   <div class="glow-card-content">
     <div class="glow-card-title">${cardTitle}</div>
@@ -262,6 +309,18 @@ export default function ComponentGenerator() {
               />
             </div>
 
+            <div className="control-group">
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon Link URL (Optional)</label>
+              <input 
+                type="url" 
+                className="input-field" 
+                placeholder="https://..." 
+                value={iconLink} 
+                onChange={e => setIconLink(e.target.value)} 
+                style={{ width: '100%' }} 
+              />
+            </div>
+
             <div className="control-group" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <label>Max Width</label>
@@ -340,6 +399,10 @@ export default function ComponentGenerator() {
                 <option value="float">Float Up</option>
                 <option value="pulse">Pulse Glow</option>
                 <option value="expand">Expand Scale</option>
+                <option value="tilt">3D Tilt</option>
+                <option value="shift-right">Shift Right</option>
+                <option value="jiggle">Jiggle</option>
+                <option value="glow-flash">Glow Flash</option>
               </select>
             </div>
 
