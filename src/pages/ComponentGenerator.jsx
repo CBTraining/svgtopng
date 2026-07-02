@@ -38,6 +38,10 @@ export default function ComponentGenerator() {
   const [iconType, setIconType] = useState('svg');
   const [iconName, setIconName] = useState('star');
 
+  const [iconSize, setIconSize] = useState(40);
+  const [iconFill, setIconFill] = useState(true);
+
+
 
   const [presets, setPresets] = useState({});
   const [presetName, setPresetName] = useState('');
@@ -57,7 +61,7 @@ export default function ComponentGenerator() {
         maxWidth, minHeight, borderRadius, innerShadowColor, backgroundColor,
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
-        iconSvg, iconLink, gradStops, iconType, iconName
+        iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill
       }
     };
     setPresets(newPresets);
@@ -90,6 +94,10 @@ export default function ComponentGenerator() {
 
     if (p.iconType !== undefined) setIconType(p.iconType);
     if (p.iconName !== undefined) setIconName(p.iconName);
+
+    if (p.iconSize !== undefined) setIconSize(p.iconSize);
+    if (p.iconFill !== undefined) setIconFill(p.iconFill);
+
 
     if (p.gradStops !== undefined) setGradStops(p.gradStops);
   };
@@ -166,6 +174,7 @@ export default function ComponentGenerator() {
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 16px;
   padding: 24px;
 }
@@ -180,6 +189,13 @@ export default function ComponentGenerator() {
   z-index: 2;
   pointer-events: none;
   border-radius: inherit;
+  transition: all 0.3s ease;
+}
+
+.glow-card:hover::before {
+  box-shadow: 
+    inset 0 4px 50px ${innerShadowColor},
+    inset 0 0 0 2px ${innerShadowColor};
 }
 
 .glow-card::after {
@@ -242,10 +258,15 @@ ${enableLuminance ? `
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: ${iconSize + 16}px;
+  height: ${iconSize + 16}px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
+}
+
+.glow-card-icon svg {
+  width: ${iconSize}px;
+  height: ${iconSize}px;
 }
 
 .glow-card-content {
@@ -271,11 +292,10 @@ ${enableLuminance ? `
 
 const iconContent = iconType === 'svg' 
     ? iconSvg.trim().split('\\n').join('\\n    ')
-    : `<span class="material-symbols-outlined" style="font-size: 24px; color: white;">${iconName}</span>`;
+    : `<span class="material-symbols-rounded" style="font-size: ${iconSize}px; color: white; font-variation-settings: 'FILL' ${iconFill ? 1 : 0};">${iconName}</span>`;
 
   const materialLink = iconType === 'material' 
-    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-` 
+    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />\n` 
     : '';
 
   const jsSnippet = enableLuminance ? `
@@ -397,140 +417,123 @@ ${materialLink}<div class="glow-card">
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
             
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
-              <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
-              <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Icon</label>
-                <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
-                  <option value="svg">SVG Code</option>
-                  <option value="material">Google Font (Material)</option>
-                </select>
+            {/* Column 1: Content & Link */}
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
+                <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
               </div>
-              {iconType === 'svg' ? (
-                <textarea 
-                  className="input-field" 
-                  value={iconSvg} 
-                  onChange={e => setIconSvg(e.target.value)} 
-                  style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} 
-                />
-              ) : (
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  placeholder="e.g. star, home, settings" 
-                  value={iconName} 
-                  onChange={e => setIconName(e.target.value)} 
-                  style={{ width: '100%' }} 
-                />
-              )}
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Icon Link URL (Optional)</label>
-              <input 
-                type="url" 
-                className="input-field" 
-                placeholder="https://..." 
-                value={iconLink} 
-                onChange={e => setIconLink(e.target.value)} 
-                style={{ width: '100%' }} 
-              />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 1', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Max Width</label>
-                <input type="number" className="input-field" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
+                <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
               </div>
-              <input type="range" min="100" max="1000" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Min Height</label>
-                <input type="number" className="input-field" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Click Link URL (Optional)</label>
+                <input type="url" className="input-field" placeholder="https://..." value={iconLink} onChange={e => setIconLink(e.target.value)} style={{ width: '100%' }} />
               </div>
-              <input type="range" min="50" max="800" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
             </div>
-            
-            <div className="control-group" style={{ gridColumn: 'span 1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Border Radius</label>
-                <input type="number" className="input-field" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
+
+            {/* Column 2: Icon Settings */}
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Icon Type</label>
+                  <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
+                    <option value="svg">SVG Code</option>
+                    <option value="material">Google Font (Material)</option>
+                  </select>
+                </div>
+                {iconType === 'svg' ? (
+                  <textarea className="input-field" value={iconSvg} onChange={e => setIconSvg(e.target.value)} style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} />
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <input type="text" className="input-field" placeholder="e.g. star, home" value={iconName} onChange={e => setIconName(e.target.value)} style={{ width: '100%' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input type="checkbox" checked={iconFill} onChange={e => setIconFill(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
+                      <label style={{ fontSize: '0.85rem' }}>Filled Icon</label>
+                    </div>
+                  </div>
+                )}
               </div>
-              <input type="range" min="0" max="200" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Icon Size</label>
+                  <input type="number" className="input-field" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} style={{ width: '60px', padding: '0.25rem' }} />
+                </div>
+                <input type="range" min="16" max="100" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} />
+              </div>
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label>Inner Glow Color</label>
-              <input 
-                type="color" 
-                value={innerShadowColor} 
-                onChange={e => setInnerShadowColor(e.target.value)} 
-                style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }}
-              />
-            </div>
-            
-            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <label>Background Color</label>
-              <input 
-                type="text" 
-                className="input-field"
-                value={backgroundColor} 
-                onChange={e => setBackgroundColor(e.target.value)} 
-                style={{ width: '120px', padding: '0.25rem 0.5rem' }}
-              />
+            {/* Column 3: Dimensions & Colors */}
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Max Width</label>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{maxWidth}px</span>
+                </div>
+                <input type="range" min="100" max="1000" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Min Height</label>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{minHeight}px</span>
+                </div>
+                <input type="range" min="50" max="800" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <label>Border Radius</label>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{borderRadius}px</span>
+                </div>
+                <input type="range" min="0" max="200" value={borderRadius} onChange={e => setBorderRadius(Number(e.target.value))} />
+              </div>
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
-              <label style={{ cursor: 'pointer', fontSize: '0.95rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance Effect</label>
+            {/* Column 4: Base Styling */}
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Inner Glow Color</label>
+                <input type="color" value={innerShadowColor} onChange={e => setInnerShadowColor(e.target.value)} style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Background Color</label>
+                <input type="text" className="input-field" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '120px', padding: '0.25rem 0.5rem' }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 'auto', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
+                <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
+                <label style={{ cursor: 'pointer', fontSize: '0.9rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance</label>
+              </div>
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <label style={{ display: 'block', marginBottom: '1rem' }}>Bottom Glow Colors</label>
+            {/* Spanning Elements at the Bottom */}
+            <div className="control-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label style={{ display: 'block' }}>Bottom Glow Gradient</label>
               <GradientEditor stops={gradStops} onChange={setGradStops} />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Glow Height</label>
-                <input type="number" className="input-field" value={glowHeight} onChange={e => setGlowHeight(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
+              
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Glow Height</label>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{glowHeight}px</span>
+                  </div>
+                  <input type="range" min="10" max="150" value={glowHeight} onChange={e => setGlowHeight(Number(e.target.value))} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Glow Blur</label>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{glowBlur}px</span>
+                  </div>
+                  <input type="range" min="0" max="100" value={glowBlur} onChange={e => setGlowBlur(Number(e.target.value))} />
+                </div>
               </div>
-              <input type="range" min="10" max="150" value={glowHeight} onChange={e => setGlowHeight(Number(e.target.value))} />
             </div>
 
-            <div className="control-group" style={{ gridColumn: 'span 2' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <label>Glow Blur Radius</label>
-                <input type="number" className="input-field" value={glowBlur} onChange={e => setGlowBlur(Number(e.target.value))} style={{ width: '80px', padding: '0.25rem 0.5rem' }} />
-              </div>
-              <input type="range" min="0" max="100" value={glowBlur} onChange={e => setGlowBlur(Number(e.target.value))} />
-            </div>
-
-            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Background Image</label>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input 
-                  type="text" 
-                  className="input-field" 
-                  placeholder="Image URL" 
-                  value={bgImageUrl} 
-                  onChange={e => setBgImageUrl(e.target.value)}
-                  style={{ flex: 1 }}
-                />
+            <div className="control-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label style={{ display: 'block' }}>Background Image & Animations</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <input type="text" className="input-field" placeholder="Image URL" value={bgImageUrl} onChange={e => setBgImageUrl(e.target.value)} style={{ flex: 1 }} />
                 <label className="btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '0.5rem' }}>
-                  <PhotoIcon width="16" />
-                  Upload
+                  <PhotoIcon width="16" /> Upload
                   <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => {
                     const file = e.target.files[0];
                     if (file) {
@@ -542,88 +545,48 @@ ${materialLink}<div class="glow-card">
                 </label>
               </div>
 
+              {/* Advanced Image Controls */}
               {bgImageUrl && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label style={{ fontSize: '0.85rem' }}>Tint Overlay Color</label>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }} onClick={() => setBgTint('transparent')}>Clear</button>
-                      <input type="color" value={bgTint === 'transparent' ? '#000000' : bgTint.substring(0, 7)} onChange={e => setBgTint(e.target.value + '80')} style={{ width: '30px', height: '30px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} title="Picks color at 50% opacity" />
-                    </div>
-                  </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><label style={{ fontSize: '0.85rem' }}>Brightness</label><span style={{ fontSize: '0.85rem' }}>{bgBrightness}%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.8rem' }}>Brightness</label>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{bgBrightness}%</span>
+                    </div>
                     <input type="range" min="0" max="200" value={bgBrightness} onChange={e => setBgBrightness(Number(e.target.value))} />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}><label style={{ fontSize: '0.85rem' }}>Contrast</label><span style={{ fontSize: '0.85rem' }}>{bgContrast}%</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <label style={{ fontSize: '0.8rem' }}>Contrast</label>
+                      <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{bgContrast}%</span>
+                    </div>
                     <input type="range" min="0" max="200" value={bgContrast} onChange={e => setBgContrast(Number(e.target.value))} />
                   </div>
-                  <button className="btn" style={{ marginTop: '0.5rem' }} onClick={() => setBgImageUrl('')}>Remove Image</button>
+                  <div style={{ gridColumn: 'span 2', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.8rem' }}>Tint Overlay</label>
+                    <input type="text" className="input-field" value={bgTint} onChange={e => setBgTint(e.target.value)} style={{ width: '100px', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} />
+                  </div>
                 </div>
               )}
-            </div>
 
-
-
-            <div className="control-group" style={{ gridColumn: 'span 4', marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <label style={{ display: 'block', marginBottom: '1rem' }}>Hover Animations (Mix & Match)</label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                {Object.keys(hoverAnimations).map(animKey => (
-                  <label key={animKey} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={hoverAnimations[animKey]} 
-                      onChange={e => setHoverAnimations(prev => ({ ...prev, [animKey]: e.target.checked }))} 
-                      style={{ accentColor: 'var(--primary-color)' }}
-                    />
-                    {animKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
-                  </label>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '1.5rem' }}>
+              {/* Hover Animations */}
+              <div style={{ marginTop: 'auto' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <label>Animation Intensity</label>
-                  <span style={{ fontSize: '0.9rem' }}>{animIntensity.toFixed(1)}x</span>
+                  <label>Hover Effects</label>
+                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>Intensity: {animIntensity.toFixed(1)}x</span>
                 </div>
-                <input type="range" min="0.1" max="3" step="0.1" value={animIntensity} onChange={e => setAnimIntensity(Number(e.target.value))} />
+                <input type="range" min="0.1" max="3" step="0.1" value={animIntensity} onChange={e => setAnimIntensity(Number(e.target.value))} style={{ marginBottom: '1rem' }} />
+                
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {Object.entries({ float: 'Float', pulse: 'Pulse', expand: 'Expand', tilt: 'Tilt', shiftRight: 'Shift', jiggle: 'Jiggle', glowFlash: 'Flash' }).map(([key, label]) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer', background: hoverAnimations[key] ? 'var(--primary-color)' : 'rgba(255,255,255,0.1)', padding: '4px 10px', borderRadius: '12px', fontSize: '0.8rem', transition: 'all 0.2s ease' }}>
+                      <input type="checkbox" style={{ display: 'none' }} checked={hoverAnimations[key]} onChange={e => setHoverAnimations({...hoverAnimations, [key]: e.target.checked})} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
-
           </div>
-        </div>
 
-  {/* Code Output */}
-          <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative' }}>
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem' }}>
-              <button 
-                className="btn" 
-                onClick={handleCopyImage} 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
-              >
-                {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
-                {copyImageSuccess ? 'Copied Image!' : 'Copy Image'}
-              </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleCopyCode} 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}
-              >
-                {copySuccess ? <Check style={{width: '16px', height: '16px'}} /> : <ClipboardDocumentIcon style={{width: '16px', height: '16px'}} />}
-                {copySuccess ? 'Copied Code!' : 'Copy Code'}
-              </button>
-            </div>
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>HTML & CSS Output</h3>
-            
-            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-              <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
-              {cssCode}{'\n'}
-              <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
-              {htmlCode}
-            </div>
-          </div>
-        </div>
-    </div>
-  );
-}
+
