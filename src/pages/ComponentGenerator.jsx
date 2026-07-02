@@ -14,8 +14,8 @@ export default function ComponentGenerator() {
   const [glowBlur, setGlowBlur] = useState(15);
   const [hoverAnimation, setHoverAnimation] = useState('none');
   
-  const [cardTitle, setCardTitle] = useState('Generative AI');
-  const [cardSubtitle, setCardSubtitle] = useState('The future of automated design.');
+  const [cardTitle, setCardTitle] = useState('Content Title');
+  const [cardSubtitle, setCardSubtitle] = useState('Content description.');
   const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: white;">
   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
 </svg>`);
@@ -88,6 +88,10 @@ export default function ComponentGenerator() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
 }
 
 .glow-card-content {
