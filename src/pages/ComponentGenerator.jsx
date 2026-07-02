@@ -231,10 +231,7 @@ export default function ComponentGenerator() {
               <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
               {cssCode}{'\n'}
               <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
-              
-              <span style={{ color: '#569cd6' }}>&lt;div</span> <span style={{ color: '#9cdcfe' }}>class</span>=<span style={{ color: '#ce9178' }}>"glow-card"</span><span style={{ color: '#569cd6' }}>&gt;</span>{'\n'}
-              {'  '}<span style={{ color: '#6a9955' }}>&lt;!-- Content goes here --&gt;</span>{'\n'}
-              <span style={{ color: '#569cd6' }}>&lt;/div&gt;</span>
+              {htmlCode}
             </div>
           </div>
         </div>
