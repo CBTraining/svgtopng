@@ -291,28 +291,22 @@ const iconContent = iconType === 'svg'
   });
 </script>` : '';
 
+  const innerHtml = `
+  ${bgImageUrl ? `<div class="glow-card-bg"></div>\n  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>\n  ` : ''}<div class="glow-card-icon">
+    ${iconContent}
+  </div>
+  <div class="glow-card-content">
+    <div class="glow-card-title">${cardTitle}</div>
+    <div class="glow-card-subtitle">${cardSubtitle}</div>
+  </div>
+  `.trim();
+
   const htmlCode = iconLink.trim() ? `
 ${materialLink}<a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>
-  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>
-  ` : ''}<div class="glow-card-icon">
-    ${iconContent}
-  </div>
-  <div class="glow-card-content">
-    <div class="glow-card-title">${cardTitle}</div>
-    <div class="glow-card-subtitle">${cardSubtitle}</div>
-  </div>
+  ${innerHtml}
 </a>${jsSnippet}`.trim() : `
 ${materialLink}<div class="glow-card">
-  ${bgImageUrl ? `<div class="glow-card-bg"></div>
-  ` : ''}${enableLuminance ? `<div class="luminance-overlay"></div>
-  ` : ''}<div class="glow-card-icon">
-    ${iconContent}
-  </div>
-  <div class="glow-card-content">
-    <div class="glow-card-title">${cardTitle}</div>
-    <div class="glow-card-subtitle">${cardSubtitle}</div>
-  </div>
+  ${innerHtml}
 </div>${jsSnippet}`.trim();
 
   const handleCopyCode = async () => {
