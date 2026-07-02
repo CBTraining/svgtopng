@@ -16,8 +16,8 @@ export default function ComponentGenerator() {
   
   const [cardTitle, setCardTitle] = useState('Content Title');
   const [cardSubtitle, setCardSubtitle] = useState('Content description.');
-  const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: white;">
-  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+  const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="color: white;">
+  <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clip-rule="evenodd" />
 </svg>`);
   const [iconLink, setIconLink] = useState('');
 
@@ -123,22 +123,6 @@ export default function ComponentGenerator() {
   height: 40px;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.glow-card-icon a {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: inherit;
-  text-decoration: none;
-}
-
-.glow-card-icon:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
 }
 
 .glow-card-content {
@@ -176,10 +160,19 @@ export default function ComponentGenerator() {
   transition: all 0.3s ease;
 }${animationCss}`.trim();
 
-  const htmlCode = `
+  const htmlCode = iconLink.trim() ? `
+<a href="${iconLink}" target="_blank" rel="noopener noreferrer" class="glow-card" style="text-decoration: none; color: inherit;">
+  <div class="glow-card-icon">
+    ${iconSvg.trim().split('\n').join('\n    ')}
+  </div>
+  <div class="glow-card-content">
+    <div class="glow-card-title">${cardTitle}</div>
+    <div class="glow-card-subtitle">${cardSubtitle}</div>
+  </div>
+</a>`.trim() : `
 <div class="glow-card">
   <div class="glow-card-icon">
-    ${iconLink.trim() ? `<a href="${iconLink}" target="_blank" rel="noopener noreferrer">\n      ${iconSvg.trim().split('\\n').join('\\n      ')}\n    </a>` : iconSvg.trim()}
+    ${iconSvg.trim().split('\n').join('\n    ')}
   </div>
   <div class="glow-card-content">
     <div class="glow-card-title">${cardTitle}</div>
@@ -248,8 +241,12 @@ export default function ComponentGenerator() {
             boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)'
           }}>
             <style>{cssCode}</style>
-            <div ref={previewRef}>
-              <div className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.replace('<div class="glow-card">', '').slice(0, -6) }} />
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              {iconLink.trim() ? (
+                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} style={{ textDecoration: 'none', color: 'inherit' }} />
+              ) : (
+                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: htmlCode.substring(htmlCode.indexOf('>') + 1, htmlCode.lastIndexOf('<')) }} />
+              )}
             </div>
           </div>
 
