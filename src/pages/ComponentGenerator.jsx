@@ -203,6 +203,7 @@ export default function ComponentGenerator() {
     try {
       // Need a slight margin to capture the glow filter properly
       const blob = await toBlob(previewRef.current, {
+        pixelRatio: 4, // Boost resolution to 4x
         width: previewRef.current.offsetWidth + 100,
         height: previewRef.current.offsetHeight + 100,
         skipFonts: true, // Fix for SecurityError: Failed to read the 'cssRules' property
