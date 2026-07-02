@@ -19,7 +19,8 @@ import {
   HomeIcon,
   ChartBarIcon,
   DocumentArrowDownIcon,
-  RectangleGroupIcon
+  RectangleGroupIcon,
+  PaintBrushIcon
 } from '@heroicons/react/24/solid';
 import { ChevronDownIcon as ChevronDownOutline } from '@heroicons/react/24/outline';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
@@ -64,19 +65,13 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
 
   const navCategories = [
     {
-      title: 'AI Tools',
-      items: [
-        { to: '/ai-text', icon: CommandLineIcon, label: 'AI Text Assistant' },
-        { to: '/image-upscaler', icon: ArrowsPointingOutIcon, label: 'AI Image Upscaler' }
-      ]
-    },
-    {
       title: 'Graphics',
       items: [
-        { to: '/image-tools', icon: PhotoIcon, label: 'Image Tools' },
-        { to: '/pdf-image-extractor', icon: DocumentArrowDownIcon, label: 'PDF Image Extractor' },
+        { to: '/image-tools', icon: PhotoIcon, label: 'Image Converter' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
-        { to: '/color-picker', icon: EyeDropperIcon, label: 'Color Picker' },
+        { to: '/image-upscaler', icon: SparklesIcon, label: 'Image Upscaler' },
+        { to: '/color-picker', icon: PaintBrushIcon, label: 'Color Picker' },
+        { to: '/pdf-image-extractor', icon: DocumentArrowDownIcon, label: 'PDF Image Extractor' },
         { to: '/shape-generator', icon: RectangleGroupIcon, label: 'Shape Generator' },
         { to: '/svg-converter', icon: CommandLineIcon, label: 'SVG Converter' }
       ]
