@@ -302,7 +302,7 @@ ${bgImageUrl ? `
             </div>
             <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.1rem' }}>HTML & CSS Output</h3>
             
-            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap' }}>
+            <div style={{ background: '#1e1e1e', color: '#d4d4d4', padding: '1.5rem', borderRadius: '8px', overflowX: 'auto', fontFamily: 'monospace', fontSize: '0.9rem', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
               <span style={{ color: '#569cd6' }}>&lt;style&gt;</span>{'\n'}
               {cssCode}{'\n'}
               <span style={{ color: '#569cd6' }}>&lt;/style&gt;</span>{'\n\n'}
