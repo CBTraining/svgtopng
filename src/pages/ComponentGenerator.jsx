@@ -6,7 +6,9 @@ import GradientEditor from '../components/GradientEditor';
 export default function ComponentGenerator() {
   // State variables for component properties
   const [maxWidth, setMaxWidth] = useState(400);
+  const [maxWidthUnit, setMaxWidthUnit] = useState('px');
   const [minHeight, setMinHeight] = useState(250);
+  const [minHeightUnit, setMinHeightUnit] = useState('px');
   const [borderRadius, setBorderRadius] = useState(32);
   const [innerShadowColor, setInnerShadowColor] = useState('#13243f');
   const [backgroundColor, setBackgroundColor] = useState('transparent');
@@ -58,7 +60,7 @@ export default function ComponentGenerator() {
     const newPresets = {
       ...presets,
       [presetName]: {
-        maxWidth, minHeight, borderRadius, innerShadowColor, backgroundColor,
+        maxWidth, maxWidthUnit, minHeight, minHeightUnit, borderRadius, innerShadowColor, backgroundColor,
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
         iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill
@@ -74,7 +76,9 @@ export default function ComponentGenerator() {
     const p = presets[name];
     if (!p) return;
     if (p.maxWidth !== undefined) setMaxWidth(p.maxWidth);
+    if (p.maxWidthUnit !== undefined) setMaxWidthUnit(p.maxWidthUnit);
     if (p.minHeight !== undefined) setMinHeight(p.minHeight);
+    if (p.minHeightUnit !== undefined) setMinHeightUnit(p.minHeightUnit);
     if (p.borderRadius !== undefined) setBorderRadius(p.borderRadius);
     if (p.innerShadowColor !== undefined) setInnerShadowColor(p.innerShadowColor);
     if (p.backgroundColor !== undefined) setBackgroundColor(p.backgroundColor);
@@ -94,7 +98,6 @@ export default function ComponentGenerator() {
 
     if (p.iconType !== undefined) setIconType(p.iconType);
     if (p.iconName !== undefined) setIconName(p.iconName);
-
     if (p.iconSize !== undefined) setIconSize(p.iconSize);
     if (p.iconFill !== undefined) setIconFill(p.iconFill);
 
@@ -164,8 +167,8 @@ export default function ComponentGenerator() {
   const cssCode = `
 .glow-card {
   width: 100%;
-  max-width: ${maxWidth}px;
-  min-height: ${minHeight}px;
+  max-width: ${maxWidth}${maxWidthUnit};
+  min-height: ${minHeight}${minHeightUnit};
   background-color: ${backgroundColor};
   border-radius: ${borderRadius}px;
   position: relative;
@@ -206,7 +209,7 @@ export default function ComponentGenerator() {
   width: 110%;
   height: ${glowHeight}px;
   background: ${gradientString};
-  filter: blur(${glowBlur}px);
+  filter: blur(${glowBlur}px) saturate(${100 + (glowBlur * 2)}%);
   z-index: 0;
   opacity: 1;
   transition: all 0.3s ease;
@@ -292,11 +295,10 @@ ${enableLuminance ? `
 
 const iconContent = iconType === 'svg' 
     ? iconSvg.trim().split('\\n').join('\\n    ')
-    : `<span class="material-symbols-outlined" style="font-size: 24px; color: white;">${iconName}</span>`;
+    : `<span class="material-symbols-rounded" style="font-size: ${iconSize}px; color: white; font-variation-settings: 'FILL' ${iconFill ? 1 : 0};">${iconName}</span>`;
 
   const materialLink = iconType === 'material' 
-    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-` 
+    ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />\n` 
     : '';
 
   const jsSnippet = enableLuminance ? `
@@ -470,16 +472,30 @@ ${materialLink}<div class="glow-card">
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <label>Max Width</label>
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{maxWidth}px</span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{maxWidth}</span>
+                    <select className="input-field" value={maxWidthUnit} onChange={e => setMaxWidthUnit(e.target.value)} style={{ padding: '0 4px', fontSize: '0.7rem', height: '20px' }}>
+                      <option value="px">px</option>
+                      <option value="%">%</option>
+                      <option value="vw">vw</option>
+                    </select>
+                  </div>
                 </div>
-                <input type="range" min="100" max="1000" value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
+                <input type="range" min={maxWidthUnit === 'px' ? 100 : 10} max={maxWidthUnit === 'px' ? 1000 : 100} value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                   <label>Min Height</label>
-                  <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{minHeight}px</span>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{minHeight}</span>
+                    <select className="input-field" value={minHeightUnit} onChange={e => setMinHeightUnit(e.target.value)} style={{ padding: '0 4px', fontSize: '0.7rem', height: '20px' }}>
+                      <option value="px">px</option>
+                      <option value="%">%</option>
+                      <option value="vh">vh</option>
+                    </select>
+                  </div>
                 </div>
-                <input type="range" min="50" max="800" value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
+                <input type="range" min={minHeightUnit === 'px' ? 50 : 10} max={minHeightUnit === 'px' ? 800 : 100} value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
               </div>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
