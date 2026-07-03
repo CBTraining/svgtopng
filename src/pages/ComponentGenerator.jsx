@@ -451,6 +451,7 @@ ${materialLink}<div class="glow-card">
               )}
             </div>
           </div>
+        </div>
 
   {/* Controls Area */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
@@ -705,7 +706,7 @@ ${materialLink}<div class="glow-card">
                 </div>
               </div>
             </div>
-</div>
+          </div>
         </div>
 
   {/* Code Output */}
