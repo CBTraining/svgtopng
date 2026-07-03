@@ -48,13 +48,39 @@ const Home = () => (
     <p>A suite of offline-capable, highly aesthetic client-side utilities.</p>
     <div className="glass-panel" style={{marginTop: '2rem'}}>
       <h3>Features</h3>
-      <ul style={{ paddingLeft: '1.5rem', marginTop: '1rem', color: 'var(--text-secondary)' }}>
-        <li style={{marginBottom: '0.5rem'}}><strong>Local AI Processing:</strong> Fully offline text summarization and image upscaling right in your browser.</li>
-        <li style={{marginBottom: '0.5rem'}}><strong>PDF Image Extraction:</strong> Pull all embedded images out of a PDF securely in your browser.</li>
-        <li style={{marginBottom: '0.5rem'}}><strong>Global Clipboard:</strong> Ctrl+V anywhere to save clipboard images directly as PNG.</li>
-        <li style={{marginBottom: '0.5rem'}}><strong>Sidebar Drop:</strong> Drag & Drop images to the sidebar for instant PNG conversion.</li>
-        <li style={{marginBottom: '0.5rem'}}><strong>Offline Ready:</strong> Install this PWA and use tools without an internet connection.</li>
-      </ul>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
+        <div>
+          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Image Tools</h4>
+          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
+            <li>Image Converter</li>
+            <li>Background Remover</li>
+            <li>Image Upscaler</li>
+            <li>Color Picker</li>
+            <li>PDF Image Extractor</li>
+            <li>Shape Generator</li>
+            <li>SVG Converter</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Video & Animation</h4>
+          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
+            <li>Video Compressor</li>
+            <li>Video to GIF</li>
+            <li>Video Frame Extractor</li>
+            <li>Lottie to GIF</li>
+          </ul>
+        </div>
+        <div>
+          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Web & Dev</h4>
+          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
+            <li>QR Generator</li>
+            <li>JSON Saver</li>
+            <li>Timezone Converter</li>
+            <li>HTML Preview</li>
+            <li>Component Generator</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 );
