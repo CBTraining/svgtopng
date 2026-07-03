@@ -215,8 +215,9 @@ export default function ComponentGenerator() {
 
   if (hoverAnimations.colorCycle) {
     animationCss += `\n@keyframes colorCycle {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+  0% { background-position: 0% 50%; background-size: 200% 100%; }
+  50% { background-size: 300% 150%; }
+  100% { background-position: 200% 50%; background-size: 200% 100%; }
 }`;
   }
 
