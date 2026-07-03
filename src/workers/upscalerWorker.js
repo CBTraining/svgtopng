@@ -2,7 +2,6 @@ import { pipeline, env, RawImage } from '@huggingface/transformers';
 
 // Configure environment
 env.allowLocalModels = false;
-env.backends.onnx.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0/dist/';
 env.backends.onnx.wasm.numThreads = navigator.hardwareConcurrency 
     ? Math.max(1, Math.min(4, navigator.hardwareConcurrency - 1)) 
     : 1; // Limit max threads to 4 to prevent mobile freezing, but allow multicore
