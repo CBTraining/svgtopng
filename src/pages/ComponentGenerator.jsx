@@ -36,6 +36,8 @@ export default function ComponentGenerator() {
   const [bgTint, setBgTint] = useState('transparent');
   const [cardTitle, setCardTitle] = useState('Content Title');
   const [cardSubtitle, setCardSubtitle] = useState('Content description.');
+  const [cardTitleColor, setCardTitleColor] = useState('#ffffff');
+  const [cardSubtitleColor, setCardSubtitleColor] = useState('#ffffff');
   const [iconSvg, setIconSvg] = useState(`<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24" style="color: white;">
   <path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.721.544l.813 2.846a3.75 3.75 0 002.576 2.576l2.846.813a.75.75 0 010 1.442l-2.846.813a3.75 3.75 0 00-2.576 2.576l-.813 2.846a.75.75 0 01-1.442 0l-.813-2.846a3.75 3.75 0 00-2.576-2.576l-2.846-.813a.75.75 0 010-1.442l2.846-.813A3.75 3.75 0 007.466 7.89l.813-2.846A.75.75 0 019 4.5zM18 1.5a.75.75 0 01.728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 010 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 01-1.456 0l-.258-1.036a2.625 2.625 0 00-1.91-1.91l-1.036-.258a.75.75 0 010-1.456l1.036-.258a2.625 2.625 0 001.91-1.91l.258-1.036A.75.75 0 0118 1.5zM16.5 15a.75.75 0 01.712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 010 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 01-1.422 0l-.395-1.183a1.5 1.5 0 00-.948-.948l-1.183-.395a.75.75 0 010-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0116.5 15z" clip-rule="evenodd" />
 </svg>`);
@@ -71,7 +73,7 @@ export default function ComponentGenerator() {
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
         iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill,
-        showText, showIcon
+        showText, showIcon, cardTitleColor, cardSubtitleColor
       }
     };
     setPresets(newPresets);
@@ -110,6 +112,8 @@ export default function ComponentGenerator() {
     if (p.iconFill !== undefined) setIconFill(p.iconFill);
     if (p.showText !== undefined) setShowText(p.showText);
     if (p.showIcon !== undefined) setShowIcon(p.showIcon);
+    if (p.cardTitleColor !== undefined) setCardTitleColor(p.cardTitleColor);
+    if (p.cardSubtitleColor !== undefined) setCardSubtitleColor(p.cardSubtitleColor);
 
     if (p.gradStops !== undefined) setGradStops(p.gradStops);
   };
@@ -144,7 +148,7 @@ export default function ComponentGenerator() {
   if (hoverAnimations.jiggle) cardAnimations.push(`jiggle 0.3s ease-in-out infinite`);
   if (hoverAnimations.shake) cardAnimations.push(`shake 0.4s ease-in-out infinite`);
   if (hoverAnimations.bounce) cardAnimations.push(`bounce 0.5s ease-in-out infinite`);
-  if (hoverAnimations.colorCycle) cardAnimations.push(`colorCycle ${5 / animIntensity}s linear infinite`);
+  
   
   if (hasTransform || hoverAnimations.float || hoverAnimations.outerGlow || cardAnimations.length > 0) {
     animationCss += `\n.glow-card:hover {`;
@@ -183,16 +187,21 @@ export default function ComponentGenerator() {
 
   if (hoverAnimations.colorCycle) {
     animationCss += `\n@keyframes colorCycle {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }`;
   }
 
-  if (hoverAnimations.pulse || hoverAnimations.glowFlash || hoverAnimations.float) {
+  let afterAnimations = [];
+  if (hoverAnimations.glowFlash) afterAnimations.push(`glowFlash 1s infinite`);
+  if (hoverAnimations.colorCycle) afterAnimations.push(`colorCycle ${5 / animIntensity}s ease-in-out infinite`);
+
+  if (hoverAnimations.pulse || hoverAnimations.float || afterAnimations.length > 0) {
     animationCss += `\n.glow-card:hover::after {`;
     if (hoverAnimations.float) animationCss += `\n  opacity: 0.8;`;
     if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px) saturate(${100 + (glowBlur * 2)}%);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
-    if (hoverAnimations.glowFlash) animationCss += `\n  animation: glowFlash 1s infinite;`;
+    if (afterAnimations.length > 0) animationCss += `\n  animation: ${afterAnimations.join(', ')};`;
     animationCss += `\n}`;
   }
 
@@ -249,8 +258,11 @@ export default function ComponentGenerator() {
   width: 110%;
   height: ${glowHeight}px;
   background: ${gradientString};
+  background-size: 200% 100%;
+  background-position: 0% 50%;
   filter: blur(${glowBlur}px) saturate(${100 + (glowBlur * 2)}%);
-  z-index: 0;
+  z-index: 2;
+  pointer-events: none;
   opacity: 1;
   transition: all 0.3s ease;
 }
@@ -319,6 +331,7 @@ ${enableLuminance ? `
 .glow-card-title {
   font-weight: 700;
   font-size: 1.1rem;
+  color: ${cardTitleColor};
   margin: 0;
 }
 
@@ -326,6 +339,7 @@ ${enableLuminance ? `
   font-weight: 400;
   font-size: 0.9rem;
   opacity: 0.8;
+  color: ${cardSubtitleColor};
   margin: 0;
 }${animationCss}`.trim();
 
@@ -416,9 +430,10 @@ ${materialLink}<div class="glow-card">
       <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
   {/* Preview Area */}
         
+        <div style={{ position: 'sticky', top: '1.5rem', zIndex: 10 }}>
           <div className="checkerboard-bg" style={{ 
             borderRadius: '16px', 
-            minHeight: '500px', 
+            minHeight: '350px', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
@@ -463,11 +478,17 @@ ${materialLink}<div class="glow-card">
               </div>
               <div style={{ opacity: showText ? 1 : 0.5, pointerEvents: showText ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Title</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Title</label>
+                    <input type="color" value={cardTitleColor} onChange={e => setCardTitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                  </div>
                   <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
                 </div>
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem' }}>Subtitle</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <label>Subtitle</label>
+                    <input type="color" value={cardSubtitleColor} onChange={e => setCardSubtitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                  </div>
                   <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
                 </div>
                 <div>
@@ -561,7 +582,10 @@ ${materialLink}<div class="glow-card">
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label>Background Color</label>
-                <input type="text" className="input-field" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '120px', padding: '0.25rem 0.5rem' }} />
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <input type="color" value={backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba') ? backgroundColor : '#000000'} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '28px', height: '28px', padding: '0', border: 'none', background: 'transparent', cursor: 'pointer' }} />
+                  <input type="text" className="input-field" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '90px', padding: '0.25rem 0.5rem' }} />
+                </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 'auto', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
                 <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
