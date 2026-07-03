@@ -31,9 +31,11 @@ export default function ComponentGenerator() {
   const [animIntensity, setAnimIntensity] = useState(1.0);
 
   const [bgImageUrl, setBgImageUrl] = useState('');
+  const [bgImagePosition, setBgImagePosition] = useState('center');
   const [bgBrightness, setBgBrightness] = useState(100);
   const [bgContrast, setBgContrast] = useState(100);
   const [bgTint, setBgTint] = useState('transparent');
+  const [fontFamily, setFontFamily] = useState('system-ui, -apple-system, sans-serif');
   const [cardTitle, setCardTitle] = useState('Content Title');
   const [cardSubtitle, setCardSubtitle] = useState('Content description.');
   const [cardTitleColor, setCardTitleColor] = useState('#ffffff');
@@ -203,7 +205,7 @@ export default function ComponentGenerator() {
   if (hoverAnimations.colorCycle) {
     animationCss += `\n@keyframes colorCycle {
   0% { background-position: 0% 50%; }
-  100% { background-position: 100% 50%; }
+  100% { background-position: 200% 50%; }
 }`;
   }
 
