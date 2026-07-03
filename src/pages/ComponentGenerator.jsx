@@ -140,7 +140,7 @@ export default function ComponentGenerator() {
   let transformStr = '';
   if (hoverAnimations.float) transformStr += `translateY(${-5 * animIntensity}px) `;
   if (hoverAnimations.expand) transformStr += `scale(${1 + (0.02 * animIntensity)}) `;
-  if (hoverAnimations.tilt) transformStr += `perspective(1000px) rotateX(${2 * animIntensity}deg) rotateY(${-2 * animIntensity}deg) `;
+  
   if (hoverAnimations.shiftRight) transformStr += `translateX(${8 * animIntensity}px) `;
 
   const hasTransform = transformStr.trim().length > 0;
@@ -381,6 +381,40 @@ ${materialLink}<div class="glow-card">
   ${innerHtml}
 </div>${jsSnippet}`.trim();
 
+
+  const handleMouseMove = (e) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    if (enableLuminance) {
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    }
+
+    if (hoverAnimations.tilt) {
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -15 * animIntensity;
+      const rotateY = ((x - centerX) / centerX) * 15 * animIntensity;
+      
+      let transformStr = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      if (hoverAnimations.expand) transformStr += ` scale(${1 + (0.02 * animIntensity)})`;
+      if (hoverAnimations.float) transformStr += ` translateY(${-5 * animIntensity}px)`;
+      if (hoverAnimations.shiftRight) transformStr += ` translateX(${8 * animIntensity}px)`;
+      
+      card.style.transform = transformStr;
+    }
+  };
+
+  const handleMouseLeave = (e) => {
+    const card = e.currentTarget;
+    if (hoverAnimations.tilt) {
+      card.style.transform = '';
+    }
+  };
+
   const handleCopyCode = async () => {
     try {
       const fullCode = `<style>\n${cssCode}\n</style>\n\n${htmlCode}`;
@@ -455,9 +489,9 @@ ${materialLink}<div class="glow-card">
             <div dangerouslySetInnerHTML={{ __html: materialLink }} />
             <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
               {iconLink.trim() ? (
-                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} />
+                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
               ) : (
-                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} />
+                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
               )}
             </div>
           </div>
