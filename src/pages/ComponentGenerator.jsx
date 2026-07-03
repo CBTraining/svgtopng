@@ -485,29 +485,6 @@ ${materialLink}<div class="glow-card">
     }
   };
 
-  const handleDownloadSvg = async () => {
-    if (!previewRef.current) return;
-    try {
-      const svgDataUrl = await toSvg(previewRef.current, {
-        width: previewRef.current.offsetWidth + 100,
-        height: previewRef.current.offsetHeight + 100,
-        skipFonts: true,
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '50px'
-        }
-      });
-      
-      const link = document.createElement('a');
-      link.download = 'component.svg';
-      link.href = svgDataUrl;
-      link.click();
-    } catch (err) {
-      console.error("Failed to download SVG", err);
-    }
-  };
 
   const handleCopyImage = async () => {
     if (!previewRef.current) return;
