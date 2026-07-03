@@ -535,25 +535,25 @@ ${materialLink}<div class="glow-card">
               </div>
               <div style={{ opacity: showText ? 1 : 0.5, pointerEvents: showText ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <label>Title</label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <label style={{fontSize: '0.75rem', opacity: 0.7}}>Size (rem):</label>
-                      <input type="number" step="0.1" value={cardTitleSize} onChange={e => setCardTitleSize(Number(e.target.value))} style={{ width: '50px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
-                      <label style={{fontSize: '0.75rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
-                      <input type="color" value={cardTitleColor} onChange={e => setCardTitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <label style={{fontSize: '0.7rem', opacity: 0.7}}>Size:</label>
+                      <input type="number" step="0.1" value={cardTitleSize} onChange={e => setCardTitleSize(Number(e.target.value))} style={{ width: '45px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
+                      <label style={{fontSize: '0.7rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
+                      <input type="color" value={cardTitleColor} onChange={e => setCardTitleColor(e.target.value)} style={{ width: '24px', height: '24px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
                     </div>
                   </div>
                   <input type="text" className="input-field" value={cardTitle} onChange={e => setCardTitle(e.target.value)} style={{ width: '100%' }} />
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <label>Subtitle</label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      <label style={{fontSize: '0.75rem', opacity: 0.7}}>Size (rem):</label>
-                      <input type="number" step="0.1" value={cardSubtitleSize} onChange={e => setCardSubtitleSize(Number(e.target.value))} style={{ width: '50px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
-                      <label style={{fontSize: '0.75rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
-                      <input type="color" value={cardSubtitleColor} onChange={e => setCardSubtitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <label style={{fontSize: '0.7rem', opacity: 0.7}}>Size:</label>
+                      <input type="number" step="0.1" value={cardSubtitleSize} onChange={e => setCardSubtitleSize(Number(e.target.value))} style={{ width: '45px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
+                      <label style={{fontSize: '0.7rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
+                      <input type="color" value={cardSubtitleColor} onChange={e => setCardSubtitleColor(e.target.value)} style={{ width: '24px', height: '24px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
                     </div>
                   </div>
                   <input type="text" className="input-field" value={cardSubtitle} onChange={e => setCardSubtitle(e.target.value)} style={{ width: '100%' }} />
@@ -573,15 +573,15 @@ ${materialLink}<div class="glow-card">
               </div>
               <div style={{ opacity: showIcon ? 1 : 0.5, pointerEvents: showIcon ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <label>Icon Type</label>
-                    <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '2px 8px', width: 'auto', fontSize: '0.8rem' }}>
+                    <select className="input-field" value={iconType} onChange={e => setIconType(e.target.value)} style={{ padding: '4px 8px', width: 'auto', fontSize: '0.8rem' }}>
                       <option value="svg">SVG Code</option>
                       <option value="material">Google Font (Material)</option>
                     </select>
                   </div>
                   {iconType === 'svg' ? (
-                    <textarea className="input-field" value={iconSvg} onChange={e => setIconSvg(e.target.value)} style={{ width: '100%', minHeight: '80px', fontFamily: 'monospace', fontSize: '0.8rem' }} />
+                    <textarea className="input-field" value={iconSvg} onChange={e => setIconSvg(e.target.value)} style={{ width: '100%', minHeight: '90px', fontFamily: 'monospace', fontSize: '0.8rem', padding: '0.5rem', borderRadius: '8px' }} />
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                       <input type="text" className="input-field" placeholder="e.g. star, home" value={iconName} onChange={e => setIconName(e.target.value)} style={{ width: '100%' }} />
@@ -593,23 +593,29 @@ ${materialLink}<div class="glow-card">
                   )}
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <label>Icon Size</label>
-                    <input type="number" className="input-field" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} style={{ width: '60px', padding: '0.25rem' }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <input type="number" className="input-field" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} style={{ width: '60px', padding: '0.25rem' }} />
+                      <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>px</span>
+                    </div>
                   </div>
                   <input type="range" min="16" max="100" value={iconSize} onChange={e => setIconSize(Number(e.target.value))} />
                 </div>
               </div>
             </div>
 
-            {/* Column 3: Dimensions & Colors */}
-            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Column 3: Dimensions */}
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                <label style={{ fontWeight: 'bold' }}>Dimensions</label>
+              </div>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <label>Max Width</label>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{maxWidth}</span>
-                    <select className="input-field" value={maxWidthUnit} onChange={e => setMaxWidthUnit(e.target.value)} style={{ padding: '0 4px', fontSize: '0.7rem', height: '20px' }}>
+                    <select className="input-field" value={maxWidthUnit} onChange={e => setMaxWidthUnit(e.target.value)} style={{ padding: '2px 4px', fontSize: '0.7rem' }}>
                       <option value="px">px</option>
                       <option value="%">%</option>
                       <option value="vw">vw</option>
@@ -619,11 +625,11 @@ ${materialLink}<div class="glow-card">
                 <input type="range" min={maxWidthUnit === 'px' ? 100 : 10} max={maxWidthUnit === 'px' ? 1000 : 100} value={maxWidth} onChange={e => setMaxWidth(Number(e.target.value))} />
               </div>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <label>Min Height</label>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                  <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                     <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{minHeight}</span>
-                    <select className="input-field" value={minHeightUnit} onChange={e => setMinHeightUnit(e.target.value)} style={{ padding: '0 4px', fontSize: '0.7rem', height: '20px' }}>
+                    <select className="input-field" value={minHeightUnit} onChange={e => setMinHeightUnit(e.target.value)} style={{ padding: '2px 4px', fontSize: '0.7rem' }}>
                       <option value="px">px</option>
                       <option value="%">%</option>
                       <option value="vh">vh</option>
@@ -633,7 +639,7 @@ ${materialLink}<div class="glow-card">
                 <input type="range" min={minHeightUnit === 'px' ? 50 : 10} max={minHeightUnit === 'px' ? 800 : 100} value={minHeight} onChange={e => setMinHeight(Number(e.target.value))} />
               </div>
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                   <label>Border Radius</label>
                   <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>{borderRadius}px</span>
                 </div>
@@ -642,21 +648,24 @@ ${materialLink}<div class="glow-card">
             </div>
 
             {/* Column 4: Base Styling */}
-            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label>Inner Glow Color</label>
-                <input type="color" value={innerShadowColor} onChange={e => setInnerShadowColor(e.target.value)} style={{ width: '40px', height: '40px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} />
+            <div className="control-group" style={{ gridColumn: 'span 1', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>
+                <label style={{ fontWeight: 'bold' }}>Base Styling</label>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label>Background Color</label>
-                <div style={{ display: 'flex', gap: '4px' }}>
+                <label>Inner Glow</label>
+                <input type="color" value={innerShadowColor} onChange={e => setInnerShadowColor(e.target.value)} style={{ width: '28px', height: '28px', padding: '0', border: 'none', borderRadius: '4px', cursor: 'pointer', background: 'transparent' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label>Background</label>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <input type="color" value={backgroundColor !== 'transparent' && !backgroundColor.startsWith('rgba') ? backgroundColor : '#000000'} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '28px', height: '28px', padding: '0', border: 'none', background: 'transparent', cursor: 'pointer' }} />
-                  <input type="text" className="input-field" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '90px', padding: '0.25rem 0.5rem' }} />
+                  <input type="text" className="input-field" value={backgroundColor} onChange={e => setBackgroundColor(e.target.value)} style={{ width: '90px', padding: '4px 8px' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: 'auto', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px' }}>
-                <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)', width: '16px', height: '16px' }} />
-                <label style={{ cursor: 'pointer', fontSize: '0.9rem' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1rem' }}>
+                <input type="checkbox" checked={enableLuminance} onChange={e => setEnableLuminance(e.target.checked)} style={{ accentColor: 'var(--primary-color)' }} />
+                <label style={{ cursor: 'pointer', fontWeight: 'bold' }} onClick={() => setEnableLuminance(!enableLuminance)}>Interactive Luminance</label>
               </div>
             </div>
 
