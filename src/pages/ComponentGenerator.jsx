@@ -363,16 +363,36 @@ const iconContent = iconType === 'svg'
     ? `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0" />\n` 
     : '';
 
-  const jsSnippet = enableLuminance ? `
+  const jsSnippet = (enableLuminance || hoverAnimations.tilt) ? `
 <script>
   document.querySelectorAll('.glow-card').forEach(card => {
     card.addEventListener('mousemove', e => {
       const rect = card.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
+      ${enableLuminance ? `
       card.style.setProperty('--mouse-x', \`\${x}px\`);
       card.style.setProperty('--mouse-y', \`\${y}px\`);
+      ` : ''}
+      ${hoverAnimations.tilt ? `
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -${15 * animIntensity};
+      const rotateY = ((x - centerX) / centerX) * ${15 * animIntensity};
+      
+      let transformStr = \`perspective(1000px) rotateX(\${rotateX}deg) rotateY(\${rotateY}deg)\`;
+      ${hoverAnimations.expand ? `transformStr += \` scale(${1 + (0.02 * animIntensity)})\`;` : ''}
+      ${hoverAnimations.float ? `transformStr += \` translateY(${-5 * animIntensity}px)\`;` : ''}
+      ${hoverAnimations.shiftRight ? `transformStr += \` translateX(${8 * animIntensity}px)\`;` : ''}
+      
+      card.style.transform = transformStr;
+      ` : ''}
     });
+    ${hoverAnimations.tilt ? `
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = '';
+    });
+    ` : ''}
   });
 </script>` : '';
 
