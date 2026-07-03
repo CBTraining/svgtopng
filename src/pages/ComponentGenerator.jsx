@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { CodeBracketSquareIcon, ClipboardDocumentIcon, CheckIcon as Check, PhotoIcon } from '@heroicons/react/24/solid';
-import { toBlob } from 'html-to-image';
+import { toBlob, toSvg } from 'html-to-image';
 import GradientEditor from '../components/GradientEditor';
 
 export default function ComponentGenerator() {
@@ -73,7 +73,7 @@ export default function ComponentGenerator() {
       [presetName]: {
         maxWidth, maxWidthUnit, minHeight, minHeightUnit, borderRadius, innerShadowColor, backgroundColor,
         glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
-        bgImageUrl, bgBrightness, bgContrast, bgTint, cardTitle, cardSubtitle,
+        bgImageUrl, bgBrightness, bgContrast, bgTint, bgImagePosition, fontFamily, cardTitle, cardSubtitle,
         iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill,
         showText, showIcon, cardTitleColor, cardSubtitleColor, cardTitleSize, cardSubtitleSize
       }
@@ -103,6 +103,8 @@ export default function ComponentGenerator() {
     if (p.bgBrightness !== undefined) setBgBrightness(p.bgBrightness);
     if (p.bgContrast !== undefined) setBgContrast(p.bgContrast);
     if (p.bgTint !== undefined) setBgTint(p.bgTint);
+    if (p.bgImagePosition !== undefined) setBgImagePosition(p.bgImagePosition);
+    if (p.fontFamily !== undefined) setFontFamily(p.fontFamily);
     if (p.cardTitle !== undefined) setCardTitle(p.cardTitle);
     if (p.cardSubtitle !== undefined) setCardSubtitle(p.cardSubtitle);
     if (p.iconSvg !== undefined) setIconSvg(p.iconSvg);
@@ -228,6 +230,7 @@ export default function ComponentGenerator() {
   const cssCode = `
 .glow-card {
   width: 100%;
+  font-family: ${fontFamily};
   max-width: ${maxWidth}${maxWidthUnit};
   min-height: ${minHeight}${minHeightUnit};
   background-color: ${backgroundColor};
@@ -285,7 +288,7 @@ ${bgImageUrl ? `
   inset: 0;
   background-image: url('${bgImageUrl}');
   background-size: cover;
-  background-position: center;
+  background-position: ${bgImagePosition};
   filter: brightness(${bgBrightness}%) contrast(${bgContrast}%);
   z-index: 1;
 }
@@ -458,6 +461,54 @@ ${materialLink}<div class="glow-card">
     }
   };
 
+  const handleDownloadSvg = async () => {
+    if (!previewRef.current) return;
+    try {
+      const svgDataUrl = await toSvg(previewRef.current, {
+        width: previewRef.current.offsetWidth + 100,
+        height: previewRef.current.offsetHeight + 100,
+        skipFonts: true,
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '50px'
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'component.svg';
+      link.href = svgDataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to download SVG", err);
+    }
+  };
+
+  const handleDownloadSvg = async () => {
+    if (!previewRef.current) return;
+    try {
+      const svgDataUrl = await toSvg(previewRef.current, {
+        width: previewRef.current.offsetWidth + 100,
+        height: previewRef.current.offsetHeight + 100,
+        skipFonts: true,
+        style: {
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '50px'
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'component.svg';
+      link.href = svgDataUrl;
+      link.click();
+    } catch (err) {
+      console.error("Failed to download SVG", err);
+    }
+  };
+
   const handleCopyImage = async () => {
     if (!previewRef.current) return;
     try {
@@ -498,6 +549,13 @@ ${materialLink}<div class="glow-card">
         
         <div style={{ position: 'sticky', top: '1.5rem', zIndex: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <button className="btn" onClick={handleDownloadSvg} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+              </svg>
+              Download SVG
+            </button>
             <button className="btn" onClick={handleCopyImage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
               {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
               {copyImageSuccess ? 'Copied Image!' : 'Copy Image'}
@@ -554,6 +612,16 @@ ${materialLink}<div class="glow-card">
                 <label style={{ fontWeight: 'bold' }}>Enable Text</label>
               </div>
               <div style={{ opacity: showText ? 1 : 0.5, pointerEvents: showText ? 'auto' : 'none', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label>Font</label>
+                  <select className="input-field" value={fontFamily} onChange={e => setFontFamily(e.target.value)} style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto' }}>
+                    <option value="system-ui, -apple-system, sans-serif">System Sans</option>
+                    <option value="'Inter', sans-serif">Inter</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="monospace">Monospace</option>
+                  </select>
+                </div>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <label>Title</label>
@@ -713,7 +781,14 @@ ${materialLink}<div class="glow-card">
             </div>
 
             <div className="control-group" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <label style={{ display: 'block' }}>Background Image & Animations</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <label style={{ display: 'block' }}>Background Image & Animations</label>
+                <select className="input-field" value={bgImagePosition} onChange={e => setBgImagePosition(e.target.value)} style={{ padding: '2px 8px', fontSize: '0.8rem', width: 'auto' }}>
+                  <option value="top">Align Top</option>
+                  <option value="center">Align Center</option>
+                  <option value="bottom">Align Bottom</option>
+                </select>
+              </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 <input type="text" className="input-field" placeholder="Image URL" value={bgImageUrl} onChange={e => setBgImageUrl(e.target.value)} style={{ flex: 1 }} />
                 <label className="btn" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', padding: '0.5rem' }}>
