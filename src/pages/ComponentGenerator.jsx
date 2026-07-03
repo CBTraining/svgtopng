@@ -85,6 +85,17 @@ export default function ComponentGenerator() {
     setPresetName(''); // Clear input after save
   };
 
+  const deletePreset = () => {
+    if (!presetName.trim()) return alert("Enter the name of the preset to delete, or load it first.");
+    if (!presets[presetName]) return alert("Preset not found.");
+    if (!window.confirm(`Delete preset "${presetName}"?`)) return;
+    const newPresets = { ...presets };
+    delete newPresets[presetName];
+    setPresets(newPresets);
+    localStorage.setItem('componentGeneratorPresets', JSON.stringify(newPresets));
+    setPresetName(''); // Clear input after delete
+  };
+
   const loadPreset = (name) => {
     if (!name) return;
     const p = presets[name];
@@ -573,10 +584,11 @@ ${materialLink}<div class="glow-card">
 
           <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', alignItems: 'center', flexWrap: 'wrap', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
             <span style={{ fontWeight: 'bold', marginRight: '0.5rem' }}>Presets:</span>
-            <input type="text" className="input-field" placeholder="New Preset Name" value={presetName} onChange={e => setPresetName(e.target.value)} style={{ width: '200px', padding: '0.5rem' }} />
+            <input type="text" className="input-field" placeholder="Preset Name" value={presetName} onChange={e => setPresetName(e.target.value)} style={{ width: '200px', padding: '0.5rem' }} />
             <button className="btn" onClick={savePreset}>Save</button>
+            <button className="btn" onClick={deletePreset} style={{ color: '#ff4444', borderColor: 'rgba(255,68,68,0.3)' }}>Delete</button>
             <div style={{ flex: 1 }}></div>
-            <select className="input-field" style={{ padding: '0.5rem', width: '200px' }} onChange={e => loadPreset(e.target.value)} value="">
+            <select className="input-field" style={{ padding: '0.5rem', width: '200px' }} onChange={e => { loadPreset(e.target.value); setPresetName(e.target.value); }} value="">
               <option value="" disabled>Load Preset...</option>
               {Object.keys(presets).map(name => <option key={name} value={name}>{name}</option>)}
             </select>
