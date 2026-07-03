@@ -162,13 +162,17 @@ export default function ComponentGenerator() {
     : `linear-gradient(90deg, ${sortedStops.map(s => `${s.color} ${Math.round(s.position * 100)}%`).join(', ')});`;
 
   let animationCss = '';
-  let transformStr = '';
-  if (hoverAnimations.float) transformStr += `translateY(${-5 * animIntensity}px) `;
+  let transformStr = `perspective(1000px) rotateX(0deg) rotateY(0deg) `;
   if (hoverAnimations.expand) transformStr += `scale(${1 + (0.02 * animIntensity)}) `;
+  else transformStr += `scale(1) `;
+  
+  if (hoverAnimations.float) transformStr += `translateY(${-5 * animIntensity}px) `;
+  else transformStr += `translateY(0px) `;
   
   if (hoverAnimations.shiftRight) transformStr += `translateX(${8 * animIntensity}px) `;
+  else transformStr += `translateX(0px) `;
 
-  const hasTransform = transformStr.trim().length > 0;
+  const hasTransform = hoverAnimations.expand || hoverAnimations.float || hoverAnimations.shiftRight;
   let cardAnimations = [];
   if (hoverAnimations.jiggle) cardAnimations.push(`jiggle 0.3s ease-in-out infinite`);
   if (hoverAnimations.shake) cardAnimations.push(`shake 0.4s ease-in-out infinite`);
@@ -253,6 +257,7 @@ export default function ComponentGenerator() {
   overflow: hidden;
   z-index: 1;
   transition: all 0.3s ease;
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1) translateY(0px) translateX(0px);
   display: flex;
   align-items: center;
   flex-wrap: wrap; /* Allows stacking if content doesn't fit */
@@ -397,10 +402,10 @@ const iconContent = iconType === 'svg'
       const rotateX = ((y - centerY) / centerY) * -${15 * animIntensity};
       const rotateY = ((x - centerX) / centerX) * ${15 * animIntensity};
       
-      let transformStr = \`perspective(1000px) rotateX(\${rotateX}deg) rotateY(\${rotateY}deg)\`;
-      ${hoverAnimations.expand ? `transformStr += \` scale(${1 + (0.02 * animIntensity)})\`;` : ''}
-      ${hoverAnimations.float ? `transformStr += \` translateY(${-5 * animIntensity}px)\`;` : ''}
-      ${hoverAnimations.shiftRight ? `transformStr += \` translateX(${8 * animIntensity}px)\`;` : ''}
+      let transformStr = \`perspective(1000px) rotateX(\${rotateX}deg) rotateY(\${rotateY}deg) \`;
+      ${hoverAnimations.expand ? `transformStr += \`scale(${1 + (0.02 * animIntensity)}) \`;` : 'transformStr += `scale(1) `;'}
+      ${hoverAnimations.float ? `transformStr += \`translateY(${-5 * animIntensity}px) \`;` : 'transformStr += `translateY(0px) `;'}
+      ${hoverAnimations.shiftRight ? `transformStr += \`translateX(${8 * animIntensity}px) \`;` : 'transformStr += `translateX(0px) `;'}
       
       card.style.transform = transformStr;
       ` : ''}
