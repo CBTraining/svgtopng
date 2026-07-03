@@ -538,7 +538,9 @@ ${materialLink}<div class="glow-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <label>Title</label>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <label style={{fontSize: '0.75rem', opacity: 0.7}}>Size (rem):</label>
                       <input type="number" step="0.1" value={cardTitleSize} onChange={e => setCardTitleSize(Number(e.target.value))} style={{ width: '50px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
+                      <label style={{fontSize: '0.75rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
                       <input type="color" value={cardTitleColor} onChange={e => setCardTitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
                     </div>
                   </div>
@@ -548,7 +550,9 @@ ${materialLink}<div class="glow-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <label>Subtitle</label>
                     <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <label style={{fontSize: '0.75rem', opacity: 0.7}}>Size (rem):</label>
                       <input type="number" step="0.1" value={cardSubtitleSize} onChange={e => setCardSubtitleSize(Number(e.target.value))} style={{ width: '50px', padding: '0 4px', fontSize: '0.8rem', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: 'white', borderRadius: '4px' }} title="Font Size (rem)" />
+                      <label style={{fontSize: '0.75rem', opacity: 0.7, marginLeft: '4px'}}>Color:</label>
                       <input type="color" value={cardSubtitleColor} onChange={e => setCardSubtitleColor(e.target.value)} style={{ width: '20px', height: '20px', padding: 0, border: 'none', background: 'transparent', cursor: 'pointer' }} title="Text Color" />
                     </div>
                   </div>
