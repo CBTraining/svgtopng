@@ -484,15 +484,8 @@ ${materialLink}<div class="glow-card">
     if (!previewRef.current) return;
     try {
       const svgDataUrl = await toSvg(previewRef.current, {
-        width: previewRef.current.offsetWidth + 100,
-        height: previewRef.current.offsetHeight + 100,
         skipFonts: true,
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '50px'
-        }
+        backgroundColor: 'transparent'
       });
       
       const link = document.createElement('a');
@@ -508,18 +501,10 @@ ${materialLink}<div class="glow-card">
   const handleCopyImage = async () => {
     if (!previewRef.current) return;
     try {
-      // Need a slight margin to capture the glow filter properly
       const blob = await toBlob(previewRef.current, {
         pixelRatio: 4, // Boost resolution to 4x
-        width: previewRef.current.offsetWidth + 100,
-        height: previewRef.current.offsetHeight + 100,
         skipFonts: true, // Fix for SecurityError: Failed to read the 'cssRules' property
-        style: {
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '50px' // give the glow room to breathe
-        }
+        backgroundColor: 'transparent'
       });
       if (blob) {
         await navigator.clipboard.write([
@@ -573,11 +558,11 @@ ${materialLink}<div class="glow-card">
           }}>
             <style>{cssCode}</style>
             <div dangerouslySetInnerHTML={{ __html: materialLink }} />
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <div ref={previewRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '50px' }}>
               {iconLink.trim() ? (
-                <a ref={previewRef} href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
+                <a href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
               ) : (
-                <div ref={previewRef} className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
+                <div className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
               )}
             </div>
           </div>
