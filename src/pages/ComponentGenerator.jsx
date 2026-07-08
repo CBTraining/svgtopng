@@ -512,8 +512,13 @@ ${materialLink}<div class="glow-card">
   const handleCopyImage = async () => {
     if (!previewRef.current) return;
     try {
+      const rect = previewRef.current.getBoundingClientRect();
+      // Ensure the output image is at least 1000px wide for high-quality pasting
+      const targetWidth = Math.max(1000, rect.width * 2);
+      const scale = targetWidth / rect.width;
+
       const blob = await toBlob(previewRef.current, {
-        pixelRatio: 4, // Boost resolution to 4x
+        pixelRatio: scale,
         backgroundColor: 'transparent'
       });
       if (blob) {
