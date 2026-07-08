@@ -234,26 +234,52 @@ function VideoToGifSlot({ slot }) {
               {enableCrop && (
                 <div style={{display: 'flex', gap: '1rem'}}>
                   <div className="input-group" style={{flex: 1}}>
-                    <label style={{display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Start Time (s)</label>
-                    <input 
-                      type="number" 
-                      min="0"
-                      step="0.1"
-                      value={startTime} 
-                      onChange={(e) => updateSlot(TOOL_ID, slot.id, { startTime: Number(e.target.value) })}
-                      style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
-                    />
+                    <label style={{display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)'}}>Start Time (m:s)</label>
+                    <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                      <input 
+                        type="number" 
+                        min="0"
+                        placeholder="MM"
+                        value={Math.floor(startTime / 60) || 0} 
+                        onChange={(e) => updateSlot(TOOL_ID, slot.id, { startTime: (Number(e.target.value) * 60) + (startTime % 60) })}
+                        style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      />
+                      <span>:</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="59.9"
+                        step="0.1"
+                        placeholder="SS.s"
+                        value={Number((startTime % 60).toFixed(1))} 
+                        onChange={(e) => updateSlot(TOOL_ID, slot.id, { startTime: (Math.floor(startTime / 60) * 60) + Number(e.target.value) })}
+                        style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      />
+                    </div>
                   </div>
                   <div className="input-group" style={{flex: 1}}>
-                    <label style={{display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)'}}>End Time (s)</label>
-                    <input 
-                      type="number" 
-                      min="0"
-                      step="0.1"
-                      value={endTime} 
-                      onChange={(e) => updateSlot(TOOL_ID, slot.id, { endTime: Number(e.target.value) })}
-                      style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
-                    />
+                    <label style={{display: 'block', marginBottom: '0.25rem', fontSize: '0.85rem', color: 'var(--text-secondary)'}}>End Time (m:s)</label>
+                    <div style={{display: 'flex', gap: '0.5rem', alignItems: 'center'}}>
+                      <input 
+                        type="number" 
+                        min="0"
+                        placeholder="MM"
+                        value={Math.floor(endTime / 60) || 0} 
+                        onChange={(e) => updateSlot(TOOL_ID, slot.id, { endTime: (Number(e.target.value) * 60) + (endTime % 60) })}
+                        style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      />
+                      <span>:</span>
+                      <input 
+                        type="number" 
+                        min="0"
+                        max="59.9"
+                        step="0.1"
+                        placeholder="SS.s"
+                        value={Number((endTime % 60).toFixed(1))} 
+                        onChange={(e) => updateSlot(TOOL_ID, slot.id, { endTime: (Math.floor(endTime / 60) * 60) + Number(e.target.value) })}
+                        style={{width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', color: 'var(--text-primary)', padding: '0.5rem', borderRadius: '4px'}}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
