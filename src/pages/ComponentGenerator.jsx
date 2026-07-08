@@ -287,9 +287,9 @@ export default function ComponentGenerator() {
 .glow-card::after {
   content: '';
   position: absolute;
-  bottom: -10px;
-  left: -5%;
-  width: 110%;
+  bottom: 0;
+  left: 0;
+  width: 100%;
   height: ${glowHeight}px;
   background: ${gradientString};
   background-size: 200% 100%;
@@ -298,6 +298,7 @@ export default function ComponentGenerator() {
   z-index: 2;
   pointer-events: none;
   opacity: 1;
+  clip-path: inset(-200px 0 0 0 round 0 0 ${borderRadius}px ${borderRadius}px);
   transition: all 0.3s ease;
 }
 
