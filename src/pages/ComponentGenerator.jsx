@@ -18,13 +18,14 @@ export default function ComponentGenerator() {
   const [hoverAnimations, setHoverAnimations] = useState({
     float: false,
     pulse: false,
-    expand: false,
-    tilt: false,
+    expand: true,
+    tilt: true,
     shiftRight: false,
     jiggle: false,
     glowFlash: false,
-    colorCycle: false,
+    colorCycle: true,
     outerGlow: false,
+    edgeGlow: false,
     shake: false,
     bounce: false
   });
@@ -50,10 +51,10 @@ export default function ComponentGenerator() {
   const [showText, setShowText] = useState(true);
   const [showIcon, setShowIcon] = useState(true);
 
-  const [iconType, setIconType] = useState('svg');
+  const [iconType, setIconType] = useState('material');
   const [iconName, setIconName] = useState('star');
 
-  const [iconSize, setIconSize] = useState(40);
+  const [iconSize, setIconSize] = useState(50);
   const [iconFill, setIconFill] = useState(true);
 
 
@@ -142,9 +143,9 @@ export default function ComponentGenerator() {
   
   const [gradStops, setGradStops] = useState([
     { color: '#4285F4', position: 0 },
-    { color: '#4285F4', position: 0.55 },
-    { color: '#EA4335', position: 0.70 },
-    { color: '#FBBC04', position: 0.85 },
+    { color: '#4285F4', position: 0.35 },
+    { color: '#EA4335', position: 0.65 },
+    { color: '#FBBC04', position: 0.82 },
     { color: '#34A853', position: 1.0 }
   ]);
 
@@ -182,14 +183,24 @@ export default function ComponentGenerator() {
   if (hoverAnimations.tilt) {
     animationCss += `\n.glow-card:hover { transition: all 0.3s ease, transform 0.1s ease-out; }`;
   }
-  if (hasTransform || hoverAnimations.float || hoverAnimations.outerGlow || cardAnimations.length > 0) {
+  if (hasTransform || hoverAnimations.float || hoverAnimations.outerGlow || hoverAnimations.edgeGlow || cardAnimations.length > 0) {
     animationCss += `\n.glow-card:hover {`;
     if (hasTransform) animationCss += `\n  transform: ${transformStr.trim()};`;
-    if (hoverAnimations.float) animationCss += `\n  box-shadow: \n    0 ${10 * animIntensity}px ${20 * animIntensity}px rgba(0,0,0,0.5);`;
+    
+    let shadows = [];
+    if (hoverAnimations.float) shadows.push(`0 ${10 * animIntensity}px ${20 * animIntensity}px rgba(0,0,0,0.5)`);
     if (hoverAnimations.outerGlow) {
       const glowCol = sortedStops.length > 0 ? sortedStops[0].color : 'rgba(255,255,255,0.5)';
-      animationCss += `\n  box-shadow: \n    0 0 ${40 * animIntensity}px ${glowCol};`;
+      shadows.push(`0 0 ${40 * animIntensity}px ${glowCol}`);
     }
+    if (hoverAnimations.edgeGlow) {
+      const edgeCol = sortedStops.length > 0 ? sortedStops[0].color : 'white';
+      shadows.push(`inset 0 0 0 2px ${edgeCol}`, `0 0 ${20 * animIntensity}px ${edgeCol}`);
+    }
+    if (shadows.length > 0) {
+      animationCss += `\n  box-shadow: \n    ${shadows.join(',\n    ')};`;
+    }
+
     if (cardAnimations.length > 0) animationCss += `\n  animation: ${cardAnimations.join(', ')};`;
     animationCss += `\n}`;
   }
@@ -831,7 +842,8 @@ ${materialLink}<div class="glow-card">
                     bounce: 'Bounce',
                     glowFlash: 'Flash',
                     colorCycle: 'Color Cycle',
-                    outerGlow: 'Outer Glow'
+                    outerGlow: 'Outer Glow',
+                    edgeGlow: 'Edge Glow'
                   }).map(([key, label]) => {
                     const isSelected = hoverAnimations[key];
                     return (
