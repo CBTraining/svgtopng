@@ -559,12 +559,14 @@ ${materialLink}<div class="glow-card">
           }}>
             <style>{cssCode}</style>
             <div dangerouslySetInnerHTML={{ __html: materialLink }} />
-            <div ref={previewRef} style={{ width: '100%', display: 'flex', justifyContent: 'center', padding: '50px' }}>
-              {iconLink.trim() ? (
-                <a href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
-              ) : (
-                <div className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
-              )}
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <div ref={previewRef} style={{ padding: '50px', display: 'flex' }}>
+                {iconLink.trim() ? (
+                  <a href={iconLink} target="_blank" rel="noopener noreferrer" className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} style={{ textDecoration: 'none', color: 'inherit' }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
+                ) : (
+                  <div className="glow-card" dangerouslySetInnerHTML={{ __html: innerHtml }} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave} />
+                )}
+              </div>
             </div>
           </div>
         </div>
