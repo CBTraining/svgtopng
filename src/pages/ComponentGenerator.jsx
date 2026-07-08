@@ -310,7 +310,7 @@ export default function ComponentGenerator() {
   pointer-events: none;
   opacity: 1;
   clip-path: inset(-200px 0 0 0 round 0 0 ${borderRadius}px ${borderRadius}px);
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease, filter 0.3s ease, height 0.3s ease, background-position 1.5s ease-out, background-size 1.5s ease-out;
 }
 
 ${bgImageUrl ? `
