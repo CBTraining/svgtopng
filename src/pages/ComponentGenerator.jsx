@@ -496,7 +496,6 @@ ${materialLink}<div class="glow-card">
     if (!previewRef.current) return;
     try {
       const svgDataUrl = await toSvg(previewRef.current, {
-        skipFonts: true,
         backgroundColor: 'transparent'
       });
       
@@ -515,7 +514,6 @@ ${materialLink}<div class="glow-card">
     try {
       const blob = await toBlob(previewRef.current, {
         pixelRatio: 4, // Boost resolution to 4x
-        skipFonts: true, // Fix for SecurityError: Failed to read the 'cssRules' property
         backgroundColor: 'transparent'
       });
       if (blob) {
