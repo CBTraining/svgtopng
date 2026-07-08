@@ -159,7 +159,7 @@ export default function ComponentGenerator() {
   
   const gradientString = hoverAnimations.colorCycle 
     ? `linear-gradient(90deg, ${loopStops.join(', ')})`
-    : `linear-gradient(90deg, ${sortedStops.map(s => `${s.color} ${Math.round(s.position * 100)}%`).join(', ')});`;
+    : `linear-gradient(90deg, ${sortedStops.map(s => `${s.color} ${Math.round(s.position * 100)}%`).join(', ')})`;
 
   let animationCss = '';
   let transformStr = `perspective(1000px) rotateX(0deg) rotateY(0deg) `;
@@ -292,7 +292,7 @@ export default function ComponentGenerator() {
   width: 100%;
   height: ${glowHeight}px;
   background: ${gradientString};
-  background-size: 200% 100%;
+  background-size: ${hoverAnimations.colorCycle ? '200% 100%' : '100% 100%'};
   background-position: 0% 50%;
   filter: blur(${glowBlur}px) saturate(${100 + (glowBlur * 2)}%);
   z-index: 2;
