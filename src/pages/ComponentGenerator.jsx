@@ -497,7 +497,7 @@ ${materialLink}<div class="glow-card">
     }
   };
 
-  const generateNativeSvg = () => {
+  const generateNativeSvg = async () => {
     if (!previewRef.current) return '';
     const cardRect = previewRef.current.getBoundingClientRect();
     const w = cardRect.width;
@@ -552,7 +552,23 @@ ${materialLink}<div class="glow-card">
       if (iconType === 'svg') {
          svgStr += `<g transform="translate(${dx}, ${dy})">${iconSvg}</g>`;
       } else {
-         svgStr += `<text x="${dx}" y="${dy}" dominant-baseline="hanging" font-family="Material Symbols Rounded" font-size="${iconSize}px" fill="white" font-weight="400">${iconName}</text>`;
+         try {
+           const cleanName = iconName.toLowerCase().trim().replace(/_/g, '-');
+           const suffix = iconFill ? '-rounded' : '-outline-rounded';
+           let queryName = cleanName;
+           if (!queryName.endsWith('-rounded')) queryName += suffix;
+           
+           const res = await fetch(`https://api.iconify.design/material-symbols/${queryName}.svg`);
+           if (res.ok) {
+             const svgText = await res.text();
+             const sizedSvg = svgText.replace('<svg ', `<svg width="${iconSize}" height="${iconSize}" color="white" `);
+             svgStr += `<g transform="translate(${dx}, ${dy})">${sizedSvg}</g>`;
+           } else {
+             throw new Error('Icon fetch failed');
+           }
+         } catch(e) {
+           svgStr += `<text x="${dx}" y="${dy}" dominant-baseline="hanging" font-family="Material Symbols Rounded" font-size="${iconSize}px" fill="white" font-weight="400">${iconName}</text>`;
+         }
       }
     }
 
@@ -585,7 +601,7 @@ ${materialLink}<div class="glow-card">
   const handleDownloadSvg = async () => {
     if (!previewRef.current) return;
     try {
-      const svgStr = generateNativeSvg();
+      const svgStr = await generateNativeSvg();
       const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
       const svgUrl = URL.createObjectURL(blob);
       
@@ -603,7 +619,7 @@ ${materialLink}<div class="glow-card">
   const handleCopySvg = async () => {
     if (!previewRef.current) return;
     try {
-      const svgStr = generateNativeSvg();
+      const svgStr = await generateNativeSvg();
       await navigator.clipboard.writeText(svgStr);
       setCopySvgSuccess(true);
       setTimeout(() => setCopySvgSuccess(false), 2000);
