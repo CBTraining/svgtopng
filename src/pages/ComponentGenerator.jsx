@@ -14,6 +14,7 @@ export default function ComponentGenerator() {
   const [backgroundColor, setBackgroundColor] = useState('transparent');
   const [glowHeight, setGlowHeight] = useState(30);
   const [glowBlur, setGlowBlur] = useState(15);
+  const [showBottomGlow, setShowBottomGlow] = useState(true);
   const [enableLuminance, setEnableLuminance] = useState(true);
   const [hoverAnimations, setHoverAnimations] = useState({
     float: false,
@@ -75,7 +76,7 @@ export default function ComponentGenerator() {
       ...presets,
       [presetName]: {
         maxWidth, maxWidthUnit, minHeight, minHeightUnit, borderRadius, innerShadowColor, backgroundColor,
-        glowHeight, glowBlur, enableLuminance, hoverAnimations, animIntensity,
+        glowHeight, glowBlur, showBottomGlow, enableLuminance, hoverAnimations, animIntensity,
         bgImageUrl, bgBrightness, bgContrast, bgTint, bgImagePosition, fontFamily, cardTitle, cardSubtitle,
         iconSvg, iconLink, gradStops, iconType, iconName, iconSize, iconFill,
         showText, showIcon, cardTitleColor, cardSubtitleColor, cardTitleSize, cardSubtitleSize
@@ -110,6 +111,7 @@ export default function ComponentGenerator() {
     if (p.backgroundColor !== undefined) setBackgroundColor(p.backgroundColor);
     if (p.glowHeight !== undefined) setGlowHeight(p.glowHeight);
     if (p.glowBlur !== undefined) setGlowBlur(p.glowBlur);
+    if (p.showBottomGlow !== undefined) setShowBottomGlow(p.showBottomGlow);
     if (p.enableLuminance !== undefined) setEnableLuminance(p.enableLuminance);
     if (p.hoverAnimations !== undefined) setHoverAnimations(prev => ({...prev, ...p.hoverAnimations}));
     if (p.animIntensity !== undefined) setAnimIntensity(p.animIntensity);
@@ -151,6 +153,7 @@ export default function ComponentGenerator() {
 
   const [copySuccess, setCopySuccess] = useState(false);
   const [copyImageSuccess, setCopyImageSuccess] = useState(false);
+  const [copySvgSuccess, setCopySvgSuccess] = useState(false);
 
   // Generate CSS string
   const sortedStops = [...gradStops].sort((a, b) => a.position - b.position);
@@ -236,16 +239,18 @@ export default function ComponentGenerator() {
 }`;
   }
 
-  let afterAnimations = [];
-  if (hoverAnimations.glowFlash) afterAnimations.push(`glowFlash 1s infinite`);
-  if (hoverAnimations.colorCycle) afterAnimations.push(`colorCycle ${5 / animIntensity}s linear infinite`);
+  if (showBottomGlow) {
+    let afterAnimations = [];
+    if (hoverAnimations.glowFlash) afterAnimations.push(`glowFlash 1s infinite`);
+    if (hoverAnimations.colorCycle) afterAnimations.push(`colorCycle ${5 / animIntensity}s linear infinite`);
 
-  if (hoverAnimations.pulse || hoverAnimations.float || afterAnimations.length > 0) {
-    animationCss += `\n.glow-card:hover::after {`;
-    if (hoverAnimations.float) animationCss += `\n  opacity: 0.8;`;
-    if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px) saturate(${100 + (glowBlur * 2)}%);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
-    if (afterAnimations.length > 0) animationCss += `\n  animation: ${afterAnimations.join(', ')};`;
-    animationCss += `\n}`;
+    if (hoverAnimations.pulse || hoverAnimations.float || afterAnimations.length > 0) {
+      animationCss += `\n.glow-card:hover::after {`;
+      if (hoverAnimations.float) animationCss += `\n  opacity: 0.8;`;
+      if (hoverAnimations.pulse) animationCss += `\n  filter: blur(${glowBlur + (10 * animIntensity)}px) saturate(${100 + (glowBlur * 2)}%);\n  height: ${glowHeight + (10 * animIntensity)}px;`;
+      if (afterAnimations.length > 0) animationCss += `\n  animation: ${afterAnimations.join(', ')};`;
+      animationCss += `\n}`;
+    }
   }
 
   if (hoverAnimations.glowFlash) {
@@ -294,7 +299,7 @@ export default function ComponentGenerator() {
     inset 0 4px 50px ${innerShadowColor},
     inset 0 0 0 2px ${innerShadowColor};
 }
-
+${showBottomGlow ? `
 .glow-card::after {
   content: '';
   position: absolute;
@@ -312,7 +317,7 @@ export default function ComponentGenerator() {
   clip-path: inset(-200px 0 0 0 round 0 0 ${borderRadius}px ${borderRadius}px);
   transition: opacity 0.3s ease, filter 0.3s ease, height 0.3s ease, background-position 1.5s ease-out, background-size 1.5s ease-out;
 }
-
+` : ''}
 ${bgImageUrl ? `
 .glow-card-bg {
   position: absolute;
@@ -492,19 +497,118 @@ ${materialLink}<div class="glow-card">
     }
   };
 
+  const generateNativeSvg = () => {
+    if (!previewRef.current) return '';
+    const cardRect = previewRef.current.getBoundingClientRect();
+    const w = cardRect.width;
+    const h = cardRect.height;
+    const r = borderRadius;
+
+    let svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+    svgStr += `<defs>`;
+    
+    svgStr += `<linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">`;
+    const sortedStops = [...gradStops].sort((a, b) => a.position - b.position);
+    sortedStops.forEach(stop => {
+      svgStr += `<stop offset="${stop.position * 100}%" stop-color="${stop.color}" />`;
+    });
+    svgStr += `</linearGradient>`;
+
+    svgStr += `<filter id="glowBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="${glowBlur}" />
+    </filter>`;
+
+    svgStr += `<clipPath id="cardClip">
+      <rect x="0" y="0" width="${w}" height="${h}" rx="${r}" />
+    </clipPath>`;
+    svgStr += `</defs>`;
+
+    // Background
+    svgStr += `<rect x="0" y="0" width="${w}" height="${h}" rx="${r}" fill="${backgroundColor}" />`;
+    
+    if (bgImageUrl) {
+      svgStr += `<g clip-path="url(#cardClip)">
+        <image href="${bgImageUrl}" x="0" y="0" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" />
+        <rect x="0" y="0" width="${w}" height="${h}" fill="${bgTint}" />
+      </g>`;
+    }
+
+    // Glow
+    if (showBottomGlow) {
+      svgStr += `<g clip-path="url(#cardClip)">
+        <rect x="-${w}" y="${h - glowHeight}" width="${w * 3}" height="${glowHeight + 100}" fill="url(#glowGrad)" filter="url(#glowBlur)" />
+      </g>`;
+    }
+
+    // Inner shadow approximation
+    svgStr += `<rect x="0.5" y="0.5" width="${w-1}" height="${h-1}" rx="${r}" fill="none" stroke="${innerShadowColor}" stroke-width="1" />`;
+
+    // Elements
+    const iconNode = previewRef.current.querySelector('.glow-card-icon');
+    if (iconNode && showIcon) {
+      const iRect = iconNode.getBoundingClientRect();
+      const dx = iRect.left - cardRect.left;
+      const dy = iRect.top - cardRect.top;
+      if (iconType === 'svg') {
+         svgStr += `<g transform="translate(${dx}, ${dy})">${iconSvg}</g>`;
+      } else {
+         svgStr += `<text x="${dx}" y="${dy}" dominant-baseline="hanging" font-family="Material Symbols Rounded" font-size="${iconSize}px" fill="white" font-weight="400">${iconName}</text>`;
+      }
+    }
+
+    const titleNode = previewRef.current.querySelector('.glow-card-title');
+    if (titleNode && showText) {
+      const tRect = titleNode.getBoundingClientRect();
+      const dx = tRect.left - cardRect.left;
+      const dy = tRect.top - cardRect.top;
+      const computedStyle = window.getComputedStyle(titleNode);
+      const fontSize = computedStyle.fontSize;
+      const fontWeight = computedStyle.fontWeight;
+      svgStr += `<text x="${dx}" y="${dy + parseFloat(fontSize) * 0.1}" dominant-baseline="hanging" font-family="${fontFamily.replace(/"/g, "'")}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${cardTitleColor}">${cardTitle}</text>`;
+    }
+
+    const subNode = previewRef.current.querySelector('.glow-card-subtitle');
+    if (subNode && showText) {
+      const sRect = subNode.getBoundingClientRect();
+      const dx = sRect.left - cardRect.left;
+      const dy = sRect.top - cardRect.top;
+      const computedStyle = window.getComputedStyle(subNode);
+      const fontSize = computedStyle.fontSize;
+      const fontWeight = computedStyle.fontWeight;
+      svgStr += `<text x="${dx}" y="${dy + parseFloat(fontSize) * 0.1}" dominant-baseline="hanging" font-family="${fontFamily.replace(/"/g, "'")}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${cardSubtitleColor}" opacity="0.8">${cardSubtitle}</text>`;
+    }
+
+    svgStr += `</svg>`;
+    return svgStr;
+  };
+
   const handleDownloadSvg = async () => {
     if (!previewRef.current) return;
     try {
-      const svgDataUrl = await toSvg(previewRef.current, {
-        backgroundColor: 'transparent'
-      });
+      const svgStr = generateNativeSvg();
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(blob);
       
       const link = document.createElement('a');
       link.download = 'component.svg';
-      link.href = svgDataUrl;
+      link.href = svgUrl;
       link.click();
+      
+      setTimeout(() => URL.revokeObjectURL(svgUrl), 100);
     } catch (err) {
       console.error("Failed to download SVG", err);
+    }
+  };
+
+  const handleCopySvg = async () => {
+    if (!previewRef.current) return;
+    try {
+      const svgStr = generateNativeSvg();
+      await navigator.clipboard.writeText(svgStr);
+      setCopySvgSuccess(true);
+      setTimeout(() => setCopySvgSuccess(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy SVG", err);
     }
   };
 
@@ -551,6 +655,10 @@ ${materialLink}<div class="glow-card">
                 <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
               </svg>
               Download SVG
+            </button>
+            <button className="btn" onClick={handleCopySvg} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
+              {copySvgSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"/></svg>}
+              {copySvgSuccess ? 'Copied SVG!' : 'Copy SVG'}
             </button>
             <button className="btn" onClick={handleCopyImage} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
               {copyImageSuccess ? <Check style={{width: '16px', height: '16px'}} /> : <PhotoIcon style={{width: '16px', height: '16px'}} />}
