@@ -518,6 +518,11 @@ ${materialLink}<div class="glow-card">
       <feGaussianBlur stdDeviation="${glowBlur}" />
     </filter>`;
 
+    svgStr += `<filter id="insetShadowBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="15" />
+      <feOffset dx="0" dy="4" />
+    </filter>`;
+
     svgStr += `<clipPath id="cardClip">
       <rect x="0" y="0" width="${w}" height="${h}" rx="${r}" />
     </clipPath>`;
@@ -540,7 +545,16 @@ ${materialLink}<div class="glow-card">
       </g>`;
     }
 
-    // Inner shadow approximation
+    // True vector inner shadow using an evenodd path hole + blur
+    const getRoundedRectPath = (x, y, width, height, radius) => `M ${x},${y + radius} a ${radius},${radius} 0 0 1 ${radius},-${radius} h ${width - 2 * radius} a ${radius},${radius} 0 0 1 ${radius},${radius} v ${height - 2 * radius} a ${radius},${radius} 0 0 1 -${radius},${radius} h -${width - 2 * radius} a ${radius},${radius} 0 0 1 -${radius},-${radius} Z`;
+    
+    const innerShadowPath = `M -100,-100 h ${w + 200} v ${h + 200} h -${w + 200} Z ${getRoundedRectPath(0, 0, w, h, r)}`;
+
+    svgStr += `<g clip-path="url(#cardClip)">
+      <path d="${innerShadowPath}" fill="${innerShadowColor}" fill-rule="evenodd" filter="url(#insetShadowBlur)" />
+    </g>`;
+
+    // Crisp 1px inner border (inset 0 0 0 1px)
     svgStr += `<rect x="0.5" y="0.5" width="${w-1}" height="${h-1}" rx="${r}" fill="none" stroke="${innerShadowColor}" stroke-width="1" />`;
 
     // Elements
