@@ -561,7 +561,7 @@ ${materialLink}<div class="glow-card">
            const res = await fetch(`https://api.iconify.design/material-symbols/${queryName}.svg`);
            if (res.ok) {
              const svgText = await res.text();
-             const sizedSvg = svgText.replace('<svg ', `<svg width="${iconSize}" height="${iconSize}" color="white" `);
+             const sizedSvg = svgText.replace(/width="[^"]*"/, `width="${iconSize}"`).replace(/height="[^"]*"/, `height="${iconSize}"`).replace('<svg ', '<svg color="white" ');
              svgStr += `<g transform="translate(${dx}, ${dy})">${sizedSvg}</g>`;
            } else {
              throw new Error('Icon fetch failed');
