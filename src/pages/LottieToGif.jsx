@@ -52,17 +52,30 @@ function LottieToGifSlot({ slot }) {
       quality: 10,
       width: canvas.width,
       height: canvas.height,
-      workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js',
+      workerScript: `${import.meta.env.BASE_URL}gif.worker.js`,
       transparent: 0x000000
     });
 
     gif.on('progress', p => {
-      updateJob(myJobId, { progress: p * 100, log: `Rendering frame...` });
+      updateJob(myJobId, { progress: p * 100, log: `Rendering frame: ${Math.round(p * 100)}%` });
     });
     
     gif.on('finished', (blob) => {
       const rUrl = URL.createObjectURL(blob);
       updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `lottie-${Date.now()}.gif` });
+      animItem.destroy();
+      document.body.removeChild(tempContainer);
+    });
+
+    gif.on('error', (err) => {
+      console.error("GIF rendering error:", err);
+      updateJob(myJobId, { status: 'error', error: err?.message || 'Failed to render GIF.' });
+      animItem.destroy();
+      document.body.removeChild(tempContainer);
+    });
+
+    gif.on('abort', () => {
+      updateJob(myJobId, { status: 'error', error: 'GIF rendering aborted.' });
       animItem.destroy();
       document.body.removeChild(tempContainer);
     });
