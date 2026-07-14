@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { CodeBracketSquareIcon as FileJson, ArrowDownTrayIcon as Download, CheckIcon as Check, ExclamationCircleIcon as AlertCircle } from '@heroicons/react/24/solid';
 import lottie from 'lottie-web';
 import GIF from 'gif.js';
@@ -74,6 +75,15 @@ export default function JsonSaver() {
   const [parsedLottieData, setParsedLottieData] = useState(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [gifJob, setGifJob] = useState({ status: 'idle', progress: 0, log: '', resultUrl: '', error: '' });
+
+  const location = useLocation();
+
+  // Load state if navigated with state (e.g., from drag and drop overlay)
+  useEffect(() => {
+    if (location.state?.jsonText) {
+      setJsonText(location.state.jsonText);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     return () => {
@@ -304,6 +314,22 @@ export default function JsonSaver() {
             <button className="btn btn-primary" onClick={handleSave}>
               <Download style={{width: "18px", height: "18px"}} /> Download .json
             </button>
+            {parsedLottieData && (
+              <button 
+                className="btn" 
+                onClick={() => { setActiveTab('preview'); handleConvertToGif(); }} 
+                style={{ 
+                  background: 'var(--accent-gradient)', 
+                  color: 'white', 
+                  boxShadow: '0 0 15px var(--accent-glow)' 
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" style={{width: 18, height: 18, marginRight: 6, display: 'inline-block', verticalAlign: 'middle'}}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                Convert Lottie to GIF
+              </button>
+            )}
           </div>
         </div>
       ) : (

@@ -29,6 +29,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
                    setDragType('svg');
                  } else if (type === 'application/pdf') {
                    setDragType('pdf');
+                 } else if (type === 'application/json' || type === 'text/json') {
+                   setDragType('json');
                  } else if (type.startsWith('image/') || type === '') {
                    setDragType('image'); // Empty type occurs on Windows for .webp or unknown files, default to image tools
                  } else if (type.startsWith('video/')) {
@@ -94,6 +96,29 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     
     const file = e.dataTransfer.files[0];
     if (!file) return;
+
+    if (dragType === 'json') {
+      if (action === 'json-editor') {
+        const text = await file.text();
+        navigate('/json-saver', { state: { jsonText: text } });
+        return;
+      } else if (action === 'lottie-convert') {
+        const text = await file.text();
+        try {
+          const json = JSON.parse(text);
+          const slotId = `lottie-to-gif-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+          addSlot('lottie-to-gif', {
+            id: slotId,
+            lottieData: json,
+            fileName: file.name
+          });
+          navigate('/lottie-to-gif');
+        } catch (err) {
+          alert("Invalid JSON file: " + err.message);
+        }
+        return;
+      }
+    }
 
     if (dragType === 'svg' && action === 'svg-convert') {
       const text = await file.text();
@@ -182,6 +207,12 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
         )}
         {dragType === 'svg' && (
           <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-convert" />
+        )}
+        {dragType === 'json' && (
+          <>
+            <Card title="Format & Save JSON" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="json-editor" />
+            <Card title="Convert Lottie to GIF" icon={<GifIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="lottie-convert" />
+          </>
         )}
         {dragType === 'unknown' && (
           <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>Unsupported file type. Drop anywhere to cancel.</div>
