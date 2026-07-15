@@ -11,6 +11,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
   const canvasRef = useRef(null);
   const [mode, setMode] = useState('erase'); // 'erase' or 'restore'
   const [brushSize, setBrushSize] = useState(40);
+  const [overlayOpacity, setOverlayOpacity] = useState(0.3);
   
   const [isDrawing, setIsDrawing] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
@@ -101,6 +102,23 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
         ctx.beginPath(); // reset path
     }
   };
+
+  const handleRestoreAll = () => {
+    if (!originalImage || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.drawImage(originalImage, 0, 0);
+    ctx.restore();
+  };
+
+  const handleClearAll = () => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  };
   
   const handleDownload = () => {
      const link = document.createElement('a');
@@ -113,30 +131,61 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', background: 'var(--bg-secondary)', padding: '0.5rem', borderRadius: 'var(--border-radius-sm)' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
-             <button 
-                className={`btn ${mode === 'erase' ? 'btn-primary' : ''}`}
-                onClick={() => setMode('erase')}
-                style={{ padding: '0.5rem 1rem' }}
-             >Erase</button>
-             <button 
-                className={`btn ${mode === 'restore' ? 'btn-primary' : ''}`}
-                onClick={() => setMode('restore')}
-                style={{ padding: '0.5rem 1rem' }}
-             >Restore</button>
+       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+             <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-primary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+                <button 
+                   className={`btn ${mode === 'erase' ? 'btn-primary' : ''}`}
+                   onClick={() => setMode('erase')}
+                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                >Erase</button>
+                <button 
+                   className={`btn ${mode === 'restore' ? 'btn-primary' : ''}`}
+                   onClick={() => setMode('restore')}
+                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                >Restore</button>
+             </div>
+
+             <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <button 
+                   className="btn"
+                   onClick={handleRestoreAll}
+                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                   title="Restore all original pixels"
+                >Restore All</button>
+                <button 
+                   className="btn"
+                   onClick={handleClearAll}
+                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', color: 'var(--danger-color)' }}
+                   title="Make entire image transparent"
+                >Clear All</button>
+              </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
-             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Brush Size</span>
-             <input 
-                type="range" 
-                min="5" 
-                max="200" 
-                value={brushSize} 
-                onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                style={{ flex: 1 }}
-             />
+          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Brush Size: {brushSize}px</span>
+                <input 
+                   type="range" 
+                   min="5" 
+                   max="200" 
+                   value={brushSize} 
+                   onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                   style={{ flex: 1 }}
+                />
+             </div>
+
+             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Guide Opacity: {Math.round(overlayOpacity * 100)}%</span>
+                <input 
+                   type="range" 
+                   min="0" 
+                   max="100" 
+                   value={Math.round(overlayOpacity * 100)} 
+                   onChange={(e) => setOverlayOpacity(parseFloat(e.target.value) / 100)}
+                   style={{ flex: 1 }}
+                />
+             </div>
           </div>
        </div>
 
@@ -147,9 +196,31 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
            background: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'20\' height=\'20\'><rect width=\'10\' height=\'10\' fill=\'%23ddd\'/><rect x=\'10\' y=\'10\' width=\'10\' height=\'10\' fill=\'%23ddd\'/><rect x=\'10\' width=\'10\' height=\'10\' fill=\'%23eee\'/><rect y=\'10\' width=\'10\' height=\'10\' fill=\'%23eee\'/></svg>")',
            borderRadius: 'var(--border-radius-sm)',
            border: '1px solid var(--border-color)',
-           touchAction: 'none'
+           touchAction: 'none',
+           position: 'relative'
          }}
        >
+         {originalImage && (
+           <img 
+             src={originalUrl} 
+             alt="Guide Overlay" 
+             style={{
+               position: 'absolute',
+               top: '50%',
+               left: '50%',
+               transform: 'translate(-50%, -50%)',
+               maxWidth: '100%',
+               maxHeight: '60vh',
+               width: 'auto',
+               height: 'auto',
+               objectFit: 'contain',
+               pointerEvents: 'none',
+               opacity: overlayOpacity,
+               zIndex: 1,
+               display: 'block'
+             }}
+           />
+         )}
          <canvas 
            ref={canvasRef}
            onPointerDown={startDrawing}
@@ -162,7 +233,9 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
              objectFit: 'contain', 
              display: 'block', 
              margin: '0 auto',
-             cursor: 'crosshair'
+             cursor: 'crosshair',
+             position: 'relative',
+             zIndex: 2
            }}
          />
        </div>
@@ -181,6 +254,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 
 function BackgroundRemoverSlot({ slot }) {
   const { jobs, addJob, updateJob, removeJob, removeSlot } = useProcessing();
+  const [modelVariant, setModelVariant] = useState('isnet_fp16');
 
   const myJobId = slot.id;
   const myJob = jobs.find(j => j.id === myJobId);
@@ -197,6 +271,7 @@ function BackgroundRemoverSlot({ slot }) {
     try {
       const config = {
         device: "gpu", // Prioritize WebGL/WebGPU hardware acceleration
+        model: modelVariant,
         progress: (key, current, total) => {
           if (total > 0) {
             updateJob(myJobId, { progress: (current / total) * 100, log: `Processing ${key}...` });
@@ -233,9 +308,24 @@ function BackgroundRemoverSlot({ slot }) {
          <img src={previewUrl} alt="Original" style={{maxWidth: '100%', width: '100%', minHeight: '150px', maxHeight: '50vh', objectFit: 'contain', borderRadius: 'var(--border-radius-sm)', display: 'block', margin: '0 auto'}} />
          
          {!isProcessing && !resultUrl && (
-           <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>
-             Remove Background
-           </button>
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', marginTop: '0.5rem' }}>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Model Quality Variant:</label>
+                <select 
+                  className="input-field"
+                  value={modelVariant}
+                  onChange={(e) => setModelVariant(e.target.value)}
+                  style={{ padding: '0.5rem', cursor: 'pointer' }}
+                >
+                  <option value="isnet_fp16">Balanced (isnet_fp16 - GPU)</option>
+                  <option value="isnet">High Precision (isnet - Full Size)</option>
+                  <option value="isnet_quint8">Fast / Lightweight (isnet_quint8 - Quantized)</option>
+                </select>
+             </div>
+             <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>
+               Remove Background
+             </button>
+           </div>
          )}
          
          {isProcessing && (
