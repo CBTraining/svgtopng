@@ -34,8 +34,8 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
   
   useEffect(() => {
     const img = new Image();
-    img.src = originalUrl;
     img.onload = () => setOriginalImage(img);
+    img.src = originalUrl;
   }, [originalUrl]);
 
   useEffect(() => {
@@ -45,7 +45,6 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
     const img = new Image();
-    img.src = resultUrl;
     img.onload = () => {
       canvas.width = img.width;
       canvas.height = img.height;
@@ -59,6 +58,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
         setSampledColors([]);
       }
     };
+    img.src = resultUrl;
   }, [resultUrl]);
 
   // Capture canvas state as baseImageData whenever switching to colorkey tab
@@ -378,7 +378,6 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const img = new Image();
-    img.src = resultUrl;
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
@@ -390,6 +389,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
         setSampledColors([]);
       }
     };
+    img.src = resultUrl;
   };
   
   const handleDownload = () => {
