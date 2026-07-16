@@ -17,10 +17,17 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
   const [overlayOpacity, setOverlayOpacity] = useState(0.3);
 
   // Color Key states
-  const [keyColor, setKeyColor] = useState({ r: 0, g: 0, b: 0 });
+  const [baseImageData, setBaseImageData] = useState(null);
+  const [sampledColors, setSampledColors] = useState([]);
   const [tolerance, setTolerance] = useState(10);
   const [feather, setFeather] = useState(5);
   
+  // Line drawing and sampling states
+  const [isDrawingLine, setIsDrawingLine] = useState(false);
+  const [strokePath, setStrokePath] = useState([]);
+  const [preStrokeImageData, setPreStrokeImageData] = useState(null);
+  const [tempStrokeColors, setTempStrokeColors] = useState([]);
+
   const [isDrawing, setIsDrawing] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
   const [pattern, setPattern] = useState(null);
@@ -44,8 +51,26 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
       canvas.height = img.height;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      
+      // Capture base image data if we are already in colorkey tab
+      if (editorTab === 'colorkey') {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        setBaseImageData(imgData);
+        setSampledColors([]);
+      }
     };
   }, [resultUrl]);
+
+  // Capture canvas state as baseImageData whenever switching to colorkey tab
+  useEffect(() => {
+    if (editorTab === 'colorkey' && canvasRef.current) {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setBaseImageData(imgData);
+      setSampledColors([]);
+    }
+  }, [editorTab]);
 
   useEffect(() => {
     if (!originalImage || !canvasRef.current) return;
@@ -70,8 +95,25 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 
   const handleCanvasPointerDown = (e) => {
     if (e.cancelable) e.preventDefault();
+    
     if (editorTab === 'colorkey') {
-      pickColor(e);
+      if (!canvasRef.current || !baseImageData) return;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      
+      setIsDrawingLine(true);
+      const coords = getCanvasCoords(e);
+      
+      // Save canvas state before drawing the yellow line
+      const currentImgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setPreStrokeImageData(currentImgData);
+      
+      const newPath = [coords];
+      setStrokePath(newPath);
+      
+      const tempColors = [];
+      sampleColorsAlongLine(coords.x, coords.y, coords.x, coords.y, baseImageData.data, baseImageData.width, baseImageData.height, tempColors);
+      setTempStrokeColors(tempColors);
     } else {
       setIsDrawing(true);
       const { x, y } = getCanvasCoords(e);
@@ -84,9 +126,47 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 
   const handleCanvasPointerMove = (e) => {
     if (editorTab === 'colorkey') {
-      if (e.buttons === 1) {
-        pickColor(e);
+      if (!isDrawingLine || !canvasRef.current || !preStrokeImageData || !baseImageData) return;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      const coords = getCanvasCoords(e);
+      
+      const lastPoint = strokePath[strokePath.length - 1];
+      const newPath = [...strokePath, coords];
+      setStrokePath(newPath);
+      
+      // Restore canvas state to clear previous line
+      ctx.putImageData(preStrokeImageData, 0, 0);
+      
+      // Draw yellow freehand stroke preview
+      ctx.save();
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = '#f59e0b'; // Amber/yellow color
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 4;
+      
+      ctx.beginPath();
+      ctx.moveTo(newPath[0].x, newPath[0].y);
+      for (let i = 1; i < newPath.length; i++) {
+        ctx.lineTo(newPath[i].x, newPath[i].y);
       }
+      ctx.stroke();
+      ctx.restore();
+      
+      // Sample unique colors along this new segment
+      const updatedColors = [...tempStrokeColors];
+      sampleColorsAlongLine(
+        lastPoint.x, lastPoint.y,
+        coords.x, coords.y,
+        baseImageData.data,
+        baseImageData.width,
+        baseImageData.height,
+        updatedColors
+      );
+      setTempStrokeColors(updatedColors);
     } else {
       draw(e);
     }
@@ -118,61 +198,100 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
   };
 
   const stopDrawing = () => {
-    setIsDrawing(false);
-    if (canvasRef.current) {
-        const ctx = canvasRef.current.getContext('2d');
-        ctx.beginPath(); // reset path
+    if (editorTab === 'colorkey') {
+      if (isDrawingLine) {
+        setIsDrawingLine(false);
+        // Remove yellow line preview
+        if (canvasRef.current && preStrokeImageData) {
+          const ctx = canvasRef.current.getContext('2d');
+          ctx.putImageData(preStrokeImageData, 0, 0);
+        }
+        
+        // Merge temp stroke colors into global list
+        if (tempStrokeColors.length > 0) {
+          setSampledColors(prev => {
+            const combined = [...prev];
+            tempStrokeColors.forEach(c => {
+              const threshold = 8;
+              const exists = combined.some(existing => 
+                Math.abs(existing.r - c.r) < threshold &&
+                Math.abs(existing.g - c.g) < threshold &&
+                Math.abs(existing.b - c.b) < threshold
+              );
+              if (!exists) {
+                combined.push(c);
+              }
+            });
+            return combined;
+          });
+        }
+        
+        setStrokePath([]);
+        setPreStrokeImageData(null);
+      }
+    } else {
+      setIsDrawing(false);
+      if (canvasRef.current) {
+          const ctx = canvasRef.current.getContext('2d');
+          ctx.beginPath(); // reset path
+      }
     }
   };
 
-  const pickColor = (e) => {
-    if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    const { x, y } = getCanvasCoords(e);
+  const sampleColorsAlongLine = (x0, y0, x1, y1, baseData, width, height, colorsList) => {
+    const dx = Math.abs(x1 - x0);
+    const dy = Math.abs(y1 - y0);
+    const steps = Math.max(dx, dy);
     
-    const clampX = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
-    const clampY = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
-    
-    try {
-      const pixel = ctx.getImageData(clampX, clampY, 1, 1).data;
-      setKeyColor({ r: pixel[0], g: pixel[1], b: pixel[2] });
-    } catch (err) {
-      console.error("Failed to pick color:", err);
+    for (let i = 0; i <= steps; i++) {
+      const t = steps === 0 ? 0 : i / steps;
+      const x = Math.round(x0 + (x1 - x0) * t);
+      const y = Math.round(y0 + (y1 - y0) * t);
+      
+      if (x >= 0 && x < width && y >= 0 && y < height) {
+        const idx = (y * width + x) * 4;
+        const r = baseData[idx];
+        const g = baseData[idx+1];
+        const b = baseData[idx+2];
+        const a = baseData[idx+3];
+        if (a > 0) {
+          // Check if color is already in list
+          const threshold = 8;
+          const isDuplicate = colorsList.some(c => 
+            Math.abs(c.r - r) < threshold && 
+            Math.abs(c.g - g) < threshold && 
+            Math.abs(c.b - b) < threshold
+          );
+          if (!isDuplicate) {
+            colorsList.push({ r, g, b });
+          }
+        }
+      }
     }
   };
 
-  const rgbToHex = (r, g, b) => {
-    const toHex = (c) => {
-      const hex = c.toString(16);
-      return hex.length === 1 ? '0' + hex : hex;
-    };
-    return '#' + toHex(r) + toHex(g) + toHex(b);
-  };
-
-  const hexToRgb = (hex) => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-      r: parseInt(result[1], 16),
-      g: parseInt(result[2], 16),
-      b: parseInt(result[3], 16)
-    } : { r: 0, g: 0, b: 0 };
-  };
-
-  const handleRemoveColor = () => {
-    if (!canvasRef.current) return;
+  const applyChromaKey = (baseImgData, colors, tol, feat) => {
     const canvas = canvasRef.current;
+    if (!canvas || !baseImgData) return;
     const ctx = canvas.getContext('2d');
-    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    
+    if (colors.length === 0) {
+      // If no colors are selected, just restore the base state
+      ctx.putImageData(baseImgData, 0, 0);
+      return;
+    }
+    
+    // Copy base image data to prevent mutating the original reference
+    const imgData = new ImageData(
+      new Uint8ClampedArray(baseImgData.data),
+      baseImgData.width,
+      baseImgData.height
+    );
     const data = imgData.data;
     
-    const targetR = keyColor.r;
-    const targetG = keyColor.g;
-    const targetB = keyColor.b;
-    
     const maxDist = 441.67;
-    const tolVal = (tolerance / 100) * maxDist;
-    const featherVal = (feather / 100) * maxDist;
+    const tolVal = (tol / 100) * maxDist;
+    const featherVal = (feat / 100) * maxDist;
     
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i];
@@ -182,22 +301,45 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
       
       if (a === 0) continue;
       
-      const distance = Math.sqrt(
-        (r - targetR) ** 2 + 
-        (g - targetG) ** 2 + 
-        (b - targetB) ** 2
-      );
+      // Calculate minimum Euclidean distance to any sampled color
+      let minDistance = Infinity;
+      for (let j = 0; j < colors.length; j++) {
+        const c = colors[j];
+        const dist = Math.sqrt(
+          (r - c.r) ** 2 + 
+          (g - c.g) ** 2 + 
+          (b - c.b) ** 2
+        );
+        if (dist < minDistance) {
+          minDistance = dist;
+        }
+      }
       
-      if (distance < tolVal) {
+      if (minDistance < tolVal) {
         data[i+3] = 0;
-      } else if (featherVal > 0 && distance < tolVal + featherVal) {
-        const ratio = (distance - tolVal) / featherVal;
+      } else if (featherVal > 0 && minDistance < tolVal + featherVal) {
+        const ratio = (minDistance - tolVal) / featherVal;
         const newAlpha = Math.round(ratio * a);
         data[i+3] = Math.min(data[i+3], newAlpha);
       }
     }
     
     ctx.putImageData(imgData, 0, 0);
+  };
+
+  // Run Chroma Key automatically when parameters or selection updates
+  useEffect(() => {
+    if (editorTab === 'colorkey' && baseImageData) {
+      applyChromaKey(baseImageData, sampledColors, tolerance, feather);
+    }
+  }, [tolerance, feather, sampledColors, baseImageData, editorTab]);
+
+  const handleClearChromaSelection = () => {
+    setSampledColors([]);
+    if (canvasRef.current && baseImageData) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.putImageData(baseImageData, 0, 0);
+    }
   };
 
   const handleRestoreAll = () => {
@@ -208,6 +350,13 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     ctx.globalCompositeOperation = 'source-over';
     ctx.drawImage(originalImage, 0, 0);
     ctx.restore();
+    
+    // If in colorkey tab, update baseImageData
+    if (editorTab === 'colorkey') {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setBaseImageData(imgData);
+      setSampledColors([]);
+    }
   };
 
   const handleClearAll = () => {
@@ -215,6 +364,13 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // If in colorkey tab, update baseImageData
+    if (editorTab === 'colorkey') {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setBaseImageData(imgData);
+      setSampledColors([]);
+    }
   };
 
   const handleResetCanvas = () => {
@@ -226,12 +382,18 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
+      
+      // If in colorkey tab, update baseImageData
+      if (editorTab === 'colorkey') {
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        setBaseImageData(imgData);
+        setSampledColors([]);
+      }
     };
   };
   
   const handleDownload = () => {
      const link = document.createElement('a');
-     // Use the original filename without the extension, or fallback to timestamp
      const name = fileName ? fileName.replace(/\.[^/.]+$/, "") : Date.now();
      link.download = `nobg-edited-${name}.png`;
      link.href = canvasRef.current.toDataURL('image/png');
@@ -314,27 +476,21 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
          </div>
        ) : (
          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '0.5rem' }}>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Target Color:</span>
-                  <div 
-                     style={{ 
-                       width: '28px', 
-                       height: '28px', 
-                       borderRadius: '4px', 
-                       border: '1px solid var(--border-color)', 
-                       backgroundColor: `rgb(${keyColor.r}, ${keyColor.g}, ${keyColor.b})` 
-                     }} 
-                  />
-                  <input 
-                     type="color" 
-                     value={rgbToHex(keyColor.r, keyColor.g, keyColor.b)} 
-                     onChange={(e) => setKeyColor(hexToRgb(e.target.value))}
-                     style={{ width: '40px', height: '28px', border: 'none', background: 'transparent', cursor: 'pointer' }}
-                  />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)' }}>
+                     Sampled colors: {sampledColors.length}
+                  </span>
+                  {sampledColors.length > 0 && (
+                    <button 
+                       className="btn" 
+                       onClick={handleClearChromaSelection}
+                       style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', color: 'var(--danger-color)' }}
+                    >Clear Stroke</button>
+                  )}
                </div>
 
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '130px' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Tolerance: {tolerance}%</span>
                   <input 
                      type="range" 
@@ -346,7 +502,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
                   />
                </div>
 
-               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '130px' }}>
                   <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Feather: {feather}%</span>
                   <input 
                      type="range" 
@@ -357,15 +513,9 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
                      style={{ flex: 1 }}
                   />
                </div>
-
-               <button 
-                  className="btn btn-primary" 
-                  onClick={handleRemoveColor}
-                  style={{ padding: '0.35rem 1rem', fontSize: '0.85rem' }}
-               >Remove Color</button>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
-               Tip: You can also click or drag directly on the image above to pick colors.
+               Tip: Draw one or more lines directly on the image to select background colors to remove (Resolve-style 3D Keyer).
             </div>
          </div>
        )}
