@@ -9,9 +9,17 @@ const TOOL_ID = 'bg-remove';
 
 function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
   const canvasRef = useRef(null);
+  const [editorTab, setEditorTab] = useState('brush'); // 'brush' or 'colorkey'
+
+  // Brush states
   const [mode, setMode] = useState('erase'); // 'erase' or 'restore'
   const [brushSize, setBrushSize] = useState(40);
   const [overlayOpacity, setOverlayOpacity] = useState(0.3);
+
+  // Color Key states
+  const [keyColor, setKeyColor] = useState({ r: 0, g: 0, b: 0 });
+  const [tolerance, setTolerance] = useState(10);
+  const [feather, setFeather] = useState(5);
   
   const [isDrawing, setIsDrawing] = useState(false);
   const [originalImage, setOriginalImage] = useState(null);
@@ -60,14 +68,28 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     };
   };
 
-  const startDrawing = (e) => {
+  const handleCanvasPointerDown = (e) => {
     if (e.cancelable) e.preventDefault();
-    setIsDrawing(true);
-    const { x, y } = getCanvasCoords(e);
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    draw(e); 
+    if (editorTab === 'colorkey') {
+      pickColor(e);
+    } else {
+      setIsDrawing(true);
+      const { x, y } = getCanvasCoords(e);
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      draw(e); 
+    }
+  };
+
+  const handleCanvasPointerMove = (e) => {
+    if (editorTab === 'colorkey') {
+      if (e.buttons === 1) {
+        pickColor(e);
+      }
+    } else {
+      draw(e);
+    }
   };
 
   const draw = (e) => {
@@ -103,6 +125,81 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     }
   };
 
+  const pickColor = (e) => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const { x, y } = getCanvasCoords(e);
+    
+    const clampX = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
+    const clampY = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
+    
+    try {
+      const pixel = ctx.getImageData(clampX, clampY, 1, 1).data;
+      setKeyColor({ r: pixel[0], g: pixel[1], b: pixel[2] });
+    } catch (err) {
+      console.error("Failed to pick color:", err);
+    }
+  };
+
+  const rgbToHex = (r, g, b) => {
+    const toHex = (c) => {
+      const hex = c.toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    };
+    return '#' + toHex(r) + toHex(g) + toHex(b);
+  };
+
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : { r: 0, g: 0, b: 0 };
+  };
+
+  const handleRemoveColor = () => {
+    if (!canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imgData.data;
+    
+    const targetR = keyColor.r;
+    const targetG = keyColor.g;
+    const targetB = keyColor.b;
+    
+    const maxDist = 441.67;
+    const tolVal = (tolerance / 100) * maxDist;
+    const featherVal = (feather / 100) * maxDist;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i+1];
+      const b = data[i+2];
+      const a = data[i+3];
+      
+      if (a === 0) continue;
+      
+      const distance = Math.sqrt(
+        (r - targetR) ** 2 + 
+        (g - targetG) ** 2 + 
+        (b - targetB) ** 2
+      );
+      
+      if (distance < tolVal) {
+        data[i+3] = 0;
+      } else if (featherVal > 0 && distance < tolVal + featherVal) {
+        const ratio = (distance - tolVal) / featherVal;
+        const newAlpha = Math.round(ratio * a);
+        data[i+3] = Math.min(data[i+3], newAlpha);
+      }
+    }
+    
+    ctx.putImageData(imgData, 0, 0);
+  };
+
   const handleRestoreAll = () => {
     if (!originalImage || !canvasRef.current) return;
     const canvas = canvasRef.current;
@@ -119,6 +216,18 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
+
+  const handleResetCanvas = () => {
+    if (!resultUrl || !canvasRef.current) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.src = resultUrl;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+    };
+  };
   
   const handleDownload = () => {
      const link = document.createElement('a');
@@ -131,63 +240,135 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-             <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-primary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
-                <button 
-                   className={`btn ${mode === 'erase' ? 'btn-primary' : ''}`}
-                   onClick={() => setMode('erase')}
-                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
-                >Erase</button>
-                <button 
-                   className={`btn ${mode === 'restore' ? 'btn-primary' : ''}`}
-                   onClick={() => setMode('restore')}
-                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
-                >Restore</button>
-             </div>
-
-             <div style={{ display: 'flex', gap: '0.25rem' }}>
-                <button 
-                   className="btn"
-                   onClick={handleRestoreAll}
-                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
-                   title="Restore all original pixels"
-                >Restore All</button>
-                <button 
-                   className="btn"
-                   onClick={handleClearAll}
-                   style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', color: 'var(--danger-color)' }}
-                   title="Make entire image transparent"
-                >Clear All</button>
-              </div>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Brush Size: {brushSize}px</span>
-                <input 
-                   type="range" 
-                   min="5" 
-                   max="200" 
-                   value={brushSize} 
-                   onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                   style={{ flex: 1 }}
-                />
-             </div>
-
-             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Guide Opacity: {Math.round(overlayOpacity * 100)}%</span>
-                <input 
-                   type="range" 
-                   min="0" 
-                   max="100" 
-                   value={Math.round(overlayOpacity * 100)} 
-                   onChange={(e) => setOverlayOpacity(parseFloat(e.target.value) / 100)}
-                   style={{ flex: 1 }}
-                />
-             </div>
-          </div>
+       {/* Tab controls */}
+       <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+          <button 
+             className={`btn ${editorTab === 'brush' ? 'btn-primary' : ''}`}
+             onClick={() => setEditorTab('brush')}
+             style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+          >Refine Brush</button>
+          <button 
+             className={`btn ${editorTab === 'colorkey' ? 'btn-primary' : ''}`}
+             onClick={() => setEditorTab('colorkey')}
+             style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+          >Color Key (Solid)</button>
        </div>
+
+       {editorTab === 'brush' ? (
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+               <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-primary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+                  <button 
+                     className={`btn ${mode === 'erase' ? 'btn-primary' : ''}`}
+                     onClick={() => setMode('erase')}
+                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                  >Erase</button>
+                  <button 
+                     className={`btn ${mode === 'restore' ? 'btn-primary' : ''}`}
+                     onClick={() => setMode('restore')}
+                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                  >Restore</button>
+               </div>
+
+               <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <button 
+                     className="btn"
+                     onClick={handleRestoreAll}
+                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                     title="Restore all original pixels"
+                  >Restore All</button>
+                  <button 
+                     className="btn"
+                     onClick={handleClearAll}
+                     style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', color: 'var(--danger-color)' }}
+                     title="Make entire image transparent"
+                  >Clear All</button>
+                </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Brush Size: {brushSize}px</span>
+                  <input 
+                     type="range" 
+                     min="5" 
+                     max="200" 
+                     value={brushSize} 
+                     onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                     style={{ flex: 1 }}
+                  />
+               </div>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Guide Opacity: {Math.round(overlayOpacity * 100)}%</span>
+                  <input 
+                     type="range" 
+                     min="0" 
+                     max="100" 
+                     value={Math.round(overlayOpacity * 100)} 
+                     onChange={(e) => setOverlayOpacity(parseFloat(e.target.value) / 100)}
+                     style={{ flex: 1 }}
+                  />
+               </div>
+            </div>
+         </div>
+       ) : (
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: 'var(--border-radius-sm)', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Target Color:</span>
+                  <div 
+                     style={{ 
+                       width: '28px', 
+                       height: '28px', 
+                       borderRadius: '4px', 
+                       border: '1px solid var(--border-color)', 
+                       backgroundColor: `rgb(${keyColor.r}, ${keyColor.g}, ${keyColor.b})` 
+                     }} 
+                  />
+                  <input 
+                     type="color" 
+                     value={rgbToHex(keyColor.r, keyColor.g, keyColor.b)} 
+                     onChange={(e) => setKeyColor(hexToRgb(e.target.value))}
+                     style={{ width: '40px', height: '28px', border: 'none', background: 'transparent', cursor: 'pointer' }}
+                  />
+               </div>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Tolerance: {tolerance}%</span>
+                  <input 
+                     type="range" 
+                     min="0" 
+                     max="100" 
+                     value={tolerance} 
+                     onChange={(e) => setTolerance(parseInt(e.target.value))}
+                     style={{ flex: 1 }}
+                  />
+               </div>
+
+               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '150px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>Feather: {feather}%</span>
+                  <input 
+                     type="range" 
+                     min="0" 
+                     max="100" 
+                     value={feather} 
+                     onChange={(e) => setFeather(parseInt(e.target.value))}
+                     style={{ flex: 1 }}
+                  />
+               </div>
+
+               <button 
+                  className="btn btn-primary" 
+                  onClick={handleRemoveColor}
+                  style={{ padding: '0.35rem 1rem', fontSize: '0.85rem' }}
+               >Remove Color</button>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+               Tip: You can also click or drag directly on the image above to pick colors.
+            </div>
+         </div>
+       )}
 
        <div 
          style={{ 
@@ -223,8 +404,8 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
          )}
          <canvas 
            ref={canvasRef}
-           onPointerDown={startDrawing}
-           onPointerMove={draw}
+           onPointerDown={handleCanvasPointerDown}
+           onPointerMove={handleCanvasPointerMove}
            onPointerUp={stopDrawing}
            onPointerOut={stopDrawing}
            style={{ 
@@ -244,6 +425,9 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
          <button onClick={handleDownload} className="btn btn-primary">
             <Download style={{width: "18px", height: "18px"}} /> Download HD
          </button>
+         <button className="btn" onClick={handleResetCanvas}>
+            Reset Changes
+         </button>
          <button className="btn" onClick={onDiscard}>
             Discard Result
          </button>
@@ -255,6 +439,7 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
 function BackgroundRemoverSlot({ slot }) {
   const { jobs, addJob, updateJob, removeJob, removeSlot } = useProcessing();
   const [modelVariant, setModelVariant] = useState('isnet_fp16');
+  const [removalMethod, setRemovalMethod] = useState('ai'); // 'ai' or 'chromakey'
 
   const myJobId = slot.id;
   const myJob = jobs.find(j => j.id === myJobId);
@@ -266,6 +451,13 @@ function BackgroundRemoverSlot({ slot }) {
   const processImage = async () => {
     if (!imageFile || isProcessing) return;
     
+    if (removalMethod === 'chromakey') {
+      // Instant success using original image, we skip AI inference
+      addJob({ id: myJobId, title: 'Opening Color Key Editor', type: 'bg-remove' });
+      updateJob(myJobId, { status: 'success', resultUrl: previewUrl, downloadName: `nobg-${Date.now()}.png` });
+      return;
+    }
+
     addJob({ id: myJobId, title: 'Removing Background', type: 'bg-remove' });
 
     try {
@@ -309,28 +501,48 @@ function BackgroundRemoverSlot({ slot }) {
          
          {!isProcessing && !resultUrl && (
            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', marginTop: '0.5rem' }}>
-             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Model Quality Variant:</label>
-                <select 
-                  className="input-field"
-                  value={modelVariant}
-                  onChange={(e) => setModelVariant(e.target.value)}
-                  style={{ padding: '0.5rem', cursor: 'pointer' }}
-                >
-                  <option value="isnet_fp16">Balanced (isnet_fp16 - GPU)</option>
-                  <option value="isnet">High Precision (isnet - Full Size)</option>
-                  <option value="isnet_quint8">Fast / Lightweight (isnet_quint8 - Quantized)</option>
-                </select>
+             <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--bg-primary)', padding: '0.25rem', borderRadius: 'var(--border-radius-sm)' }}>
+                <button 
+                   className={`btn ${removalMethod === 'ai' ? 'btn-primary' : ''}`}
+                   onClick={() => setRemovalMethod('ai')}
+                   style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                >AI Model</button>
+                <button 
+                   className={`btn ${removalMethod === 'chromakey' ? 'btn-primary' : ''}`}
+                   onClick={() => setRemovalMethod('chromakey')}
+                   style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                >Color Key (Solid)</button>
              </div>
+
+             {removalMethod === 'ai' ? (
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Model Quality Variant:</label>
+                  <select 
+                    className="input-field"
+                    value={modelVariant}
+                    onChange={(e) => setModelVariant(e.target.value)}
+                    style={{ padding: '0.5rem', cursor: 'pointer' }}
+                  >
+                    <option value="isnet_fp16">Balanced (isnet_fp16 - GPU)</option>
+                    <option value="isnet">High Precision (isnet - Full Size)</option>
+                    <option value="isnet_quint8">Fast / Lightweight (isnet_quint8 - Quantized)</option>
+                  </select>
+               </div>
+             ) : (
+               <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center', padding: '0.25rem' }}>
+                  Remove solid color backgrounds instantly.
+               </div>
+             )}
+
              <button className="btn btn-primary" onClick={processImage} style={{width: '100%'}}>
-               Remove Background
+               {removalMethod === 'ai' ? 'Remove Background' : 'Open Editor'}
              </button>
            </div>
          )}
          
          {isProcessing && (
            <div style={{marginTop: '1rem', textAlign: 'center', color: 'var(--text-secondary)'}}>
-             AI is analyzing and removing background...
+             Analyzing and processing image...
            </div>
          )}
       </div>
