@@ -39,6 +39,17 @@ const LAYOUT_TEMPLATES = [
   { id: 'strip-v', label: 'Filmstrip (V)', description: 'Vertical strip' }
 ];
 
+function isLightColor(hex) {
+  if (!hex || typeof hex !== 'string') return false;
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const r = parseInt(c.substr(0, 2), 16) || 0;
+  const g = parseInt(c.substr(2, 2), 16) || 0;
+  const b = parseInt(c.substr(4, 2), 16) || 0;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6;
+}
+
 export default function CollageMaker() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,6 +57,10 @@ export default function CollageMaker() {
   const folderInputRef = useRef(null);
   const canvasRef = useRef(null);
   const previewContainerRef = useRef(null);
+
+  // Theme Detection State
+  const [theme, setTheme] = useState(() => document.documentElement.getAttribute('data-theme') || 'dark');
+  const [userHasCustomBg, setUserHasCustomBg] = useState(false);
 
   // Photos State: array of { id, file, url, width, height, panX, panY, zoom }
   const [photos, setPhotos] = useState([]);
@@ -58,27 +73,44 @@ export default function CollageMaker() {
 
   // Layout & Styling State
   const [layoutType, setLayoutType] = useState('justified');
-  const [gap, setGap] = useState(12);
-  const [margin, setMargin] = useState(16);
-  const [borderRadius, setBorderRadius] = useState(8);
+  const [gap, setGap] = useState(0);
+  const [margin, setMargin] = useState(0);
+  const [borderRadius, setBorderRadius] = useState(0);
   const [fillMode, setFillMode] = useState('cover'); // 'cover' | 'contain'
   const [bgType, setBgType] = useState('solid'); // 'solid' | 'gradient' | 'blur'
-  const [bgColor, setBgColor] = useState('#0f172a');
-  const [bgGradient, setBgGradient] = useState('linear-gradient(135deg, #1e293b, #0f172a)');
+  
+  // Default background color adapts to theme unless user explicitly picks a custom color
+  const [bgColor, setBgColor] = useState(() => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    return currentTheme === 'light' ? '#f8fafc' : '#0f172a';
+  });
+
   const [borderWidth, setBorderWidth] = useState(0);
   const [borderColor, setBorderColor] = useState('#ffffff');
-  const [shadow, setShadow] = useState(4);
+  const [shadow, setShadow] = useState(0);
 
   // Interactive Panning state
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
   const [panningPhotoId, setPanningPhotoId] = useState(null);
 
+  // Observe theme changes on documentElement
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      setTheme(currentTheme);
+      if (!userHasCustomBg) {
+        setBgColor(currentTheme === 'light' ? '#f8fafc' : '#0f172a');
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, [userHasCustomBg]);
+
   // Process dropped files from location state on mount
   useEffect(() => {
     if (location.state?.droppedFiles && location.state.droppedFiles.length > 0) {
       addFiles(location.state.droppedFiles);
-      // Clear location state after reading
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -492,6 +524,11 @@ export default function CollageMaker() {
     setPanningPhotoId(null);
   };
 
+  // Luminance calculation for high-contrast empty state text
+  const isCanvasLight = isLightColor(bgColor);
+  const emptyTitleColor = isCanvasLight ? '#0f172a' : '#f8fafc';
+  const emptySubtitleColor = isCanvasLight ? '#475569' : '#94a3b8';
+
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
       <div className="page-header">
@@ -743,7 +780,7 @@ export default function CollageMaker() {
                 <input 
                   type="color" 
                   value={bgColor} 
-                  onChange={(e) => setBgColor(e.target.value)} 
+                  onChange={(e) => { setBgColor(e.target.value); setUserHasCustomBg(true); }} 
                   style={{ border: 'none', background: 'transparent', width: 28, height: 28, cursor: 'pointer' }}
                 />
                 <span style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{bgColor}</span>
@@ -802,7 +839,8 @@ export default function CollageMaker() {
               borderRadius: 'var(--border-radius-sm)',
               position: 'relative',
               overflow: 'hidden',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+              border: '1px solid var(--border-color)',
               margin: '0 auto',
               userSelect: 'none'
             }}
@@ -817,15 +855,14 @@ export default function CollageMaker() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '1rem',
-                  color: 'var(--text-secondary)',
                   cursor: 'pointer',
                   padding: '2rem'
                 }}
               >
                 <PhotoIcon style={{ width: 64, height: 64, color: 'var(--primary-color)', opacity: 0.8 }} />
                 <div style={{ textAlign: 'center' }}>
-                  <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>Your Collage Canvas</h3>
-                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem' }}>Click or drop photos/folders to assemble your collage.</p>
+                  <h3 style={{ margin: 0, color: emptyTitleColor, transition: 'color 0.2s' }}>Your Collage Canvas</h3>
+                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.85rem', color: emptySubtitleColor, transition: 'color 0.2s' }}>Click or drop photos/folders to assemble your collage.</p>
                 </div>
               </div>
             ) : (
