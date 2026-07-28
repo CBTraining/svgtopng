@@ -612,8 +612,40 @@ ${materialLink}<div class="glow-card">
     return svgStr;
   };
 
-  const getComponentSvg = async () => {
+  const parseDataUrlSvg = (dataUrl) => {
+    if (!dataUrl) return '';
+    if (dataUrl.includes('base64,')) {
+      try { return atob(dataUrl.split('base64,')[1]); } catch (e) {}
+    }
+    const commaIdx = dataUrl.indexOf(',');
+    if (commaIdx !== -1) {
+      try { return decodeURIComponent(dataUrl.substring(commaIdx + 1)); } catch (e) {}
+    }
+    return dataUrl;
+  };
+
+  const generateForeignObjectSvg = () => {
     if (!previewRef.current) return '';
+    const rect = previewRef.current.getBoundingClientRect();
+    const w = Math.round(rect.width);
+    const h = Math.round(rect.height);
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <style>
+${cssCode}
+  </style>
+  <foreignObject width="100%" height="100%">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+      <div class="glow-card" style="margin: 0;">
+        ${innerHtml}
+      </div>
+    </div>
+  </foreignObject>
+</svg>`.trim();
+  };
+
+  const getComponentSvg = async () => {
+    if (!previewRef.current) return generateForeignObjectSvg();
     try {
       // Temporarily strip hover tilt transform for a clean, squared export
       const originalTransform = previewRef.current.style.transform;
@@ -621,17 +653,19 @@ ${materialLink}<div class="glow-card">
 
       const dataUrl = await toSvg(previewRef.current, {
         backgroundColor: 'transparent',
-        pixelRatio: 2
+        cacheBust: true
       });
 
       previewRef.current.style.transform = originalTransform;
 
-      const res = await fetch(dataUrl);
-      return await res.text();
+      const svgText = parseDataUrlSvg(dataUrl);
+      if (svgText && svgText.trim().length > 50) {
+        return svgText;
+      }
     } catch (err) {
-      console.warn("toSvg failed, falling back to native generator", err);
-      return generateNativeSvg();
+      console.warn("toSvg failed, falling back to foreignObject generator", err);
     }
+    return generateForeignObjectSvg();
   };
 
   const handleDownloadSvg = async () => {
