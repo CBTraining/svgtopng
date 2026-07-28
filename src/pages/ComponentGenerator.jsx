@@ -645,27 +645,19 @@ ${cssCode}
   };
 
   const getComponentSvg = async () => {
-    if (!previewRef.current) return generateForeignObjectSvg();
+    if (!previewRef.current) return '';
     try {
-      // Temporarily strip hover tilt transform for a clean, squared export
       const originalTransform = previewRef.current.style.transform;
       previewRef.current.style.transform = 'none';
 
-      const dataUrl = await toSvg(previewRef.current, {
-        backgroundColor: 'transparent',
-        cacheBust: true
-      });
+      const svgStr = await generateNativeSvg();
 
       previewRef.current.style.transform = originalTransform;
-
-      const svgText = parseDataUrlSvg(dataUrl);
-      if (svgText && svgText.trim().length > 50) {
-        return svgText;
-      }
+      return svgStr;
     } catch (err) {
-      console.warn("toSvg failed, falling back to foreignObject generator", err);
+      console.warn("generateNativeSvg failed", err);
+      return '';
     }
-    return generateForeignObjectSvg();
   };
 
   const handleDownloadSvg = async () => {
