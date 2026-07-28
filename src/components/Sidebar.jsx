@@ -68,6 +68,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
       title: 'Graphics',
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Converter' },
+        { to: '/collage-maker', icon: Square3Stack3DIcon, label: 'Collage Maker' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/image-upscaler', icon: SparklesIcon, label: 'Image Upscaler' },
         { to: '/color-picker', icon: PaintBrushIcon, label: 'Color Picker' },

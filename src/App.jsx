@@ -27,6 +27,7 @@ import PdfImageExtractor from './pages/PdfImageExtractor';
 import ShapeGenerator from './pages/ShapeGenerator';
 import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
+import CollageMaker from './pages/CollageMaker';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -507,6 +508,7 @@ function App() {
               <Route path="/shape-generator" element={<ShapeGenerator />} />
               <Route path="/component-generator" element={<ComponentGenerator />} />
               <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
+              <Route path="/collage-maker" element={<CollageMaker />} />
             </Routes>
           </MainContentWrapper>
           

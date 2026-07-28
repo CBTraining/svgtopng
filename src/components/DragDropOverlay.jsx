@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
-import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline';
+import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon, DocumentArrowDownIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
 
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -93,6 +93,16 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     setIsDragging(false);
     setDragType('none');
     window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'radial', x: e.clientX, y: e.clientY } }));
+
+    if (action === 'create-collage') {
+      const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(f.name));
+      if (files.length > 0) {
+        navigate('/collage-maker', { state: { droppedFiles: files } });
+      } else {
+        navigate('/collage-maker');
+      }
+      return;
+    }
     
     const file = e.dataTransfer.files[0];
     if (!file) return;
@@ -189,10 +199,10 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       <div style={{ width: '100%', maxWidth: '900px', display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
         {dragType === 'image' && (
           <>
-            <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-png" />
-            <Card title="Rename & Download PNG" icon={<DocumentPlusIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="rename-png" />
+            <Card title="Create Photo Collage" icon={<Square3Stack3DIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="create-collage" />
             <Card title="Remove background" icon={<SparklesIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="remove-bg" />
             <Card title="Upscale" icon={<PhotoIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="upscale" />
+            <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-png" />
           </>
         )}
         {dragType === 'video' && (
