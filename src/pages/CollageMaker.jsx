@@ -87,12 +87,12 @@ export default function CollageMaker() {
   const [margin, setMargin] = useState(0);
   const [borderRadius, setBorderRadius] = useState(0);
   const [fillMode, setFillMode] = useState('cover'); // 'cover' | 'contain'
-  const [bgType, setBgType] = useState('solid'); // 'solid' | 'gradient' | 'blur'
+  const [bgType, setBgType] = useState('transparent'); // 'transparent' | 'solid'
   
   // Default background color adapts to theme unless user explicitly picks a custom color
   const [bgColor, setBgColor] = useState(() => {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    return currentTheme === 'light' ? '#f8fafc' : '#0f172a';
+    return currentTheme === 'light' ? '#ffffff' : '#0f172a';
   });
 
   const [borderWidth, setBorderWidth] = useState(0);
@@ -110,7 +110,7 @@ export default function CollageMaker() {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       setTheme(currentTheme);
       if (!userHasCustomBg) {
-        setBgColor(currentTheme === 'light' ? '#f8fafc' : '#0f172a');
+        setBgColor(currentTheme === 'light' ? '#ffffff' : '#0f172a');
       }
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -395,20 +395,11 @@ export default function CollageMaker() {
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
 
-    // Clear Canvas
+    // Clear Canvas (Leaves 100% transparent PNG background if bgType === 'transparent')
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    // Render Background
+    // Render Background if Solid Color is selected
     if (bgType === 'solid') {
-      ctx.fillStyle = bgColor;
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    } else if (bgType === 'gradient') {
-      const grad = ctx.createLinearGradient(0, 0, canvasWidth, canvasHeight);
-      grad.addColorStop(0, '#1e293b');
-      grad.addColorStop(1, bgColor);
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    } else {
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     }
@@ -545,10 +536,18 @@ export default function CollageMaker() {
     updatePhoto(photoId, 'zoom', parseFloat(newZoom.toFixed(2)));
   };
 
-  // Luminance calculation for high-contrast empty state text
-  const isCanvasLight = isLightColor(bgColor);
-  const emptyTitleColor = isCanvasLight ? '#0f172a' : '#f8fafc';
-  const emptySubtitleColor = isCanvasLight ? '#475569' : '#94a3b8';
+  // Contrast calculation for empty state text
+  const emptyTitleColor = bgType === 'transparent' ? 'var(--text-primary)' : (isLightColor(bgColor) ? '#0f172a' : '#f8fafc');
+  const emptySubtitleColor = bgType === 'transparent' ? 'var(--text-secondary)' : (isLightColor(bgColor) ? '#475569' : '#94a3b8');
+
+  // Preview container background style
+  const previewBgStyle = bgType === 'transparent' ? {
+    backgroundImage: 'conic-gradient(#80808022 90deg, transparent 90deg 180deg, #80808022 180deg 270deg, transparent 270deg)',
+    backgroundSize: '24px 24px',
+    backgroundColor: 'var(--bg-secondary)'
+  } : {
+    backgroundColor: bgColor
+  };
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '3rem' }}>
@@ -794,18 +793,44 @@ export default function CollageMaker() {
               </div>
             </div>
 
-            {/* Background Color Picker */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Background Color</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <input 
-                  type="color" 
-                  value={bgColor} 
-                  onChange={(e) => { setBgColor(e.target.value); setUserHasCustomBg(true); }} 
-                  style={{ border: 'none', background: 'transparent', width: 28, height: 28, cursor: 'pointer' }}
-                />
-                <span style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{bgColor}</span>
+            {/* Background Style Toggle */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Background</span>
+                <div style={{ display: 'flex', gap: '0.25rem', background: 'var(--bg-primary)', padding: '0.2rem', borderRadius: 'var(--border-radius-sm)' }}>
+                  <button 
+                    className={`btn ${bgType === 'transparent' ? 'btn-primary' : ''}`}
+                    onClick={() => setBgType('transparent')}
+                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                  >Transparent</button>
+                  <button 
+                    className={`btn ${bgType === 'solid' ? 'btn-primary' : ''}`}
+                    onClick={() => setBgType('solid')}
+                    style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
+                  >Color Hex</button>
+                </div>
               </div>
+
+              {bgType === 'solid' && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Color Hex</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input 
+                      type="color" 
+                      value={bgColor} 
+                      onChange={(e) => { setBgColor(e.target.value); setUserHasCustomBg(true); }} 
+                      style={{ border: 'none', background: 'transparent', width: 28, height: 28, cursor: 'pointer' }}
+                    />
+                    <input 
+                      type="text" 
+                      className="input-field"
+                      value={bgColor} 
+                      onChange={(e) => { setBgColor(e.target.value); setUserHasCustomBg(true); }} 
+                      style={{ width: 85, padding: '0.2rem 0.4rem', fontSize: '0.75rem', fontFamily: 'monospace' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -856,7 +881,7 @@ export default function CollageMaker() {
               width: '100%', 
               aspectRatio: `${canvasWidth} / ${canvasHeight}`,
               maxHeight: '70vh',
-              backgroundColor: bgColor,
+              ...previewBgStyle,
               borderRadius: 'var(--border-radius-sm)',
               position: 'relative',
               overflow: 'hidden',
