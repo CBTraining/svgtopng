@@ -27,8 +27,9 @@ const RESOLUTION_PRESETS = [
 ];
 
 const LAYOUT_TEMPLATES = [
-  { id: 'grid', label: 'Auto Grid', description: 'Optimal rows & columns' },
-  { id: 'masonry', label: 'Masonry', description: 'Staggered columns' },
+  { id: 'justified', label: 'Smart Pack (No Crop)', description: 'Auto-adjusts for wide & tall photos without cropping' },
+  { id: 'masonry', label: 'Masonry Columns', description: 'Staggered columns' },
+  { id: 'grid', label: 'Equal Grid', description: 'Uniform grid cells' },
   { id: 'split-2v', label: '2 Splits (V)', description: 'Side by side' },
   { id: 'split-2h', label: '2 Splits (H)', description: 'Stacked rows' },
   { id: 'split-3v', label: '1 Big + 2 Side', description: 'Hero focus' },
@@ -56,7 +57,7 @@ export default function CollageMaker() {
   const [canvasHeight, setCanvasHeight] = useState(1080);
 
   // Layout & Styling State
-  const [layoutType, setLayoutType] = useState('grid');
+  const [layoutType, setLayoutType] = useState('justified');
   const [gap, setGap] = useState(12);
   const [margin, setMargin] = useState(16);
   const [borderRadius, setBorderRadius] = useState(8);
@@ -147,14 +148,63 @@ export default function CollageMaker() {
     setPhotos(prev => prev.map(p => p.id === id ? { ...p, [key]: val } : p));
   };
 
-  // Calculate cell geometries based on layout template and count
+  // Calculate cell geometries based on layout template, count, and photos' aspect ratios
   const computeCellGeometries = useCallback((count, width, height) => {
     if (count === 0) return [];
-    const cells = [];
+    const cells = new Array(count);
     const usableW = width - margin * 2;
     const usableH = height - margin * 2;
 
-    if (layoutType === 'grid' || layoutType === 'masonry') {
+    if (layoutType === 'justified' || layoutType === 'auto-fit') {
+      const numPhotos = photos.length;
+      if (numPhotos === 0) return [];
+
+      const totalAR = photos.reduce((acc, p) => acc + (p.width && p.height ? p.width / p.height : 1.33), 0);
+      const targetCanvasAR = usableW / (usableH || 1);
+      
+      let numRows = Math.max(1, Math.round(Math.sqrt(totalAR / (targetCanvasAR || 1))));
+      if (numPhotos <= 3) numRows = 1;
+      else if (numPhotos <= 8 && numRows > 3) numRows = 2;
+
+      const rows = Array.from({ length: numRows }, () => []);
+      photos.forEach((photo, i) => {
+        const rowIdx = Math.min(numRows - 1, Math.floor((i / numPhotos) * numRows));
+        rows[rowIdx].push({ photo, idx: i });
+      });
+
+      const rowData = rows.map(rowItems => {
+        const rowAspectSum = rowItems.reduce((sum, item) => sum + (item.photo.width && item.photo.height ? item.photo.width / item.photo.height : 1.33), 0);
+        const gapsWidth = Math.max(0, rowItems.length - 1) * gap;
+        const rawHeight = (usableW - gapsWidth) / (rowAspectSum || 1);
+        return { rowItems, rowAspectSum, rawHeight };
+      });
+
+      const totalRawHeight = rowData.reduce((sum, r) => sum + r.rawHeight, 0) + Math.max(0, numRows - 1) * gap;
+      const heightScale = usableH / (totalRawHeight || 1);
+
+      let currentY = margin;
+      rowData.forEach(rData => {
+        const scaledRowHeight = rData.rawHeight * heightScale;
+        let currentX = margin;
+
+        rData.rowItems.forEach(item => {
+          const ar = item.photo.width && item.photo.height ? item.photo.width / item.photo.height : 1.33;
+          const cellWidth = scaledRowHeight * ar;
+          cells[item.idx] = {
+            x: currentX,
+            y: currentY,
+            width: cellWidth,
+            height: scaledRowHeight,
+            angle: 0
+          };
+          currentX += cellWidth + gap;
+        });
+
+        currentY += scaledRowHeight + gap;
+      });
+
+      return cells;
+    } else if (layoutType === 'grid') {
       const cols = Math.ceil(Math.sqrt(count));
       const rows = Math.ceil(count / cols);
       const cellW = (usableW - (cols - 1) * gap) / cols;
@@ -163,38 +213,63 @@ export default function CollageMaker() {
       for (let i = 0; i < count; i++) {
         const r = Math.floor(i / cols);
         const c = i % cols;
-        cells.push({
+        cells[i] = {
           x: margin + c * (cellW + gap),
           y: margin + r * (cellH + gap),
           width: cellW,
           height: cellH,
           angle: 0
-        });
+        };
+      }
+    } else if (layoutType === 'masonry') {
+      const cols = Math.max(1, Math.ceil(Math.sqrt(count)));
+      const cellW = (usableW - (cols - 1) * gap) / cols;
+      const colHeights = new Array(cols).fill(margin);
+
+      for (let i = 0; i < count; i++) {
+        const photo = photos[i];
+        const ar = photo && photo.width && photo.height ? photo.width / photo.height : 1.33;
+        const cellH = cellW / ar;
+
+        let minCol = 0;
+        for (let c = 1; c < cols; c++) {
+          if (colHeights[c] < colHeights[minCol]) minCol = c;
+        }
+
+        cells[i] = {
+          x: margin + minCol * (cellW + gap),
+          y: colHeights[minCol],
+          width: cellW,
+          height: cellH,
+          angle: 0
+        };
+
+        colHeights[minCol] += cellH + gap;
       }
     } else if (layoutType === 'split-2v') {
       const cols = 2;
       const cellW = (usableW - gap) / cols;
       for (let i = 0; i < count; i++) {
         const c = i % 2;
-        cells.push({
+        cells[i] = {
           x: margin + c * (cellW + gap),
           y: margin,
           width: cellW,
           height: usableH,
           angle: 0
-        });
+        };
       }
     } else if (layoutType === 'split-2h') {
       const cellH = (usableH - gap) / 2;
       for (let i = 0; i < count; i++) {
         const r = i % 2;
-        cells.push({
+        cells[i] = {
           x: margin,
           y: margin + r * (cellH + gap),
           width: usableW,
           height: cellH,
           angle: 0
-        });
+        };
       }
     } else if (layoutType === 'split-3v') {
       const mainW = (usableW - gap) * 0.6;
@@ -203,11 +278,11 @@ export default function CollageMaker() {
 
       for (let i = 0; i < count; i++) {
         if (i === 0) {
-          cells.push({ x: margin, y: margin, width: mainW, height: usableH, angle: 0 });
+          cells[i] = { x: margin, y: margin, width: mainW, height: usableH, angle: 0 };
         } else if (i === 1) {
-          cells.push({ x: margin + mainW + gap, y: margin, width: sideW, height: sideH, angle: 0 });
+          cells[i] = { x: margin + mainW + gap, y: margin, width: sideW, height: sideH, angle: 0 };
         } else {
-          cells.push({ x: margin + mainW + gap, y: margin + sideH + gap, width: sideW, height: sideH, angle: 0 });
+          cells[i] = { x: margin + mainW + gap, y: margin + sideH + gap, width: sideW, height: sideH, angle: 0 };
         }
       }
     } else if (layoutType === 'grid-4') {
@@ -216,13 +291,13 @@ export default function CollageMaker() {
       for (let i = 0; i < count; i++) {
         const r = Math.floor((i % 4) / 2);
         const c = (i % 4) % 2;
-        cells.push({
+        cells[i] = {
           x: margin + c * (cellW + gap),
           y: margin + r * (cellH + gap),
           width: cellW,
           height: cellH,
           angle: 0
-        });
+        };
       }
     } else if (layoutType === 'scattered') {
       const cols = Math.ceil(Math.sqrt(count));
@@ -230,46 +305,45 @@ export default function CollageMaker() {
       const cellW = (usableW - (cols - 1) * gap) / cols;
       const cellH = (usableH - (rows - 1) * gap) / rows;
 
-      // Seed pseudo-random angles based on index
       const angles = [-5, 4, -3, 6, -4, 3, -6, 5];
       for (let i = 0; i < count; i++) {
         const r = Math.floor(i / cols);
         const c = i % cols;
         const angle = angles[i % angles.length];
-        cells.push({
+        cells[i] = {
           x: margin + c * (cellW + gap),
           y: margin + r * (cellH + gap),
           width: cellW,
           height: cellH,
           angle
-        });
+        };
       }
     } else if (layoutType === 'strip-h') {
       const cellW = (usableW - (count - 1) * gap) / count;
       for (let i = 0; i < count; i++) {
-        cells.push({
+        cells[i] = {
           x: margin + i * (cellW + gap),
           y: margin,
           width: cellW,
           height: usableH,
           angle: 0
-        });
+        };
       }
     } else if (layoutType === 'strip-v') {
       const cellH = (usableH - (count - 1) * gap) / count;
       for (let i = 0; i < count; i++) {
-        cells.push({
+        cells[i] = {
           x: margin,
           y: margin + i * (cellH + gap),
           width: usableW,
           height: cellH,
           angle: 0
-        });
+        };
       }
     }
 
     return cells;
-  }, [layoutType, gap, margin]);
+  }, [layoutType, gap, margin, photos]);
 
   // Offscreen Canvas Renderer
   const renderCanvas = useCallback(() => {
@@ -588,7 +662,7 @@ export default function CollageMaker() {
             {/* Layout Template Selector */}
             <div>
               <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Layout Setup</label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.4rem', marginTop: '0.4rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem', marginTop: '0.4rem' }}>
                 {LAYOUT_TEMPLATES.map(t => (
                   <button 
                     key={t.id}
