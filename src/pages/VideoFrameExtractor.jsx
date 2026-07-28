@@ -2,6 +2,70 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FilmIcon, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download, XMarkIcon as XMark, ClipboardDocumentIcon, CheckIcon as Check, PlayIcon, PauseIcon, ForwardIcon, BackwardIcon } from '@heroicons/react/24/solid';
 
+function extractYouTubeVideoId(url) {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+const fetchYouTubeVideoStream = async (youtubeUrl, videoId) => {
+  // Strategy 1: Try Cobalt API
+  try {
+    const res = await fetch('https://api.cobalt.tools/', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url: youtubeUrl,
+        videoQuality: '1080'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) return data.url;
+    }
+  } catch (e) {
+    console.warn("Cobalt API failed", e);
+  }
+
+  // Strategy 2: Try Piped API
+  try {
+    const res = await fetch(`https://pipedapi.kavin.rocks/streams/${videoId}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.videoStreams && data.videoStreams.length > 0) {
+        const mp4Streams = data.videoStreams.filter(s => s.mimeType?.includes('mp4') || s.format === 'v1080p' || s.format === 'v720p');
+        const bestStream = mp4Streams[0] || data.videoStreams[0];
+        if (bestStream?.url) return bestStream.url;
+      }
+    }
+  } catch (e) {
+    console.warn("Piped API failed", e);
+  }
+
+  // Strategy 3: Try Invidious API instances
+  const invidiousInstances = ['https://invidious.drgns.space', 'https://inv.privacydev.net'];
+  for (const instance of invidiousInstances) {
+    try {
+      const res = await fetch(`${instance}/api/v1/videos/${videoId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.formatStreams && data.formatStreams.length > 0) {
+          const mp4 = data.formatStreams.find(s => s.container === 'mp4') || data.formatStreams[0];
+          if (mp4?.url) return mp4.url;
+        }
+      }
+    } catch (e) {
+      console.warn(`Invidious instance ${instance} failed`, e);
+    }
+  }
+
+  throw new Error("Unable to resolve direct video stream for this YouTube link. Please ensure the video is public.");
+};
+
 export default function VideoFrameExtractor() {
   const [videoFile, setVideoFile] = useState(null);
   const [videoUrl, setVideoUrl] = useState('');
@@ -12,6 +76,7 @@ export default function VideoFrameExtractor() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [ytLoadingText, setYtLoadingText] = useState('');
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -65,24 +130,47 @@ export default function VideoFrameExtractor() {
 
   const handleDragOver = (e) => e.preventDefault();
 
-  const handleUrlLoad = () => {
+  const handleUrlLoad = async () => {
     let url = externalUrl.trim();
-    if (url) {
-      // Parse Google Drive links
-      const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
-      const match = url.match(driveRegex);
-      if (match && match[1]) {
-        url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
-      }
+    if (!url) return;
 
-      setVideoFile(null);
-      if (videoUrl && !videoUrl.startsWith('http')) {
-        URL.revokeObjectURL(videoUrl);
-      }
-      setVideoUrl(url);
+    // Check if YouTube URL
+    const ytVideoId = extractYouTubeVideoId(url);
+    if (ytVideoId) {
       setIsLoading(true);
-      setLoadingProgress(0);
+      setLoadingProgress(10);
+      setYtLoadingText('Resolving YouTube video stream...');
+      try {
+        const streamUrl = await fetchYouTubeVideoStream(url, ytVideoId);
+        setYtLoadingText('Loading video stream...');
+        setVideoFile({ name: `youtube_${ytVideoId}.mp4` });
+        if (videoUrl && !videoUrl.startsWith('http')) {
+          URL.revokeObjectURL(videoUrl);
+        }
+        setVideoUrl(streamUrl);
+      } catch (err) {
+        alert("YouTube Error: " + err.message);
+        setIsLoading(false);
+      } finally {
+        setYtLoadingText('');
+      }
+      return;
     }
+
+    // Parse Google Drive links
+    const driveRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
+    const match = url.match(driveRegex);
+    if (match && match[1]) {
+      url = `https://drive.google.com/uc?export=download&id=${match[1]}`;
+    }
+
+    setVideoFile(null);
+    if (videoUrl && !videoUrl.startsWith('http')) {
+      URL.revokeObjectURL(videoUrl);
+    }
+    setVideoUrl(url);
+    setIsLoading(true);
+    setLoadingProgress(0);
   };
 
   const handleLoadedData = () => {
@@ -220,16 +308,24 @@ export default function VideoFrameExtractor() {
             
             <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>— OR —</div>
             
-            {/* External URL Input */}
-            <div style={{ display: 'flex', gap: '0.5rem', width: '100%', maxWidth: '500px', margin: '0 auto' }}>
-              <input 
-                type="text" 
-                className="input-field" 
-                placeholder="Paste video URL (e.g. .mp4 link)..." 
-                value={externalUrl}
-                onChange={(e) => setExternalUrl(e.target.value)}
-              />
-              <button className="btn" onClick={handleUrlLoad}>Load</button>
+            {/* External / YouTube URL Input */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '550px', margin: '0 auto' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  placeholder="Paste YouTube link or direct video URL (.mp4)..." 
+                  value={externalUrl}
+                  onChange={(e) => setExternalUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleUrlLoad(); }}
+                />
+                <button className="btn btn-primary" onClick={handleUrlLoad} disabled={isLoading}>
+                  {isLoading ? 'Loading...' : 'Load Video'}
+                </button>
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                Supports YouTube videos (<code style={{ fontSize: '0.7rem' }}>youtube.com/watch?v=...</code>, <code style={{ fontSize: '0.7rem' }}>youtu.be/...</code>, Shorts), Google Drive, and MP4 links.
+              </div>
             </div>
           </div>
         ) : (
@@ -253,8 +349,8 @@ export default function VideoFrameExtractor() {
               position: 'relative'
             }}>
               {isLoading && (
-                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'white' }}>
-                   <div style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Loading Video...</div>
+                <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, color: 'white' }}>
+                   <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>{ytLoadingText || 'Loading Video...'}</div>
                    <div style={{ width: '80%', maxWidth: '300px', height: '10px', background: 'var(--bg-tertiary)', borderRadius: '5px', overflow: 'hidden' }}>
                       <div style={{ height: '100%', width: `${loadingProgress}%`, background: 'var(--accent-color)', transition: 'width 0.2s ease-out' }}></div>
                    </div>
