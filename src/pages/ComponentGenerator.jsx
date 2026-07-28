@@ -612,10 +612,32 @@ ${materialLink}<div class="glow-card">
     return svgStr;
   };
 
+  const getComponentSvg = async () => {
+    if (!previewRef.current) return '';
+    try {
+      // Temporarily strip hover tilt transform for a clean, squared export
+      const originalTransform = previewRef.current.style.transform;
+      previewRef.current.style.transform = 'none';
+
+      const dataUrl = await toSvg(previewRef.current, {
+        backgroundColor: 'transparent',
+        pixelRatio: 2
+      });
+
+      previewRef.current.style.transform = originalTransform;
+
+      const res = await fetch(dataUrl);
+      return await res.text();
+    } catch (err) {
+      console.warn("toSvg failed, falling back to native generator", err);
+      return generateNativeSvg();
+    }
+  };
+
   const handleDownloadSvg = async () => {
     if (!previewRef.current) return;
     try {
-      const svgStr = await generateNativeSvg();
+      const svgStr = await getComponentSvg();
       const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
       const svgUrl = URL.createObjectURL(blob);
       
@@ -633,7 +655,7 @@ ${materialLink}<div class="glow-card">
   const handleCopySvg = async () => {
     if (!previewRef.current) return;
     try {
-      const svgStr = await generateNativeSvg();
+      const svgStr = await getComponentSvg();
       await navigator.clipboard.writeText(svgStr);
       setCopySvgSuccess(true);
       setTimeout(() => setCopySvgSuccess(false), 2000);
