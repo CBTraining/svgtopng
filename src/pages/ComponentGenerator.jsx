@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { CodeBracketSquareIcon, ClipboardDocumentIcon, CheckIcon as Check, PhotoIcon } from '@heroicons/react/24/solid';
-import { toBlob, toSvg } from 'html-to-image';
+import { CodeBracketSquareIcon, ClipboardDocumentIcon, CheckIcon as Check, PhotoIcon, DocumentArrowDownIcon } from '@heroicons/react/24/solid';
+import { toBlob, toSvg, toCanvas } from 'html-to-image';
 import GradientEditor from '../components/GradientEditor';
 
 export default function ComponentGenerator() {
@@ -528,8 +528,9 @@ ${materialLink}<div class="glow-card">
     </clipPath>`;
     svgStr += `</defs>`;
 
-    // Background
-    svgStr += `<rect x="0" y="0" width="${w}" height="${h}" rx="${r}" fill="${backgroundColor}" />`;
+    // Background (use innerShadowColor as card base if backgroundColor is transparent)
+    const cardBaseFill = (backgroundColor && backgroundColor !== 'transparent') ? backgroundColor : innerShadowColor;
+    svgStr += `<rect x="0" y="0" width="${w}" height="${h}" rx="${r}" fill="${cardBaseFill}" />`;
     
     if (bgImageUrl) {
       svgStr += `<g clip-path="url(#cardClip)">
@@ -545,17 +546,8 @@ ${materialLink}<div class="glow-card">
       </g>`;
     }
 
-    // True vector inner shadow using an evenodd path hole + blur
-    const getRoundedRectPath = (x, y, width, height, radius) => `M ${x},${y + radius} a ${radius},${radius} 0 0 1 ${radius},-${radius} h ${width - 2 * radius} a ${radius},${radius} 0 0 1 ${radius},${radius} v ${height - 2 * radius} a ${radius},${radius} 0 0 1 -${radius},${radius} h -${width - 2 * radius} a ${radius},${radius} 0 0 1 -${radius},-${radius} Z`;
-    
-    const innerShadowPath = `M -100,-100 h ${w + 200} v ${h + 200} h -${w + 200} Z ${getRoundedRectPath(0, 0, w, h, r)}`;
-
-    svgStr += `<g clip-path="url(#cardClip)">
-      <path d="${innerShadowPath}" fill="${innerShadowColor}" fill-rule="evenodd" filter="url(#insetShadowBlur)" />
-    </g>`;
-
-    // Crisp 1px inner border (inset 0 0 0 1px)
-    svgStr += `<rect x="0.5" y="0.5" width="${w-1}" height="${h-1}" rx="${r}" fill="none" stroke="${innerShadowColor}" stroke-width="1" />`;
+    // Crisp 1px inner border
+    svgStr += `<rect x="0.5" y="0.5" width="${w-1}" height="${h-1}" rx="${r}" fill="none" stroke="${innerShadowColor}" stroke-width="1.5" />`;
 
     // Elements
     const iconNode = previewRef.current.querySelector('.glow-card-icon');
@@ -695,7 +687,6 @@ ${cssCode}
     if (!previewRef.current) return;
     try {
       const rect = previewRef.current.getBoundingClientRect();
-      // Ensure the output image is at least 1000px wide for high-quality pasting
       const targetWidth = Math.max(1000, rect.width * 2);
       const scale = targetWidth / rect.width;
 
@@ -715,6 +706,82 @@ ${cssCode}
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current) return;
+    try {
+      const rect = previewRef.current.getBoundingClientRect();
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height);
+
+      const originalTransform = previewRef.current.style.transform;
+      previewRef.current.style.transform = 'none';
+
+      const canvas = await toCanvas(previewRef.current, {
+        pixelRatio: 4, // 300+ DPI high resolution vector quality
+        backgroundColor: 'transparent'
+      });
+
+      previewRef.current.style.transform = originalTransform;
+
+      const jpegUrl = canvas.toDataURL('image/jpeg', 0.95);
+      const base64Data = jpegUrl.split(',')[1];
+      const imgBytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+
+      const pdfHeader = `%PDF-1.4\n`;
+      const obj1 = `1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n`;
+      const obj2 = `2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n`;
+      const obj3 = `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${w} ${h}] /Resources 4 0 R /Contents 5 0 R >>\nendobj\n`;
+      const obj4 = `4 0 obj\n<< /ProcSet [/PDF /ImageC /ImageI] /XObject << /Im1 6 0 R >> >>\nendobj\n`;
+      
+      const streamContent = `q\n${w} 0 0 ${h} 0 0 cm\n/Im1 Do\nQ\n`;
+      const obj5 = `5 0 obj\n<< /Length ${streamContent.length} >>\nstream\n${streamContent}endstream\nendobj\n`;
+
+      const obj6Header = `6 0 obj\n<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imgBytes.length} >>\nstream\n`;
+      const obj6Footer = `\nendstream\nendobj\n`;
+
+      let offset = pdfHeader.length;
+      const offsets = [0];
+      offsets.push(offset); offset += obj1.length;
+      offsets.push(offset); offset += obj2.length;
+      offsets.push(offset); offset += obj3.length;
+      offsets.push(offset); offset += obj4.length;
+      offsets.push(offset); offset += obj5.length;
+      offsets.push(offset);
+
+      const encoder = new TextEncoder();
+      const headerBytes = encoder.encode(pdfHeader + obj1 + obj2 + obj3 + obj4 + obj5 + obj6Header);
+      const footerBytes = encoder.encode(obj6Footer);
+
+      offset += headerBytes.length + imgBytes.length + footerBytes.length;
+
+      let xref = `xref\n0 7\n0000000000 65535 f \n`;
+      for (let i = 1; i <= 6; i++) {
+        xref += `${offsets[i].toString().padStart(10, '0')} 00000 n \n`;
+      }
+      const trailer = `trailer\n<< /Size 7 /Root 1 0 R >>\nstartxref\n${offset}\n%%EOF`;
+
+      const xrefBytes = encoder.encode(xref + trailer);
+
+      const totalLength = headerBytes.length + imgBytes.length + footerBytes.length + xrefBytes.length;
+      const pdfBuffer = new Uint8Array(totalLength);
+      
+      pdfBuffer.set(headerBytes, 0);
+      pdfBuffer.set(imgBytes, headerBytes.length);
+      pdfBuffer.set(footerBytes, headerBytes.length + imgBytes.length);
+      pdfBuffer.set(xrefBytes, headerBytes.length + imgBytes.length + footerBytes.length);
+
+      const blob = new Blob([pdfBuffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'component.pdf';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 100);
+    } catch (err) {
+      console.error("Failed to export PDF", err);
+    }
+  };
+
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       <div className="page-header" style={{ marginBottom: '0' }}>
@@ -727,6 +794,10 @@ ${cssCode}
         
         <div style={{ position: 'sticky', top: '1.5rem', zIndex: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.5rem' }}>
+            <button className="btn" onClick={handleDownloadPdf} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
+              <DocumentArrowDownIcon style={{ width: '16px', height: '16px' }} />
+              Download PDF
+            </button>
             <button className="btn" onClick={handleDownloadSvg} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)' }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
