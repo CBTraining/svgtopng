@@ -16,13 +16,23 @@ import {
 } from '@heroicons/react/24/outline';
 
 const RESOLUTION_PRESETS = [
-  { id: 'square', label: 'Square (1:1 - 1080x1080)', width: 1080, height: 1080 },
-  { id: 'square-hd', label: 'Square HD (2048x2048)', width: 2048, height: 2048 },
-  { id: 'landscape', label: 'Landscape (16:9 - 1920x1080)', width: 1920, height: 1080 },
-  { id: '4k', label: 'Landscape 4K (3840x2160)', width: 3840, height: 2160 },
-  { id: 'portrait', label: 'Portrait (9:16 - 1080x1920)', width: 1080, height: 1920 },
-  { id: 'social-post', label: 'Social Post (4:5 - 1080x1350)', width: 1080, height: 1350 },
-  { id: 'twitter-cover', label: 'Cover Banner (1200x630)', width: 1200, height: 630 },
+  { id: 'landscape-1080p', label: 'Landscape FHD (1920×1080)', width: 1920, height: 1080 },
+  { id: 'landscape-qhd', label: 'Landscape QHD 2K (2560×1440)', width: 2560, height: 1440 },
+  { id: 'landscape-4k', label: 'Landscape 4K UHD (3840×2160)', width: 3840, height: 2160 },
+  { id: 'ultrawide-qhd', label: 'Ultrawide 21:9 QHD (3440×1440)', width: 3440, height: 1440 },
+  { id: 'ultrawide-5k', label: 'Ultrawide 21:9 5K (5120×2160)', width: 5120, height: 2160 },
+  { id: 'square', label: 'Square (1:1 - 1080×1080)', width: 1080, height: 1080 },
+  { id: 'square-qhd', label: 'Square 2K (2048×2048)', width: 2048, height: 2048 },
+  { id: 'square-4k', label: 'Square 4K (3840×3840)', width: 3840, height: 3840 },
+  { id: 'portrait-1080p', label: 'Portrait FHD (1080×1920)', width: 1080, height: 1920 },
+  { id: 'portrait-qhd', label: 'Portrait QHD 2K (1440×2560)', width: 1440, height: 2560 },
+  { id: 'portrait-4k', label: 'Portrait 4K UHD (2160×3840)', width: 2160, height: 3840 },
+  { id: 'social-post', label: 'Social Post 4:5 (1080×1350)', width: 1080, height: 1350 },
+  { id: 'social-post-qhd', label: 'Social Post 4:5 QHD (1440×1800)', width: 1440, height: 1800 },
+  { id: 'social-post-4k', label: 'Social Post 4:5 4K (2160×2700)', width: 2160, height: 2700 },
+  { id: 'twitter-cover', label: 'Cover Banner (1200×630)', width: 1200, height: 630 },
+  { id: 'print-letter', label: 'Print 300 DPI Letter (2550×3300)', width: 2550, height: 3300 },
+  { id: 'print-tabloid', label: 'Print 300 DPI Tabloid (3300×5100)', width: 3300, height: 5100 },
   { id: 'custom', label: 'Custom Resolution...', width: 1920, height: 1080 }
 ];
 
@@ -67,7 +77,7 @@ export default function CollageMaker() {
   const [selectedPhotoId, setSelectedPhotoId] = useState(null);
 
   // Resolution State
-  const [preset, setPreset] = useState('landscape');
+  const [preset, setPreset] = useState('landscape-1080p');
   const [canvasWidth, setCanvasWidth] = useState(1920);
   const [canvasHeight, setCanvasHeight] = useState(1080);
 
@@ -524,6 +534,17 @@ export default function CollageMaker() {
     setPanningPhotoId(null);
   };
 
+  // Mouse Wheel Zoom Handler
+  const handleCellWheel = (photoId, e) => {
+    e.stopPropagation();
+    if (e.cancelable) e.preventDefault();
+    const photo = photos.find(p => p.id === photoId);
+    if (!photo) return;
+    const delta = e.deltaY < 0 ? 0.08 : -0.08;
+    const newZoom = Math.max(0.4, Math.min(4.0, photo.zoom + delta));
+    updatePhoto(photoId, 'zoom', parseFloat(newZoom.toFixed(2)));
+  };
+
   // Luminance calculation for high-contrast empty state text
   const isCanvasLight = isLightColor(bgColor);
   const emptyTitleColor = isCanvasLight ? '#0f172a' : '#f8fafc';
@@ -881,6 +902,7 @@ export default function CollageMaker() {
                   <div
                     key={photo.id}
                     onPointerDown={(e) => handleCellPointerDown(photo.id, e)}
+                    onWheel={(e) => handleCellWheel(photo.id, e)}
                     onClick={() => setSelectedPhotoId(photo.id)}
                     style={{
                       position: 'absolute',
@@ -924,14 +946,14 @@ export default function CollageMaker() {
                         }}
                       >
                         <button 
-                          onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, 'zoom', Math.min(3, photo.zoom + 0.15)); }}
+                          onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, 'zoom', Math.min(4, photo.zoom + 0.15)); }}
                           style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
                           title="Zoom In"
                         >
                           <MagnifyingGlassPlusIcon style={{ width: 14, height: 14 }} />
                         </button>
                         <button 
-                          onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, 'zoom', Math.max(0.5, photo.zoom - 0.15)); }}
+                          onClick={(e) => { e.stopPropagation(); updatePhoto(photo.id, 'zoom', Math.max(0.4, photo.zoom - 0.15)); }}
                           style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}
                           title="Zoom Out"
                         >
@@ -960,7 +982,7 @@ export default function CollageMaker() {
           </div>
 
           <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
-            Tip: Drag directly on any photo in the preview canvas to adjust its crop position (pan).
+            Tip: Drag directly on any photo to adjust pan, or use your mouse scroll wheel over a photo to zoom in & out.
           </div>
         </div>
 
