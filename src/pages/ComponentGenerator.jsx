@@ -504,7 +504,10 @@ ${materialLink}<div class="glow-card">
     const h = cardRect.height;
     const r = borderRadius;
 
-    let svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+    const hasOuterGlow = hoverAnimations.outerGlow || hoverAnimations.edgeGlow;
+    const pad = hasOuterGlow ? Math.round(40 * animIntensity + 20) : 0;
+
+    let svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="${w + pad * 2}" height="${h + pad * 2}" viewBox="-${pad} -${pad} ${w + pad * 2} ${h + pad * 2}">`;
     svgStr += `<defs>`;
     
     svgStr += `<linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">`;
@@ -514,19 +517,38 @@ ${materialLink}<div class="glow-card">
     });
     svgStr += `</linearGradient>`;
 
-    svgStr += `<filter id="glowBlur" x="-20%" y="-20%" width="140%" height="140%">
+    svgStr += `<filter id="glowBlur" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="${glowBlur}" />
     </filter>`;
 
-    svgStr += `<filter id="insetShadowBlur" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="15" />
-      <feOffset dx="0" dy="4" />
-    </filter>`;
+    if (hoverAnimations.outerGlow) {
+      svgStr += `<filter id="outerGlowFilter" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="${25 * animIntensity}" />
+      </filter>`;
+    }
+
+    if (hoverAnimations.edgeGlow) {
+      svgStr += `<filter id="edgeGlowFilter" x="-100%" y="-100%" width="300%" height="300%">
+        <feGaussianBlur stdDeviation="${15 * animIntensity}" />
+      </filter>`;
+    }
 
     svgStr += `<clipPath id="cardClip">
       <rect x="0" y="0" width="${w}" height="${h}" rx="${r}" />
     </clipPath>`;
     svgStr += `</defs>`;
+
+    // Outer Glow behind card
+    if (hoverAnimations.outerGlow) {
+      const glowCol = sortedStops.length > 0 ? sortedStops[0].color : '#4285F4';
+      svgStr += `<rect x="0" y="0" width="${w}" height="${h}" rx="${r}" fill="${glowCol}" filter="url(#outerGlowFilter)" opacity="0.85" />`;
+    }
+
+    // Edge Glow behind card
+    if (hoverAnimations.edgeGlow) {
+      const edgeCol = sortedStops.length > 0 ? sortedStops[0].color : '#ffffff';
+      svgStr += `<rect x="-4" y="-4" width="${w+8}" height="${h+8}" rx="${r+4}" fill="none" stroke="${edgeCol}" stroke-width="${4 * animIntensity}" filter="url(#edgeGlowFilter)" opacity="0.9" />`;
+    }
 
     // Background (use innerShadowColor as card base if backgroundColor is transparent)
     const cardBaseFill = (backgroundColor && backgroundColor !== 'transparent') ? backgroundColor : innerShadowColor;
