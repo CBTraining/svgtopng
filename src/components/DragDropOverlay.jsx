@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
-import { ArrowDownTrayIcon, SparklesIcon, PhotoIcon, GifIcon, FilmIcon, CodeBracketIcon, DocumentPlusIcon, DocumentArrowDownIcon, Square3Stack3DIcon } from '@heroicons/react/24/outline';
+import { 
+  SparklesIcon, PhotoIcon, ArrowDownTrayIcon, FilmIcon, GifIcon, DocumentArrowDownIcon, CodeBracketIcon, Square3Stack3DIcon, CubeIcon
+} from '@heroicons/react/24/outline';
 
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -130,10 +132,16 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       }
     }
 
-    if (dragType === 'svg' && action === 'svg-convert') {
-      const text = await file.text();
-      navigate('/svg-converter', { state: { svgText: text } });
-      return;
+    if (dragType === 'svg') {
+      if (action === 'svg-3d') {
+        const text = await file.text();
+        navigate('/svg-to-3d', { state: { svgContent: text, fileName: file.name } });
+        return;
+      } else if (action === 'svg-convert') {
+        const text = await file.text();
+        navigate('/svg-converter', { state: { svgText: text } });
+        return;
+      }
     }
     
     if (dragType === 'pdf' && action === 'pdf-extract') {
@@ -216,7 +224,10 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
           <Card title="Extract PDF Images" icon={<DocumentArrowDownIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="pdf-extract" />
         )}
         {dragType === 'svg' && (
-          <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-convert" />
+          <>
+            <Card title="Convert SVG to 3D" icon={<CubeIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-3d" />
+            <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-convert" />
+          </>
         )}
         {dragType === 'json' && (
           <>

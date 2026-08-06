@@ -68,6 +68,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
       title: 'Graphics',
       items: [
         { to: '/image-tools', icon: PhotoIcon, label: 'Image Converter' },
+        { to: '/svg-to-3d', icon: CubeIcon, label: 'SVG to 3D' },
         { to: '/collage-maker', icon: Square3Stack3DIcon, label: 'Collage Maker' },
         { to: '/bg-remover', icon: SparklesIcon, label: 'Background Remover' },
         { to: '/image-upscaler', icon: SparklesIcon, label: 'Image Upscaler' },
@@ -118,7 +119,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
           <div className="logo-container" style={{ alignItems: 'center' }}>
             <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="28" height="28" style={{ marginLeft: '6px', marginRight: '-2px' }} />
             <h2>Web<span className="text-gradient">Tools</span></h2>
-            <span className="version">v3.12</span>
+            <span className="version">v3.13</span>
           </div>
 
         </div>

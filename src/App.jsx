@@ -28,6 +28,7 @@ import ShapeGenerator from './pages/ShapeGenerator';
 import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
 import CollageMaker from './pages/CollageMaker';
+import SvgTo3D from './pages/SvgTo3D';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -509,6 +510,7 @@ function App() {
               <Route path="/component-generator" element={<ComponentGenerator />} />
               <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
               <Route path="/collage-maker" element={<CollageMaker />} />
+              <Route path="/svg-to-3d" element={<SvgTo3D />} />
             </Routes>
           </MainContentWrapper>
           
