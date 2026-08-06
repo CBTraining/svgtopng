@@ -16,9 +16,14 @@
           var theme = localStorage.getItem('theme') || 'dark';
           document.documentElement.setAttribute('data-theme', theme);
         } catch (e) {}
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            for (var r of regs) { r.update(); }
+          });
+        }
       })();
     </script>
-    <script type="module" crossorigin src="/webtools/assets/index-CEnvUqkB.js"></script>
+    <script type="module" crossorigin src="/webtools/assets/index-BCrcmhG9.js"></script>
     <link rel="stylesheet" crossorigin href="/webtools/assets/index-BQVdJ0B_.css">
   <link rel="manifest" href="/webtools/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/webtools/registerSW.js"></script></head>
   <body>
