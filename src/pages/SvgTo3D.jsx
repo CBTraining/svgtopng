@@ -431,9 +431,11 @@ export default function SvgTo3D() {
     const result = exporter.parse(modelGroupRef.current, { binary: true });
     const blob = new Blob([result], { type: 'application/octet-stream' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    link.href = url;
     link.download = svgFileName.replace(/\.[^/.]+$/, "") + '_3d.stl';
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     triggerSuccessMsg('Exported STL for 3D Printing!');
   };
 
@@ -444,9 +446,11 @@ export default function SvgTo3D() {
     const result = exporter.parse(modelGroupRef.current);
     const blob = new Blob([result], { type: 'text/plain' });
     const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(blob);
+    link.href = url;
     link.download = svgFileName.replace(/\.[^/.]+$/, "") + '_3d.obj';
     link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     triggerSuccessMsg('Exported OBJ 3D Model!');
   };
 
@@ -459,9 +463,11 @@ export default function SvgTo3D() {
       (gltf) => {
         const blob = new Blob([gltf], { type: 'application/octet-stream' });
         const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+        link.href = url;
         link.download = svgFileName.replace(/\.[^/.]+$/, "") + '_3d.glb';
         link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         triggerSuccessMsg('Exported GLB 3D Asset!');
       },
       (err) => console.error("GLTF Export Error:", err),
