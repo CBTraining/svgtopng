@@ -4,6 +4,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
   base: '/webtools/',
+  resolve: {
+    alias: {
+      'onnxruntime-web/webgpu': 'onnxruntime-web'
+    }
+  },
   plugins: [
     react(),
     VitePWA({
@@ -37,13 +42,5 @@ export default defineConfig({
         cleanupOutdatedCaches: true
       }
     })
-  ],
-  build: {
-    rolldownOptions: {
-      external: ['onnxruntime-web/webgpu', 'onnxruntime-web']
-    },
-    rollupOptions: {
-      external: ['onnxruntime-web/webgpu', 'onnxruntime-web']
-    }
-  }
+  ]
 })
