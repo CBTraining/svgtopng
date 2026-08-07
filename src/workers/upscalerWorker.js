@@ -11,12 +11,27 @@ class PipelineSingleton {
     static model = 'Xenova/swin2SR-classical-sr-x2-64';
     static instance = null;
 
-    static async getInstance(progress_callback = null, useWasm = false) {
+    static async getInstance(progress_callback = null, forceWasm = false) {
         if (this.instance === null) {
-            this.instance = await pipeline(this.task, this.model, {
-                progress_callback,
-                device: useWasm ? 'wasm' : 'webgpu', // Will fallback to wasm if webgpu is unsupported
-            });
+            if (forceWasm) {
+                this.instance = await pipeline(this.task, this.model, {
+                    progress_callback,
+                    device: 'wasm',
+                });
+            } else {
+                try {
+                    this.instance = await pipeline(this.task, this.model, {
+                        progress_callback,
+                        device: 'webgpu',
+                    });
+                } catch (err) {
+                    console.warn("WebGPU initialization failed in upscalerWorker, falling back to WASM:", err);
+                    this.instance = await pipeline(this.task, this.model, {
+                        progress_callback,
+                        device: 'wasm',
+                    });
+                }
+            }
         }
         return this.instance;
     }
@@ -98,8 +113,10 @@ self.addEventListener('message', async (event) => {
         console.error("Upscaler Error:", error);
         
         const errorMsg = error.message || error.toString();
-        // If it's a WebGPU error and we weren't already using WASM, ask the main thread to retry with WASM
-        if (!useWasm && (errorMsg.includes('WebGPU') || errorMsg.includes('OrtRun'))) {
+        const lowerMsg = errorMsg.toLowerCase();
+
+        // If it's a WebGPU error and we weren't already using WASM, retry with WASM
+        if (!useWasm && (lowerMsg.includes('webgpu') || lowerMsg.includes('backend') || lowerMsg.includes('jsep') || lowerMsg.includes('ortrun'))) {
              self.postMessage({
                  jobId,
                  status: 'webgpu_error',
