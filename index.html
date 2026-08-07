@@ -16,11 +16,25 @@
           var theme = localStorage.getItem('theme') || 'dark';
           document.documentElement.setAttribute('data-theme', theme);
         } catch (e) {}
+
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(function(regs) {
             for (var r of regs) { r.update(); }
           });
         }
+
+        window.addEventListener('error', function(e) {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var r of regs) { r.unregister(); }
+            });
+          }
+          if (window.caches) {
+            caches.keys().then(function(keys) {
+              for (var k of keys) { caches.delete(k); }
+            });
+          }
+        });
       })();
     </script>
     <script type="module" crossorigin src="/webtools/assets/index-CuexsOse.js"></script>
