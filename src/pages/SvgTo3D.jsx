@@ -9,16 +9,36 @@ import {
   ArrowPathIcon,
   SunIcon,
   EyeIcon,
-  CheckIcon as Check
+  CheckIcon as Check,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/solid';
 
-const SCRIPTS_TO_LOAD = [
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js',
-  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js'
+const SCRIPT_GROUPS = [
+  [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+    'https://unpkg.com/three@0.128.0/build/three.min.js'
+  ],
+  [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
+    'https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js'
+  ],
+  [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js',
+    'https://unpkg.com/three@0.128.0/examples/js/loaders/SVGLoader.js'
+  ],
+  [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js',
+    'https://unpkg.com/three@0.128.0/examples/js/exporters/STLExporter.js'
+  ],
+  [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js',
+    'https://unpkg.com/three@0.128.0/examples/js/exporters/OBJExporter.js'
+  ],
+  [
+    'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js',
+    'https://unpkg.com/three@0.128.0/examples/js/exporters/GLTFExporter.js'
+  ]
 ];
 
 function loadScript(src) {
@@ -30,6 +50,18 @@ function loadScript(src) {
     script.onerror = reject;
     document.head.appendChild(script);
   });
+}
+
+async function loadScriptWithFallbacks(urls) {
+  for (const url of urls) {
+    try {
+      await loadScript(url);
+      return;
+    } catch (e) {
+      console.warn(`Failed loading script from ${url}, trying fallback...`, e);
+    }
+  }
+  throw new Error(`Failed to load script from all sources`);
 }
 
 // Sample SVG presets for quick testing
@@ -64,6 +96,7 @@ const MATERIAL_PRESETS = {
 
 export default function SvgTo3D() {
   const [threeLoaded, setThreeLoaded] = useState(!!window.THREE);
+  const [loadError, setLoadError] = useState(false);
   const [svgContent, setSvgContent] = useState('');
   const [svgFileName, setSvgFileName] = useState('');
   const [useOriginalSvgColors, setUseOriginalSvgColors] = useState(true);
@@ -99,25 +132,26 @@ export default function SvgTo3D() {
   const gridHelperRef = useRef(null);
   const location = useLocation();
 
-  // Load Three.js scripts dynamically
-  useEffect(() => {
-    let isMounted = true;
-    const loadAll = async () => {
-      try {
-        for (const src of SCRIPTS_TO_LOAD) {
-          await loadScript(src);
-        }
-        if (isMounted) setThreeLoaded(true);
-      } catch (e) {
-        console.error("Failed loading Three.js scripts", e);
+  // Load Three.js scripts dynamically with fallbacks
+  const initEngine = async () => {
+    setLoadError(false);
+    try {
+      for (const urls of SCRIPT_GROUPS) {
+        await loadScriptWithFallbacks(urls);
       }
-    };
+      if (window.THREE) setThreeLoaded(true);
+    } catch (e) {
+      console.error("Failed loading Three.js scripts:", e);
+      setLoadError(true);
+    }
+  };
+
+  useEffect(() => {
     if (!window.THREE || !window.THREE.OrbitControls || !window.THREE.SVGLoader) {
-      loadAll();
+      initEngine();
     } else {
       setThreeLoaded(true);
     }
-    return () => { isMounted = false; };
   }, []);
 
   // Load incoming SVG file from router state if available
@@ -148,8 +182,8 @@ export default function SvgTo3D() {
     if (!threeLoaded || !containerRef.current || !window.THREE) return;
     const THREE = window.THREE;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+    const width = containerRef.current.clientWidth || 600;
+    const height = containerRef.current.clientHeight || 500;
 
     // 1. Scene
     const scene = new THREE.Scene();
@@ -606,7 +640,18 @@ export default function SvgTo3D() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           <div className="glass-panel" style={{ position: 'relative', overflow: 'hidden', padding: 0, borderRadius: '12px', height: '580px' }}>
-            {!threeLoaded ? (
+            {loadError ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: '#ef4444', padding: '2rem', textAlign: 'center' }}>
+                <ExclamationTriangleIcon style={{ width: '48px', height: '48px' }} />
+                <h3 style={{ margin: 0, color: 'white' }}>Failed to Load 3D Engine</h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', maxWidth: '360px', margin: 0 }}>
+                  CDN script loading was blocked or timed out. Please check your network connection or ad-blocker.
+                </p>
+                <button className="btn btn-primary" onClick={initEngine} style={{ padding: '0.5rem 1.25rem' }}>
+                  Retry Loading 3D Engine
+                </button>
+              </div>
+            ) : !threeLoaded ? (
               <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
                 <div style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
                 <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
