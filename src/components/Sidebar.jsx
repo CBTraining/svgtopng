@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { 
   PhotoIcon, 
+  CubeIcon,
   FilmIcon,
   GifIcon,
   ScissorsIcon, 
