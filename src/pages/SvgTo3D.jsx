@@ -94,6 +94,13 @@ const MATERIAL_PRESETS = {
   ruby: { name: 'Ruby Glass', color: '#f43f5e', metalness: 0.1, roughness: 0.1, clearcoat: 1.0 }
 };
 
+const LIGHTING_PRESETS = {
+  bright: { name: 'Bright Studio', ambient: 1.8, key: 3.5, fill: 2.0, rim: 2.5, keyColor: '#ffffff' },
+  warm: { name: 'Warm Sunset', ambient: 1.4, key: 4.0, fill: 1.5, rim: 3.0, keyColor: '#fff1e6' },
+  cyber: { name: 'Cyber Cyan', ambient: 1.2, key: 3.2, fill: 2.5, rim: 3.5, keyColor: '#00f2fe' },
+  dramatic: { name: 'Dramatic Rim', ambient: 0.6, key: 2.5, fill: 0.8, rim: 4.0, keyColor: '#ffffff' }
+};
+
 export default function SvgTo3D() {
   const [threeLoaded, setThreeLoaded] = useState(!!window.THREE);
   const [loadError, setLoadError] = useState(false);
@@ -117,6 +124,10 @@ export default function SvgTo3D() {
   const [clearcoat, setClearcoat] = useState(0.3);
   const [wireframe, setWireframe] = useState(false);
 
+  // Studio Lighting Controls
+  const [lightPreset, setLightPreset] = useState('bright');
+  const [lightBrightness, setLightBrightness] = useState(1.8);
+
   // Environment & Viewport Controls
   const [autoRotate, setAutoRotate] = useState(false);
   const [bgColor, setBgColor] = useState('#0b0f19');
@@ -130,6 +141,10 @@ export default function SvgTo3D() {
   const controlsRef = useRef(null);
   const modelGroupRef = useRef(null);
   const gridHelperRef = useRef(null);
+  const ambientLightRef = useRef(null);
+  const dirLight1Ref = useRef(null);
+  const dirLight2Ref = useRef(null);
+  const rimLightRef = useRef(null);
   const location = useLocation();
 
   // Load Three.js scripts dynamically with fallbacks
@@ -192,7 +207,7 @@ export default function SvgTo3D() {
 
     // 2. Camera
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 50, 150);
+    camera.position.set(0, 60, 140);
     cameraRef.current = camera;
 
     // 3. Renderer
@@ -202,7 +217,7 @@ export default function SvgTo3D() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 1.3;
     rendererRef.current = renderer;
 
     containerRef.current.appendChild(renderer.domElement);
@@ -212,38 +227,43 @@ export default function SvgTo3D() {
     const controls = new OrbitControlsClass(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 + 0.1;
+    controls.maxPolarAngle = Math.PI / 2 + 0.05;
     controlsRef.current = controls;
 
-    // 5. Lighting Setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    // 5. Lighting Setup (Bright High-Key Studio Setup)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.8);
     scene.add(ambientLight);
+    ambientLightRef.current = ambientLight;
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 2.0);
-    dirLight1.position.set(100, 150, 100);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 3.5);
+    dirLight1.position.set(100, 160, 120);
     dirLight1.castShadow = true;
     dirLight1.shadow.mapSize.width = 2048;
     dirLight1.shadow.mapSize.height = 2048;
     scene.add(dirLight1);
+    dirLight1Ref.current = dirLight1;
 
-    const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 1.2);
-    dirLight2.position.set(-100, -50, -100);
+    const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 2.0);
+    dirLight2.position.set(-100, -40, -100);
     scene.add(dirLight2);
+    dirLight2Ref.current = dirLight2;
 
-    const rimLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    rimLight.position.set(0, 100, -150);
+    const rimLight = new THREE.DirectionalLight(0xffffff, 2.5);
+    rimLight.position.set(0, 120, -150);
     scene.add(rimLight);
+    rimLightRef.current = rimLight;
 
     // Floor & Grid
     const gridHelper = new THREE.GridHelper(200, 40, 0x3b82f6, 0x1e293b);
-    gridHelper.position.y = -0.1;
+    gridHelper.position.y = 0;
     scene.add(gridHelper);
     gridHelperRef.current = gridHelper;
 
     const floorGeo = new THREE.PlaneGeometry(300, 300);
-    const floorMat = new THREE.ShadowMaterial({ opacity: 0.4 });
+    const floorMat = new THREE.ShadowMaterial({ opacity: 0.35 });
     const floor = new THREE.Mesh(floorGeo, floorMat);
     floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
     floor.receiveShadow = true;
     scene.add(floor);
 
@@ -284,6 +304,20 @@ export default function SvgTo3D() {
     };
   }, [threeLoaded]);
 
+  // Dynamic Studio Lighting Preset Updates
+  useEffect(() => {
+    const p = LIGHTING_PRESETS[lightPreset] || LIGHTING_PRESETS.bright;
+    const mult = parseFloat(lightBrightness);
+
+    if (ambientLightRef.current) ambientLightRef.current.intensity = p.ambient * mult;
+    if (dirLight1Ref.current) {
+      dirLight1Ref.current.intensity = p.key * mult;
+      dirLight1Ref.current.color.set(p.keyColor);
+    }
+    if (dirLight2Ref.current) dirLight2Ref.current.intensity = p.fill * mult;
+    if (rimLightRef.current) rimLightRef.current.intensity = p.rim * mult;
+  }, [lightPreset, lightBrightness]);
+
   // Update Background & Grid
   useEffect(() => {
     if (sceneRef.current && window.THREE) {
@@ -294,7 +328,7 @@ export default function SvgTo3D() {
     }
   }, [bgColor, showGrid]);
 
-  // Re-extrude 3D Object
+  // Re-extrude 3D Object & Position ON TOP of Grid
   useEffect(() => {
     if (!threeLoaded || !modelGroupRef.current || !svgContent || !window.THREE) return;
     const THREE = window.THREE;
@@ -355,28 +389,35 @@ export default function SvgTo3D() {
         });
       });
 
-      // Center bounding box
-      const box = new THREE.Box3().setFromObject(group);
-      const center = box.getCenter(new THREE.Vector3());
-      const size = box.getSize(new THREE.Vector3());
+      // Align geometry & position strictly ON TOP of floor grid
+      group.rotation.x = Math.PI;
+
+      const tempBox = new THREE.Box3().setFromObject(group);
+      const center = tempBox.getCenter(new THREE.Vector3());
+      const min = tempBox.min;
 
       group.position.x = -center.x;
-      group.position.y = size.y / 2;
       group.position.z = -center.z;
-      group.rotation.x = Math.PI;
+      group.position.y = -min.y + 0.2; // Sit 0.2mm cleanly ON TOP of floor grid!
 
       const pivotGroup = new THREE.Group();
       pivotGroup.add(group);
 
       modelGroupRef.current.add(pivotGroup);
 
+      // Fit camera comfortably inside viewport
       if (controlsRef.current && cameraRef.current) {
-        const maxDim = Math.max(size.x, size.y, size.z);
+        const finalBox = new THREE.Box3().setFromObject(pivotGroup);
+        const finalCenter = finalBox.getCenter(new THREE.Vector3());
+        const finalSize = finalBox.getSize(new THREE.Vector3());
+        const maxDim = Math.max(finalSize.x, finalSize.y, finalSize.z);
+
         const fov = cameraRef.current.fov * (Math.PI / 180);
-        let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.8;
-        cameraZ = Math.max(cameraZ, 40);
-        cameraRef.current.position.set(0, maxDim * 0.8, cameraZ);
-        controlsRef.current.target.set(0, size.y / 2, 0);
+        let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
+        cameraZ = Math.max(cameraZ, 45);
+
+        cameraRef.current.position.set(0, finalCenter.y + maxDim * 0.4, cameraZ);
+        controlsRef.current.target.copy(finalCenter);
         controlsRef.current.update();
       }
     } catch (err) {
@@ -486,13 +527,20 @@ export default function SvgTo3D() {
   };
 
   const resetCamera = () => {
-    if (controlsRef.current && cameraRef.current) {
-      cameraRef.current.position.set(0, 50, 150);
-      controlsRef.current.target.set(0, 10, 0);
+    if (controlsRef.current && cameraRef.current && modelGroupRef.current) {
+      const finalBox = new window.THREE.Box3().setFromObject(modelGroupRef.current);
+      const finalCenter = finalBox.getCenter(new window.THREE.Vector3());
+      const finalSize = finalBox.getSize(new window.THREE.Vector3());
+      const maxDim = Math.max(finalSize.x, finalSize.y, finalSize.z);
+
+      const fov = cameraRef.current.fov * (Math.PI / 180);
+      let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2))) * 1.5;
+      cameraZ = Math.max(cameraZ, 45);
+
+      cameraRef.current.position.set(0, finalCenter.y + maxDim * 0.4, cameraZ);
+      controlsRef.current.target.copy(finalCenter);
       controlsRef.current.update();
-      if (modelGroupRef.current) {
-        modelGroupRef.current.rotation.y = 0;
-      }
+      modelGroupRef.current.rotation.y = 0;
     }
   };
 
@@ -682,10 +730,10 @@ export default function SvgTo3D() {
                   <button 
                     className="btn" 
                     onClick={resetCamera} 
-                    title="Reset Camera Position"
+                    title="Reset Camera View & Zoom"
                     style={{ padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', fontSize: '0.75rem', color: 'white' }}
                   >
-                    Reset Camera
+                    Fit to View
                   </button>
                 </div>
 
@@ -695,7 +743,7 @@ export default function SvgTo3D() {
                     style={{ background: 'none', border: 'none', color: showGrid ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                     onClick={() => setShowGrid(!showGrid)}
                   >
-                    <EyeIcon style={{ width: '14px', height: '14px' }} /> Grid
+                    <EyeIcon style={{ width: '14px', height: '14px' }} /> Floor Grid
                   </button>
                   <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
                   <button 
@@ -743,6 +791,53 @@ export default function SvgTo3D() {
         {/* Right Column: Material & Studio Lighting Presets */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           
+          {/* Studio Lighting Settings */}
+          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '0.5rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <SunIcon style={{ width: '18px', height: '18px', color: '#f59e0b' }} />
+              Studio Lighting & Brightness
+            </h3>
+
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                <span>Light Intensity / Brightness:</span>
+                <span style={{ fontWeight: 'bold', color: '#f59e0b' }}>{Math.round(lightBrightness * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0.5" 
+                max="3.5" 
+                step="0.1" 
+                value={lightBrightness} 
+                onChange={(e) => setLightBrightness(Number(e.target.value))}
+                style={{ width: '100%', accentColor: '#f59e0b' }}
+              />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem' }}>
+              {Object.keys(LIGHTING_PRESETS).map((key) => {
+                const p = LIGHTING_PRESETS[key];
+                const isSelected = lightPreset === key;
+                return (
+                  <button
+                    key={key}
+                    className="btn"
+                    onClick={() => setLightPreset(key)}
+                    style={{
+                      padding: '0.4rem 0.5rem',
+                      fontSize: '0.75rem',
+                      border: isSelected ? '2px solid #f59e0b' : '1px solid var(--border-color)',
+                      background: isSelected ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.03)',
+                      color: isSelected ? '#f59e0b' : 'white'
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Material Presets */}
           <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <h3 style={{ marginTop: 0, marginBottom: '0.5rem', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
