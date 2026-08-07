@@ -11,12 +11,26 @@ import {
   EyeIcon,
   CheckIcon as Check
 } from '@heroicons/react/24/solid';
-import * as THREE from 'https://esm.sh/three@0.174.0';
-import { OrbitControls } from 'https://esm.sh/three@0.174.0/examples/jsm/controls/OrbitControls.js';
-import { SVGLoader } from 'https://esm.sh/three@0.174.0/examples/jsm/loaders/SVGLoader.js';
-import { STLExporter } from 'https://esm.sh/three@0.174.0/examples/jsm/exporters/STLExporter.js';
-import { OBJExporter } from 'https://esm.sh/three@0.174.0/examples/jsm/exporters/OBJExporter.js';
-import { GLTFExporter } from 'https://esm.sh/three@0.174.0/examples/jsm/exporters/GLTFExporter.js';
+
+const SCRIPTS_TO_LOAD = [
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/SVGLoader.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/STLExporter.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js',
+  'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js'
+];
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
 
 // Sample SVG presets for quick testing
 const SAMPLE_SVGS = {
@@ -49,6 +63,7 @@ const MATERIAL_PRESETS = {
 };
 
 export default function SvgTo3D() {
+  const [threeLoaded, setThreeLoaded] = useState(!!window.THREE);
   const [svgContent, setSvgContent] = useState('');
   const [svgFileName, setSvgFileName] = useState('');
   const [useOriginalSvgColors, setUseOriginalSvgColors] = useState(true);
@@ -84,6 +99,27 @@ export default function SvgTo3D() {
   const gridHelperRef = useRef(null);
   const location = useLocation();
 
+  // Load Three.js scripts dynamically
+  useEffect(() => {
+    let isMounted = true;
+    const loadAll = async () => {
+      try {
+        for (const src of SCRIPTS_TO_LOAD) {
+          await loadScript(src);
+        }
+        if (isMounted) setThreeLoaded(true);
+      } catch (e) {
+        console.error("Failed loading Three.js scripts", e);
+      }
+    };
+    if (!window.THREE || !window.THREE.OrbitControls || !window.THREE.SVGLoader) {
+      loadAll();
+    } else {
+      setThreeLoaded(true);
+    }
+    return () => { isMounted = false; };
+  }, []);
+
   // Load incoming SVG file from router state if available
   useEffect(() => {
     if (location.state?.svgContent) {
@@ -91,13 +127,11 @@ export default function SvgTo3D() {
       setSvgFileName(location.state.fileName || 'custom_vector.svg');
       window.history.replaceState({}, document.title);
     } else if (!svgContent) {
-      // Default to sample star logo
       setSvgContent(SAMPLE_SVGS.star);
       setSvgFileName('star_badge.svg');
     }
   }, [location.state]);
 
-  // Handle Preset Selection
   const applyMaterialPreset = (presetKey) => {
     setMaterialPreset(presetKey);
     const p = MATERIAL_PRESETS[presetKey];
@@ -111,7 +145,8 @@ export default function SvgTo3D() {
 
   // Initialize Three.js Scene
   useEffect(() => {
-    if (!containerRef.current) return;
+    if (!threeLoaded || !containerRef.current || !window.THREE) return;
+    const THREE = window.THREE;
 
     const width = containerRef.current.clientWidth;
     const height = containerRef.current.clientHeight;
@@ -139,10 +174,11 @@ export default function SvgTo3D() {
     containerRef.current.appendChild(renderer.domElement);
 
     // 4. Orbit Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
+    const OrbitControlsClass = THREE.OrbitControls || window.THREE.OrbitControls;
+    const controls = new OrbitControlsClass(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
-    controls.maxPolarAngle = Math.PI / 2 + 0.1; // Don't go below floor
+    controls.maxPolarAngle = Math.PI / 2 + 0.1;
     controlsRef.current = controls;
 
     // 5. Lighting Setup
@@ -156,7 +192,7 @@ export default function SvgTo3D() {
     dirLight1.shadow.mapSize.height = 2048;
     scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 1.2); // Cool blue fill light
+    const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 1.2);
     dirLight2.position.set(-100, -50, -100);
     scene.add(dirLight2);
 
@@ -164,19 +200,7 @@ export default function SvgTo3D() {
     rimLight.position.set(0, 100, -150);
     scene.add(rimLight);
 
-    // Generate procedural environment reflection texture for realistic metals
-    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-    pmremGenerator.compileEquirectangularShader();
-    const envScene = new THREE.Scene();
-    envScene.background = new THREE.Color(0x334155);
-    const envLight = new THREE.DirectionalLight(0xffffff, 3.0);
-    envLight.position.set(5, 10, 5);
-    envScene.add(envLight);
-    const envTex = pmremGenerator.fromScene(envScene).texture;
-    scene.environment = envTex;
-    pmremGenerator.dispose();
-
-    // 6. Floor & Grid
+    // Floor & Grid
     const gridHelper = new THREE.GridHelper(200, 40, 0x3b82f6, 0x1e293b);
     gridHelper.position.y = -0.1;
     scene.add(gridHelper);
@@ -189,7 +213,7 @@ export default function SvgTo3D() {
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // 7. Group to hold 3D model
+    // Group for 3D model
     const modelGroup = new THREE.Group();
     scene.add(modelGroup);
     modelGroupRef.current = modelGroup;
@@ -206,7 +230,6 @@ export default function SvgTo3D() {
     };
     animate();
 
-    // Handle Window Resize
     const handleResize = () => {
       if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -225,21 +248,25 @@ export default function SvgTo3D() {
         containerRef.current.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [threeLoaded]);
 
-  // Update Scene Background & Grid
+  // Update Background & Grid
   useEffect(() => {
-    if (sceneRef.current) {
-      sceneRef.current.background = new THREE.Color(bgColor);
+    if (sceneRef.current && window.THREE) {
+      sceneRef.current.background = new window.THREE.Color(bgColor);
     }
     if (gridHelperRef.current) {
       gridHelperRef.current.visible = showGrid;
     }
   }, [bgColor, showGrid]);
 
-  // Re-extrude 3D Object whenever parameters or SVG content change
+  // Re-extrude 3D Object
   useEffect(() => {
-    if (!modelGroupRef.current || !svgContent) return;
+    if (!threeLoaded || !modelGroupRef.current || !svgContent || !window.THREE) return;
+    const THREE = window.THREE;
+    const SVGLoaderClass = THREE.SVGLoader || window.THREE.SVGLoader;
+
+    if (!SVGLoaderClass) return;
 
     // Clear previous mesh
     while (modelGroupRef.current.children.length > 0) {
@@ -253,7 +280,7 @@ export default function SvgTo3D() {
     }
 
     try {
-      const loader = new SVGLoader();
+      const loader = new SVGLoaderClass();
       const svgData = loader.parse(svgContent);
 
       const extrudeSettings = {
@@ -275,18 +302,15 @@ export default function SvgTo3D() {
           matColor = fillColor;
         }
 
-        const material = new THREE.MeshPhysicalMaterial({
+        const material = new THREE.MeshStandardMaterial({
           color: new THREE.Color(matColor),
           metalness: parseFloat(metalness),
           roughness: parseFloat(roughness),
-          clearcoat: parseFloat(clearcoat),
-          clearcoatRoughness: 0.1,
-          reflectivity: 0.9,
           wireframe: wireframe,
           side: THREE.DoubleSide
         });
 
-        const shapes = SVGLoader.createShapes(path);
+        const shapes = SVGLoaderClass.createShapes(path);
 
         shapes.forEach((shape) => {
           const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
@@ -297,24 +321,21 @@ export default function SvgTo3D() {
         });
       });
 
-      // Center the bounding box in the 3D scene
+      // Center bounding box
       const box = new THREE.Box3().setFromObject(group);
       const center = box.getCenter(new THREE.Vector3());
       const size = box.getSize(new THREE.Vector3());
 
-      // Invert Y axis because SVGs render Y-downwards
       group.position.x = -center.x;
       group.position.y = size.y / 2;
       group.position.z = -center.z;
       group.rotation.x = Math.PI;
 
-      // Wrap in outer group to preserve inversion
       const pivotGroup = new THREE.Group();
       pivotGroup.add(group);
 
       modelGroupRef.current.add(pivotGroup);
 
-      // Adjust camera distance to fit model
       if (controlsRef.current && cameraRef.current) {
         const maxDim = Math.max(size.x, size.y, size.z);
         const fov = cameraRef.current.fov * (Math.PI / 180);
@@ -328,6 +349,7 @@ export default function SvgTo3D() {
       console.error("Error parsing/extruding SVG:", err);
     }
   }, [
+    threeLoaded,
     svgContent, 
     depth, 
     bevelEnabled, 
@@ -343,7 +365,6 @@ export default function SvgTo3D() {
     wireframe
   ]);
 
-  // Handle File Upload
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'image/svg+xml' || file.name.endsWith('.svg'))) {
@@ -364,15 +385,15 @@ export default function SvgTo3D() {
     }
   };
 
-  // Exporters
   const triggerSuccessMsg = (msg) => {
     setExportSuccess(msg);
     setTimeout(() => setExportSuccess(''), 3000);
   };
 
   const exportSTL = () => {
-    if (!modelGroupRef.current) return;
-    const exporter = new STLExporter();
+    if (!modelGroupRef.current || !window.THREE?.STLExporter) return;
+    const STLExporterClass = window.THREE.STLExporter;
+    const exporter = new STLExporterClass();
     const result = exporter.parse(modelGroupRef.current, { binary: true });
     const blob = new Blob([result], { type: 'application/octet-stream' });
     const link = document.createElement('a');
@@ -383,8 +404,9 @@ export default function SvgTo3D() {
   };
 
   const exportOBJ = () => {
-    if (!modelGroupRef.current) return;
-    const exporter = new OBJExporter();
+    if (!modelGroupRef.current || !window.THREE?.OBJExporter) return;
+    const OBJExporterClass = window.THREE.OBJExporter;
+    const exporter = new OBJExporterClass();
     const result = exporter.parse(modelGroupRef.current);
     const blob = new Blob([result], { type: 'text/plain' });
     const link = document.createElement('a');
@@ -395,8 +417,9 @@ export default function SvgTo3D() {
   };
 
   const exportGLTF = () => {
-    if (!modelGroupRef.current) return;
-    const exporter = new GLTFExporter();
+    if (!modelGroupRef.current || !window.THREE?.GLTFExporter) return;
+    const GLTFExporterClass = window.THREE.GLTFExporter;
+    const exporter = new GLTFExporterClass();
     exporter.parse(
       modelGroupRef.current,
       (gltf) => {
@@ -583,52 +606,62 @@ export default function SvgTo3D() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           <div className="glass-panel" style={{ position: 'relative', overflow: 'hidden', padding: 0, borderRadius: '12px', height: '580px' }}>
-            {/* 3D Canvas Viewport */}
-            <div ref={containerRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+            {!threeLoaded ? (
+              <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', color: 'var(--text-secondary)' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--accent-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+                <span>Initializing 3D Engine...</span>
+              </div>
+            ) : (
+              <>
+                {/* 3D Canvas Viewport */}
+                <div ref={containerRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
 
-            {/* Viewport Overlay Controls */}
-            <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
-              <button 
-                className="btn" 
-                onClick={() => setAutoRotate(!autoRotate)} 
-                title="Toggle Auto Rotation"
-                style={{ padding: '0.4rem 0.75rem', background: autoRotate ? 'var(--accent-color)' : 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', fontSize: '0.75rem', color: 'white' }}
-              >
-                <ArrowPathIcon style={{ width: '14px', height: '14px', marginRight: '4px' }} />
-                {autoRotate ? 'Rotating' : 'Auto-Rotate'}
-              </button>
-              <button 
-                className="btn" 
-                onClick={resetCamera} 
-                title="Reset Camera Position"
-                style={{ padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', fontSize: '0.75rem', color: 'white' }}
-              >
-                Reset Camera
-              </button>
-            </div>
+                {/* Viewport Overlay Controls */}
+                <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10 }}>
+                  <button 
+                    className="btn" 
+                    onClick={() => setAutoRotate(!autoRotate)} 
+                    title="Toggle Auto Rotation"
+                    style={{ padding: '0.4rem 0.75rem', background: autoRotate ? 'var(--accent-color)' : 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', fontSize: '0.75rem', color: 'white' }}
+                  >
+                    <ArrowPathIcon style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                    {autoRotate ? 'Rotating' : 'Auto-Rotate'}
+                  </button>
+                  <button 
+                    className="btn" 
+                    onClick={resetCamera} 
+                    title="Reset Camera Position"
+                    style={{ padding: '0.4rem 0.75rem', background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', fontSize: '0.75rem', color: 'white' }}
+                  >
+                    Reset Camera
+                  </button>
+                </div>
 
-            {/* Environment Toggle Controls */}
-            <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10, background: 'rgba(0,0,0,0.6)', padding: '0.35rem 0.75rem', borderRadius: '20px', backdropFilter: 'blur(8px)' }}>
-              <button 
-                style={{ background: 'none', border: 'none', color: showGrid ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                onClick={() => setShowGrid(!showGrid)}
-              >
-                <EyeIcon style={{ width: '14px', height: '14px' }} /> Grid
-              </button>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-              <button 
-                style={{ background: 'none', border: 'none', color: bgColor === '#0b0f19' ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem' }}
-                onClick={() => setBgColor('#0b0f19')}
-              >
-                Dark Studio
-              </button>
-              <button 
-                style={{ background: 'none', border: 'none', color: bgColor === '#f8fafc' ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem' }}
-                onClick={() => setBgColor('#f8fafc')}
-              >
-                Light Studio
-              </button>
-            </div>
+                {/* Environment Toggle Controls */}
+                <div style={{ position: 'absolute', bottom: '1rem', left: '1rem', display: 'flex', gap: '0.5rem', zIndex: 10, background: 'rgba(0,0,0,0.6)', padding: '0.35rem 0.75rem', borderRadius: '20px', backdropFilter: 'blur(8px)' }}>
+                  <button 
+                    style={{ background: 'none', border: 'none', color: showGrid ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    onClick={() => setShowGrid(!showGrid)}
+                  >
+                    <EyeIcon style={{ width: '14px', height: '14px' }} /> Grid
+                  </button>
+                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                  <button 
+                    style={{ background: 'none', border: 'none', color: bgColor === '#0b0f19' ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem' }}
+                    onClick={() => setBgColor('#0b0f19')}
+                  >
+                    Dark Studio
+                  </button>
+                  <button 
+                    style={{ background: 'none', border: 'none', color: bgColor === '#f8fafc' ? 'var(--accent-color)' : 'white', cursor: 'pointer', fontSize: '0.75rem' }}
+                    onClick={() => setBgColor('#f8fafc')}
+                  >
+                    Light Studio
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Export Bar */}
@@ -742,22 +775,6 @@ export default function SvgTo3D() {
                   step="0.05" 
                   value={roughness} 
                   onChange={(e) => { setRoughness(Number(e.target.value)); setMaterialPreset('custom'); }}
-                  style={{ width: '100%', accentColor: 'var(--accent-color)' }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
-                  <span>Clearcoat Gloss:</span>
-                  <span>{Math.round(clearcoat * 100)}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="1" 
-                  step="0.05" 
-                  value={clearcoat} 
-                  onChange={(e) => { setClearcoat(Number(e.target.value)); setMaterialPreset('custom'); }}
                   style={{ width: '100%', accentColor: 'var(--accent-color)' }}
                 />
               </div>
