@@ -37,4 +37,12 @@ export default defineConfig({
       }
     })
   ],
+  build: {
+    rolldownOptions: {
+      external: ['onnxruntime-web/webgpu', 'onnxruntime-web']
+    },
+    rollupOptions: {
+      external: ['onnxruntime-web/webgpu', 'onnxruntime-web']
+    }
+  }
 })
