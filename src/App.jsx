@@ -29,6 +29,7 @@ import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
 import CollageMaker from './pages/CollageMaker';
 import SvgTo3D from './pages/SvgTo3D';
+import AssetExtractor from './pages/AssetExtractor';
 
 const Home = () => (
   <div className="animate-fade-in">
@@ -75,6 +76,7 @@ const Home = () => (
         <div>
           <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Web & Dev</h4>
           <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
+            <li>Website Asset Extractor</li>
             <li>QR Generator</li>
             <li>JSON Saver</li>
             <li>Timezone Converter</li>
@@ -511,6 +513,7 @@ function App() {
               <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
               <Route path="/collage-maker" element={<CollageMaker />} />
               <Route path="/svg-to-3d" element={<SvgTo3D />} />
+              <Route path="/asset-extractor" element={<AssetExtractor />} />
             </Routes>
           </MainContentWrapper>
           

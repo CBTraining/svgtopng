@@ -5,23 +5,23 @@ import {
   FilmIcon,
   GifIcon,
   ScissorsIcon, 
-  CodeBracketSquareIcon, 
-  SparklesIcon, 
   CommandLineIcon, 
+  CodeBracketSquareIcon, 
+  PaintBrushIcon, 
+  QrCodeIcon, 
+  SparklesIcon, 
+  DocumentArrowDownIcon,
+  ClockIcon,
+  WindowIcon,
+  RectangleGroupIcon,
   Square3Stack3DIcon,
-  EyeDropperIcon,
-  QrCodeIcon,
-  ClipboardDocumentIcon,
+  GlobeAltIcon,
   SunIcon,
   MoonIcon,
-  ClockIcon,
   ArrowsPointingOutIcon,
-  WindowIcon,
   HomeIcon,
   ChartBarIcon,
-  DocumentArrowDownIcon,
-  RectangleGroupIcon,
-  PaintBrushIcon
+  ClipboardDocumentIcon
 } from '@heroicons/react/24/solid';
 import { ChevronDownIcon as ChevronDownOutline } from '@heroicons/react/24/outline';
 import BackgroundJobsWidget from './BackgroundJobsWidget';
@@ -91,6 +91,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
     {
       title: 'Web & Dev',
       items: [
+        { to: '/asset-extractor', icon: GlobeAltIcon, label: 'Asset Extractor' },
         { to: '/qr-generator', icon: QrCodeIcon, label: 'QR Generator' },
         { to: '/json-saver', icon: CodeBracketSquareIcon, label: 'JSON Saver' },
         { to: '/timezone-converter', icon: ClockIcon, label: 'Timezone Converter' },
@@ -120,7 +121,7 @@ export default function Sidebar({ isOpen, onClose, onManualPaste, onClockClick, 
           <div className="logo-container" style={{ alignItems: 'center' }}>
             <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="WebTools Logo" width="28" height="28" style={{ marginLeft: '6px', marginRight: '-2px' }} />
             <h2>Web<span className="text-gradient">Tools</span></h2>
-            <span className="version">v3.16</span>
+            <span className="version">v3.17</span>
           </div>
 
         </div>
