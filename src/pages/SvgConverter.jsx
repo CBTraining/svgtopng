@@ -23,11 +23,11 @@ export default function SvgConverter() {
   useEffect(() => {
     if (location.state?.svgText) {
       setSvgText(location.state.svgText);
-      // Clear state so a refresh doesn't keep reloading it if unwanted
       window.history.replaceState({}, document.title);
     }
   }, [location.state?.svgText]);
 
+  // Robust SVG Dimension & Native Aspect Ratio Parser
   useEffect(() => {
     if (!svgText.trim() || !svgText.includes('<svg')) return;
     try {
@@ -35,25 +35,41 @@ export default function SvgConverter() {
       const doc = parser.parseFromString(svgText, "image/svg+xml");
       const svgEl = doc.querySelector('svg');
       if (svgEl) {
-        let w = svgEl.getAttribute('width');
-        let h = svgEl.getAttribute('height');
+        let wAttr = svgEl.getAttribute('width');
+        let hAttr = svgEl.getAttribute('height');
         const viewBox = svgEl.getAttribute('viewBox');
         
-        let parsedW = w ? parseFloat(w) : null;
-        let parsedH = h ? parseFloat(h) : null;
+        let parsedW = null;
+        let parsedH = null;
 
-        if ((!parsedW || !parsedH) && viewBox) {
+        // Parse viewBox first for accurate aspect ratio
+        if (viewBox) {
           const parts = viewBox.split(/[ ,\n\t]+/).filter(Boolean).map(parseFloat);
-          if (parts.length === 4) {
+          if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
             parsedW = parts[2];
             parsedH = parts[3];
           }
         }
 
+        // If width/height attributes are explicit numeric pixels, use them
+        if (wAttr && !wAttr.includes('%')) {
+          const wVal = parseFloat(wAttr);
+          if (wVal > 0) parsedW = wVal;
+        }
+        if (hAttr && !hAttr.includes('%')) {
+          const hVal = parseFloat(hAttr);
+          if (hVal > 0) parsedH = hVal;
+        }
+
         if (parsedW && parsedH && parsedW > 0 && parsedH > 0) {
-          setWidth(Math.round(parsedW));
-          setHeight(Math.round(parsedH));
-          setAspectRatio(parsedW / parsedH);
+          const ratio = parsedW / parsedH;
+          setAspectRatio(ratio);
+          
+          // Match output height to keep initial proportions without stretching
+          const targetW = 512;
+          const targetH = Math.round(targetW / ratio);
+          setWidth(targetW);
+          setHeight(targetH);
         }
       }
     } catch (e) {
@@ -68,14 +84,9 @@ export default function SvgConverter() {
   }, [previewUrl]);
 
   const handleConvert = useCallback(() => {
-    if (!svgText.trim()) return;
-    if (!canvasRef.current) return;
+    if (!svgText.trim() || !canvasRef.current || !svgText.includes('<svg')) return;
 
-    // Check if valid SVG
-    if (!svgText.includes('<svg')) {
-      return;
-    }
-
+    // Sanitize SVG blob so width/height match viewbox aspect ratio
     const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     
@@ -86,7 +97,29 @@ export default function SvgConverter() {
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, width, height);
-      ctx.drawImage(img, 0, 0, width, height);
+
+      // Calculate Contain-Fit Aspect Ratio so vector NEVER stretches
+      const imgW = img.naturalWidth || img.width || width;
+      const imgH = img.naturalHeight || img.height || height;
+      const imgAspect = imgW / imgH;
+
+      let drawW = width;
+      let drawH = height;
+      let drawX = 0;
+      let drawY = 0;
+
+      if (keepProportions && imgAspect > 0) {
+        const canvasAspect = width / height;
+        if (imgAspect > canvasAspect) {
+          drawH = width / imgAspect;
+          drawY = (height - drawH) / 2;
+        } else {
+          drawW = height * imgAspect;
+          drawX = (width - drawW) / 2;
+        }
+      }
+
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
       
       if (applyTint) {
         ctx.globalCompositeOperation = 'source-in';
@@ -118,12 +151,12 @@ export default function SvgConverter() {
       URL.revokeObjectURL(url);
     };
     img.src = url;
-  }, [svgText, width, height, applyTint, tintMode, solidColor, gradStart, gradEnd, gradDirection]);
+  }, [svgText, width, height, keepProportions, applyTint, tintMode, solidColor, gradStart, gradEnd, gradDirection]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       handleConvert();
-    }, 200);
+    }, 150);
     return () => clearTimeout(timer);
   }, [handleConvert]);
 
@@ -131,7 +164,7 @@ export default function SvgConverter() {
     if (!previewUrl) return;
     const a = document.createElement('a');
     a.href = previewUrl;
-    a.download = `icon-${width}x${height}.png`;
+    a.download = `vector-${width}x${height}.png`;
     a.click();
   };
 
@@ -209,9 +242,9 @@ export default function SvgConverter() {
     <div className="animate-fade-in">
       <div className="page-header">
         <FileCode2 />
-        <h1>SVG Icon Converter</h1>
+        <h1>SVG Converter</h1>
       </div>
-      <p>Upload or paste SVG code, scale to any dimension, and convert to a transparent PNG.</p>
+      <p>Upload or paste SVG vector graphics, scale to any resolution without stretching, apply solid/gradient color overrides, and export as transparent PNGs.</p>
 
       <div className="grid-container">
         <div 
@@ -279,7 +312,7 @@ export default function SvgConverter() {
           </div>
           
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem', marginTop: '0.5rem' }}>
-            {[16, 32, 64, 128, 256, 512].map(size => (
+            {[16, 32, 64, 128, 256, 512, 1024].map(size => (
               <button 
                 key={size}
                 className="btn" 
@@ -349,14 +382,17 @@ export default function SvgConverter() {
                         <span>End</span>
                       </div>
                     </div>
-                    <div>
-                      <select className="input-field" value={gradDirection} onChange={(e) => setGradDirection(e.target.value)} style={{ padding: '0.25rem', marginTop: '0.25rem' }}>
-                        <option value="to-bottom-right">Top-Left to Bottom-Right</option>
-                        <option value="to-top-right">Bottom-Left to Top-Right</option>
-                        <option value="to-right">Left to Right</option>
-                        <option value="to-bottom">Top to Bottom</option>
-                      </select>
-                    </div>
+                    <select 
+                      className="input-field" 
+                      value={gradDirection} 
+                      onChange={(e) => setGradDirection(e.target.value)}
+                      style={{ padding: '0.25rem 0.5rem' }}
+                    >
+                      <option value="to-bottom">Top to Bottom</option>
+                      <option value="to-right">Left to Right</option>
+                      <option value="to-bottom-right">Diagonal (TL to BR)</option>
+                      <option value="to-top-right">Diagonal (BL to TR)</option>
+                    </select>
                   </div>
                 )}
               </div>
@@ -364,30 +400,55 @@ export default function SvgConverter() {
           </div>
         </div>
 
-        <div className="glass-panel preview-panel">
-          <h3>Preview</h3>
+        <div className="glass-panel preview-panel" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+          
           {previewUrl ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
-              <div className="canvas-container" style={{ background: 'transparent' }}>
-                 {/* Invisible canvas for processing */}
-                 <canvas ref={canvasRef} style={{ display: 'none' }} />
-                 <img src={previewUrl} alt="SVG Preview" style={{ maxWidth: '100%', maxHeight: '400px', border: '1px solid var(--border-color)' }} />
+            <div className="preview-container" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+              <div 
+                className="canvas-container"
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '400px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justify: 'center',
+                  padding: '1rem',
+                  borderRadius: 'var(--border-radius-sm)',
+                  background: 'linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.08) 75%) #090d16',
+                  backgroundSize: '16px 16px',
+                  backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px'
+                }}
+              >
+                <img 
+                  src={previewUrl} 
+                  alt="Converted SVG PNG Preview" 
+                  style={{ 
+                    maxWidth: '100%', 
+                    maxHeight: '360px', 
+                    objectFit: 'contain'
+                  }} 
+                />
               </div>
-              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                Resolution: <strong>{width} x {height} px</strong>
+              </div>
+
+              <div className="button-group" style={{ width: '100%', justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={handleDownload}>
-                  <Download style={{width: "18px", height: "18px"}} /> Download PNG
+                  <Download style={{ width: 18, height: 18 }} /> Download PNG
                 </button>
                 <button className="btn" onClick={handleCopy}>
-                  {copySuccess ? <Check style={{width: "18px", height: "18px"}} /> : <ClipboardDocumentIcon style={{width: "18px", height: "18px"}} />} 
+                  {copySuccess ? <Check style={{ width: 18, height: 18, color: '#10b981' }} /> : <ClipboardDocumentIcon style={{ width: 18, height: 18 }} />}
                   {copySuccess ? 'Copied!' : 'Copy PNG'}
                 </button>
               </div>
             </div>
           ) : (
-             <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                Render to see preview
-                <canvas ref={canvasRef} style={{ display: 'none' }} />
-             </div>
+            <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
+              Enter SVG code or upload a file to generate a live PNG preview
+            </div>
           )}
         </div>
       </div>
