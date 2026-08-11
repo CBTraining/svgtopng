@@ -56,6 +56,17 @@ export default function AssetExtractor() {
   const [previewModalAsset, setPreviewModalAsset] = useState(null);
   const navigate = useNavigate();
 
+  // Cleanup object URLs when assets change or component unmounts
+  useEffect(() => {
+    return () => {
+      assets.forEach(asset => {
+        if (asset.url && asset.url.startsWith('blob:')) {
+          URL.revokeObjectURL(asset.url);
+        }
+      });
+    };
+  }, [assets]);
+
   const handleExtract = async (urlToFetch) => {
     const inputUrl = urlToFetch || targetUrl;
     if (!inputUrl.trim()) return;
@@ -65,6 +76,13 @@ export default function AssetExtractor() {
       formattedUrl = 'https://' + formattedUrl;
     }
     setTargetUrl(formattedUrl);
+
+    // Revoke previous blob URLs before clearing list
+    assets.forEach(asset => {
+      if (asset.url && asset.url.startsWith('blob:')) {
+        URL.revokeObjectURL(asset.url);
+      }
+    });
 
     setLoading(true);
     setLoadingStatus('Working...');
