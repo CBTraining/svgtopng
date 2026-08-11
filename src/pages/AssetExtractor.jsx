@@ -67,7 +67,7 @@ export default function AssetExtractor() {
     setTargetUrl(formattedUrl);
 
     setLoading(true);
-    setLoadingStatus('Connecting to website...');
+    setLoadingStatus('Working...');
     setErrorMsg('');
     setAssets([]);
 
@@ -76,7 +76,7 @@ export default function AssetExtractor() {
 
     // Try direct fetch first
     try {
-      setLoadingStatus('Fetching webpage content...');
+      setLoadingStatus('Working...');
       const res = await fetch(formattedUrl);
       if (res.ok) {
         htmlText = await res.text();
@@ -90,7 +90,7 @@ export default function AssetExtractor() {
     if (!fetchSuccess) {
       for (let i = 0; i < PROXIES.length; i++) {
         try {
-          setLoadingStatus(`Bypassing CORS via proxy server ${i + 1}...`);
+          setLoadingStatus('Working...');
           const proxyUrl = PROXIES[i](formattedUrl);
           const res = await fetch(proxyUrl);
           if (res.ok) {
@@ -110,7 +110,7 @@ export default function AssetExtractor() {
       return;
     }
 
-    setLoadingStatus('Parsing DOM and extracting media components...');
+    setLoadingStatus('Working...');
 
     try {
       const parser = new DOMParser();
