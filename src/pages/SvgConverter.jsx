@@ -311,20 +311,31 @@ export default function SvgConverter() {
             </div>
           </div>
           
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem', marginTop: '0.5rem' }}>
-            {[16, 32, 64, 128, 256, 512, 1024].map(size => (
-              <button 
-                key={size}
-                className="btn" 
-                style={{ padding: '0.2rem 0.5rem', fontSize: '0.8rem', background: 'var(--bg-tertiary)' }}
-                onClick={() => {
-                  setWidth(size);
-                  if (keepProportions && aspectRatio) setHeight(Math.round(size / aspectRatio));
-                }}
-              >
-                {size}
-              </button>
-            ))}
+          <div style={{ marginBottom: '1rem', marginTop: '0.75rem' }}>
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
+              Vertical Height Presets:
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {[500, 1000, 1500, 2000].map(size => (
+                <button 
+                  key={size}
+                  className="btn" 
+                  style={{ 
+                    padding: '0.3rem 0.75rem', 
+                    fontSize: '0.8rem', 
+                    background: height === size ? 'var(--accent-color)' : 'var(--bg-tertiary)', 
+                    color: 'white',
+                    border: height === size ? '1px solid var(--accent-color)' : '1px solid var(--border-color)'
+                  }}
+                  onClick={() => {
+                    setHeight(size);
+                    if (keepProportions && aspectRatio) setWidth(Math.round(size * aspectRatio));
+                  }}
+                >
+                  {size}px
+                </button>
+              ))}
+            </div>
           </div>
           
           <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
