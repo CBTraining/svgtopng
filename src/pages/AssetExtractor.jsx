@@ -11,8 +11,9 @@ import {
   MagnifyingGlassIcon,
   CheckIcon,
   ClipboardDocumentIcon,
-  DocumentDuplicateIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  XMarkIcon,
+  EyeIcon
 } from '@heroicons/react/24/solid';
 import JSZip from 'jszip';
 import { playDing } from '../utils/audio';
@@ -51,6 +52,7 @@ export default function AssetExtractor() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [zipping, setZipping] = useState(false);
+  const [previewModalAsset, setPreviewModalAsset] = useState(null);
   const navigate = useNavigate();
 
   const handleExtract = async (urlToFetch) => {
@@ -119,11 +121,23 @@ export default function AssetExtractor() {
       // 1. Extract Inline <svg> Elements
       const svgElements = doc.querySelectorAll('svg');
       svgElements.forEach((svg, index) => {
-        // Clone and sanitize SVG
         const clone = svg.cloneNode(true);
         if (!clone.getAttribute('xmlns')) {
           clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         }
+        
+        // Ensure SVG has proper dimensions / viewBox so it renders sharply
+        if (!clone.getAttribute('viewBox')) {
+          const w = parseInt(clone.getAttribute('width')) || 100;
+          const h = parseInt(clone.getAttribute('height')) || 100;
+          clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        }
+
+        // Set style so currentColor defaults to visible light color in preview
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        clone.style.maxHeight = '120px';
+
         const svgString = clone.outerHTML;
         const blob = new Blob([svgString], { type: 'image/svg+xml' });
         const blobUrl = URL.createObjectURL(blob);
@@ -134,8 +148,7 @@ export default function AssetExtractor() {
           name: `vector_icon_${index + 1}.svg`,
           url: blobUrl,
           rawSvg: svgString,
-          source: 'Inline SVG Vector',
-          sizeText: `${clone.getAttribute('width') || 'auto'} x ${clone.getAttribute('height') || 'auto'}`
+          source: 'Inline SVG Vector'
         });
       });
 
@@ -144,7 +157,6 @@ export default function AssetExtractor() {
       imgElements.forEach((img, index) => {
         let src = img.getAttribute('src') || img.getAttribute('data-src') || img.getAttribute('srcset');
         if (src) {
-          // If srcset, pick first URL
           if (src.includes(' ')) src = src.split(' ')[0];
           const fullUrl = resolveUrl(src, baseUrl);
           if (fullUrl && !seenUrls.has(fullUrl)) {
@@ -268,6 +280,15 @@ export default function AssetExtractor() {
 
   const handleDownloadAsset = async (asset) => {
     try {
+      if (asset.rawSvg) {
+        const blob = new Blob([asset.rawSvg], { type: 'image/svg+xml' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = asset.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        return;
+      }
       const response = await fetch(asset.url);
       const blob = await response.blob();
       const a = document.createElement('a');
@@ -509,27 +530,51 @@ export default function AssetExtractor() {
                   position: 'relative'
                 }}
               >
-                {/* Media Preview Box */}
-                <div style={{ 
-                  height: '140px', 
-                  background: '#090d16', 
-                  borderRadius: '6px', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justify: 'center', 
-                  overflow: 'hidden',
-                  position: 'relative',
-                  border: '1px solid rgba(255,255,255,0.05)'
-                }}>
+                {/* Media Preview Box with Checkerboard Background for SVGs & Transparencies */}
+                <div 
+                  onClick={() => setPreviewModalAsset(asset)}
+                  style={{ 
+                    height: '140px', 
+                    background: asset.type === 'svg' 
+                      ? 'linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.08) 75%) #080c16'
+                      : '#090d16',
+                    backgroundSize: '16px 16px',
+                    backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                    borderRadius: '6px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justify: 'center', 
+                    overflow: 'hidden',
+                    position: 'relative',
+                    cursor: 'pointer',
+                    border: '1px solid rgba(255,255,255,0.05)',
+                    padding: '8px'
+                  }}
+                  title="Click to expand high-res preview"
+                >
                   {asset.type === 'svg' ? (
-                    <img src={asset.url} alt={asset.name} style={{ maxWidth: '80%', maxHeight: '80%', objectFit: 'contain' }} />
+                    asset.rawSvg ? (
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: asset.rawSvg }} 
+                        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }} 
+                      />
+                    ) : (
+                      <img 
+                        src={asset.url} 
+                        alt={asset.name} 
+                        style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )
                   ) : asset.type === 'video' ? (
                     <video src={asset.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} muted loop onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />
                   ) : (
                     <img src={asset.url} alt={asset.name} style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} onError={(e) => { e.target.style.display = 'none'; }} />
                   )}
 
-                  <span style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(0,0,0,0.7)', color: 'var(--accent-color)', fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                  <span style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(0,0,0,0.75)', color: 'var(--accent-color)', fontSize: '0.65rem', padding: '0.15rem 0.4rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 'bold' }}>
                     {asset.type}
                   </span>
                 </div>
@@ -581,6 +626,65 @@ export default function AssetExtractor() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Expanded High-Res Preview Modal */}
+      {previewModalAsset && (
+        <div className="modal-overlay animate-fade-in" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+          <div className="glass-panel" style={{ width: '100%', maxWidth: '700px', padding: '1.5rem', position: 'relative', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#0b0f19', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+            <button 
+              onClick={() => setPreviewModalAsset(null)}
+              style={{ position: 'absolute', top: '12px', right: '12px', background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <XMarkIcon style={{ width: 20, height: 20 }} />
+            </button>
+
+            <h3 style={{ margin: 0, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <EyeIcon style={{ width: 20, height: 20, color: 'var(--accent-color)' }} />
+              High-Res Asset Preview: {previewModalAsset.name}
+            </h3>
+
+            {/* High-Res Preview Box */}
+            <div style={{ 
+              width: '100%', 
+              height: '340px', 
+              background: 'linear-gradient(45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.08) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.08) 75%), linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.08) 75%) #090d16',
+              backgroundSize: '20px 20px',
+              borderRadius: '8px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justify: 'center', 
+              padding: '1.5rem',
+              overflow: 'hidden'
+            }}>
+              {previewModalAsset.type === 'svg' ? (
+                previewModalAsset.rawSvg ? (
+                  <div dangerouslySetInnerHTML={{ __html: previewModalAsset.rawSvg }} style={{ width: '80%', height: '80%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff' }} />
+                ) : (
+                  <img src={previewModalAsset.url} alt={previewModalAsset.name} style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} />
+                )
+              ) : previewModalAsset.type === 'video' ? (
+                <video src={previewModalAsset.url} controls autoPlay loop style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: '6px' }} />
+              ) : (
+                <img src={previewModalAsset.url} alt={previewModalAsset.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Source: {previewModalAsset.source}</span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {previewModalAsset.type === 'svg' && (
+                  <button className="btn btn-primary" onClick={() => { setPreviewModalAsset(null); openIn3DExtruder(previewModalAsset); }}>
+                    <CubeIcon style={{ width: 16, height: 16 }} /> Open in 3D Extruder
+                  </button>
+                )}
+                <button className="btn" onClick={() => handleDownloadAsset(previewModalAsset)}>
+                  <Download style={{ width: 16, height: 16 }} /> Download Asset
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
