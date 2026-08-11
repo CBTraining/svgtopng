@@ -37,10 +37,9 @@ function resolveUrl(relativeUrl, baseUrl) {
 
 // Sample websites for quick testing
 const SAMPLE_SITES = [
-  { name: 'Stripe', url: 'https://stripe.com' },
-  { name: 'GitHub', url: 'https://github.com' },
-  { name: 'TailwindCSS', url: 'https://tailwindcss.com' },
-  { name: 'Vite', url: 'https://vite.dev' }
+  { name: 'Gemini', url: 'https://gemini.google/about/' },
+  { name: 'Googlebook', url: 'https://googlebook.com' },
+  { name: 'Android', url: 'https://www.android.com/' }
 ];
 
 export default function AssetExtractor() {
