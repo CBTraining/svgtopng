@@ -13,7 +13,8 @@ import {
   ClipboardDocumentIcon,
   ArrowPathIcon,
   XMarkIcon,
-  EyeIcon
+  EyeIcon,
+  CommandLineIcon
 } from '@heroicons/react/24/solid';
 import JSZip from 'jszip';
 import { playDing } from '../utils/audio';
@@ -133,7 +134,6 @@ export default function AssetExtractor() {
           clone.setAttribute('viewBox', `0 0 ${w} ${h}`);
         }
 
-        // Set style so currentColor defaults to visible light color in preview
         clone.style.width = '100%';
         clone.style.height = '100%';
         clone.style.maxHeight = '120px';
@@ -301,18 +301,18 @@ export default function AssetExtractor() {
     }
   };
 
-  const openIn3DExtruder = async (asset) => {
+  const openInSvgConverter = async (asset) => {
     let svgText = asset.rawSvg;
     if (!svgText) {
       try {
         const res = await fetch(asset.url);
         svgText = await res.text();
       } catch (e) {
-        console.error("Failed fetching SVG for 3D tool:", e);
+        console.error("Failed fetching SVG for Converter tool:", e);
         return;
       }
     }
-    navigate('/svg-to-3d', { state: { svgContent: svgText, fileName: asset.name } });
+    navigate('/svg-converter', { state: { svgText, fileName: asset.name } });
   };
 
   const downloadAllZip = async () => {
@@ -530,7 +530,7 @@ export default function AssetExtractor() {
                   position: 'relative'
                 }}
               >
-                {/* Media Preview Box with Checkerboard Background for SVGs & Transparencies */}
+                {/* Media Preview Box with Checkerboard Background */}
                 <div 
                   onClick={() => setPreviewModalAsset(asset)}
                   style={{ 
@@ -602,15 +602,15 @@ export default function AssetExtractor() {
                     <Download style={{ width: 14, height: 14 }} /> Download
                   </button>
 
-                  {/* 1-Click Bridge to 3D Extruder for SVGs */}
+                  {/* Direct Bridge to SVG Converter */}
                   {asset.type === 'svg' && (
                     <button 
                       className="btn btn-primary" 
-                      onClick={() => openIn3DExtruder(asset)}
+                      onClick={() => openInSvgConverter(asset)}
                       style={{ padding: '0.35rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                      title="Convert this SVG vector into a 3D model!"
+                      title="Convert, recolor, tint, or resize this SVG vector!"
                     >
-                      <CubeIcon style={{ width: 14, height: 14 }} /> 3D
+                      <CommandLineIcon style={{ width: 14, height: 14 }} /> Convert SVG
                     </button>
                   )}
 
@@ -676,8 +676,8 @@ export default function AssetExtractor() {
               <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Source: {previewModalAsset.source}</span>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {previewModalAsset.type === 'svg' && (
-                  <button className="btn btn-primary" onClick={() => { setPreviewModalAsset(null); openIn3DExtruder(previewModalAsset); }}>
-                    <CubeIcon style={{ width: 16, height: 16 }} /> Open in 3D Extruder
+                  <button className="btn btn-primary" onClick={() => { setPreviewModalAsset(null); openInSvgConverter(previewModalAsset); }}>
+                    <CommandLineIcon style={{ width: 16, height: 16 }} /> Open in SVG Converter
                   </button>
                 )}
                 <button className="btn" onClick={() => handleDownloadAsset(previewModalAsset)}>
