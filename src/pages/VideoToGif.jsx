@@ -12,6 +12,7 @@ import { fetchFile } from '@ffmpeg/util';
 import { playDing } from '../utils/audio';
 import { useProcessing } from '../contexts/ProcessingContext';
 import Dropzone from '../components/Dropzone';
+import { isVideoFile } from '../utils/fileTypes';
 
 function formatBytes(bytes, decimals = 2) {
   if (!+bytes) return '0 Bytes';
@@ -27,6 +28,169 @@ function formatTime(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = (seconds % 60).toFixed(1);
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+function DirectTimelineTrimmer({ videoDuration, startTime, endTime, onUpdateTimes, onSeek }) {
+  const trackRef = useRef(null);
+  const [draggingHandle, setDraggingHandle] = useState(null); // 'start', 'end', or 'range'
+  const dragStartRef = useRef({ mouseX: 0, startVal: 0, endVal: 0 });
+
+  const totalDur = videoDuration || 10;
+  const startPct = Math.min(100, Math.max(0, (startTime / totalDur) * 100));
+  const endPct = Math.min(100, Math.max(0, (endTime / totalDur) * 100));
+
+  const handlePointerDown = (type, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDraggingHandle(type);
+    dragStartRef.current = {
+      mouseX: e.clientX,
+      startVal: startTime,
+      endVal: endTime
+    };
+  };
+
+  useEffect(() => {
+    if (!draggingHandle) return;
+
+    const handlePointerMove = (e) => {
+      if (!trackRef.current) return;
+      const rect = trackRef.current.getBoundingClientRect();
+      const deltaX = e.clientX - dragStartRef.current.mouseX;
+      const deltaSec = (deltaX / rect.width) * totalDur;
+
+      if (draggingHandle === 'start') {
+        const newStart = Math.max(0, Math.min(dragStartRef.current.endVal - 0.1, dragStartRef.current.startVal + deltaSec));
+        onUpdateTimes(newStart, endTime);
+        onSeek(newStart);
+      } else if (draggingHandle === 'end') {
+        const newEnd = Math.min(totalDur, Math.max(dragStartRef.current.startVal + 0.1, dragStartRef.current.endVal + deltaSec));
+        onUpdateTimes(startTime, newEnd);
+        onSeek(newEnd);
+      } else if (draggingHandle === 'range') {
+        const rangeLen = dragStartRef.current.endVal - dragStartRef.current.startVal;
+        let newStart = dragStartRef.current.startVal + deltaSec;
+        if (newStart < 0) newStart = 0;
+        if (newStart + rangeLen > totalDur) newStart = totalDur - rangeLen;
+        onUpdateTimes(newStart, newStart + rangeLen);
+        onSeek(newStart);
+      }
+    };
+
+    const handlePointerUp = () => {
+      setDraggingHandle(null);
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [draggingHandle, startTime, endTime, totalDur, onUpdateTimes, onSeek]);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '0.5rem 0' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+        <span>Direct Visual Timeline Trimmer:</span>
+        <span>
+          <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> — <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({(endTime - startTime).toFixed(1)}s)
+        </span>
+      </div>
+
+      <div 
+        ref={trackRef}
+        style={{
+          position: 'relative',
+          height: '36px',
+          background: 'rgba(0,0,0,0.5)',
+          borderRadius: '8px',
+          border: '1px solid var(--border-color)',
+          userSelect: 'none',
+          touchAction: 'none'
+        }}
+        onClick={(e) => {
+          if (!trackRef.current || draggingHandle) return;
+          const rect = trackRef.current.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+          onSeek(ratio * totalDur);
+        }}
+      >
+        {/* Highlighted Crop Range Bar */}
+        <div 
+          onPointerDown={(e) => handlePointerDown('range', e)}
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: `${startPct}%`,
+            width: `${Math.max(0, endPct - startPct)}%`,
+            background: 'rgba(59, 130, 246, 0.35)',
+            borderTop: '2px solid var(--accent-color)',
+            borderBottom: '2px solid var(--accent-color)',
+            cursor: draggingHandle === 'range' ? 'grabbing' : 'grab',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center'
+          }}
+          title="Drag middle bar to slide crop window"
+        >
+          <span style={{ fontSize: '0.65rem', color: 'white', fontWeight: 'bold', pointerEvents: 'none', opacity: 0.85 }}>
+            {(endTime - startTime).toFixed(1)}s
+          </span>
+        </div>
+
+        {/* Left Start Handle */}
+        <div 
+          onPointerDown={(e) => handlePointerDown('start', e)}
+          style={{
+            position: 'absolute',
+            top: '-2px',
+            bottom: '-2px',
+            left: `${startPct}%`,
+            width: '16px',
+            marginLeft: '-8px',
+            background: 'var(--accent-color)',
+            borderRadius: '4px',
+            cursor: 'ew-resize',
+            zIndex: 10,
+            boxShadow: '0 0 8px rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center'
+          }}
+          title="Drag Start Handle"
+        >
+          <div style={{ width: '2px', height: '16px', background: '#000', opacity: 0.6 }} />
+        </div>
+
+        {/* Right End Handle */}
+        <div 
+          onPointerDown={(e) => handlePointerDown('end', e)}
+          style={{
+            position: 'absolute',
+            top: '-2px',
+            bottom: '-2px',
+            left: `${endPct}%`,
+            width: '16px',
+            marginLeft: '-8px',
+            background: 'var(--accent-color)',
+            borderRadius: '4px',
+            cursor: 'ew-resize',
+            zIndex: 10,
+            boxShadow: '0 0 8px rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center'
+          }}
+          title="Drag End Handle"
+        >
+          <div style={{ width: '2px', height: '16px', background: '#000', opacity: 0.6 }} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const TOOL_ID = 'video-to-gif';
@@ -57,7 +221,7 @@ function VideoToGifSlot({ slot }) {
 
   // Estimation Logic
   const targetFps = fps === 'original' ? (originalFps || 15) : parseInt(fps);
-  const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560); // 240 to 800 width
+  const targetScale = Math.floor(240 + ((quality - 1) / 99) * 560);
   const duration = Math.max(0.1, endTime - startTime);
   const estimatedHeight = targetScale * (9 / 16);
   const estimatedBytes = (targetScale * estimatedHeight * targetFps * duration) / 3.5;
@@ -89,7 +253,7 @@ function VideoToGifSlot({ slot }) {
                 }
                 updateSlot(TOOL_ID, slot.id, { originalFps: roundedFps, fps: newFps });
              } else {
-                updateSlot(TOOL_ID, slot.id, { originalFps: 30 }); // fallback
+                updateSlot(TOOL_ID, slot.id, { originalFps: 30 });
              }
          } catch(err) {
              console.error("Probe error", err);
@@ -278,11 +442,6 @@ function VideoToGifSlot({ slot }) {
     setTimeout(() => removeSlot(TOOL_ID, slot.id), 200);
   };
 
-  // Duration ratio percentages for visual timeline bar
-  const totalDur = videoDuration || 10;
-  const startPct = Math.min(100, Math.max(0, (startTime / totalDur) * 100));
-  const endPct = Math.min(100, Math.max(0, (endTime / totalDur) * 100));
-
   return (
     <div className={`glass-panel controls animate-pop-in ${isClosing ? 'animate-pop-out' : ''}`} style={{ position: 'relative', marginBottom: '2rem' }}>
       <button 
@@ -374,7 +533,7 @@ function VideoToGifSlot({ slot }) {
               </select>
             </div>
 
-            {/* Crop Duration Settings with Visual Range Bar */}
+            {/* Crop Duration Settings with Direct Draggable Timeline Trimmer */}
             <div className="input-group" style={{marginBottom: '1.5rem', background: 'var(--bg-tertiary)', padding: '1rem', borderRadius: 'var(--border-radius-sm)'}}>
               <label style={{display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', marginBottom: enableCrop ? '1rem' : '0'}}>
                 <input 
@@ -389,86 +548,16 @@ function VideoToGifSlot({ slot }) {
               {enableCrop && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   
-                  {/* Interactive Visual Timeline Bar */}
-                  {totalDur > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <div 
-                        style={{
-                          position: 'relative',
-                          height: '24px',
-                          background: 'rgba(0,0,0,0.4)',
-                          borderRadius: '6px',
-                          border: '1px solid var(--border-color)',
-                          overflow: 'hidden',
-                          cursor: 'pointer'
-                        }}
-                        onClick={(e) => {
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const clickX = e.clientX - rect.left;
-                          const ratio = Math.max(0, Math.min(1, clickX / rect.width));
-                          seekToTime(ratio * totalDur);
-                        }}
-                        title="Click timeline to seek player position"
-                      >
-                        {/* Highlighted Crop Region */}
-                        <div 
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            bottom: 0,
-                            left: `${startPct}%`,
-                            width: `${Math.max(0, endPct - startPct)}%`,
-                            background: 'rgba(59, 130, 246, 0.4)',
-                            borderLeft: '3px solid var(--accent-color)',
-                            borderRight: '3px solid var(--accent-color)'
-                          }}
-                        />
-                      </div>
-
-                      {/* Visual Sliders for Start & End Handles */}
-                      <div style={{ display: 'flex', gap: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                            <span>Start Handle</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</span>
-                          </div>
-                          <input 
-                            type="range"
-                            min="0"
-                            max={Math.max(0, endTime - 0.1)}
-                            step="0.1"
-                            value={startTime}
-                            onChange={(e) => {
-                              const val = Math.min(Number(e.target.value), endTime - 0.1);
-                              updateSlot(TOOL_ID, slot.id, { startTime: val });
-                              seekToTime(val);
-                            }}
-                            style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                          />
-                        </div>
-
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>
-                            <span>End Handle</span>
-                            <span style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</span>
-                          </div>
-                          <input 
-                            type="range"
-                            min={Math.min(totalDur, startTime + 0.1)}
-                            max={totalDur}
-                            step="0.1"
-                            value={endTime}
-                            onChange={(e) => {
-                              const val = Math.max(Number(e.target.value), startTime + 0.1);
-                              updateSlot(TOOL_ID, slot.id, { endTime: val });
-                              seekToTime(val);
-                            }}
-                            style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {/* Direct Draggable Timeline Bar & Handles */}
+                  <DirectTimelineTrimmer 
+                    videoDuration={videoDuration}
+                    startTime={startTime}
+                    endTime={endTime}
+                    onUpdateTimes={(newStart, newEnd) => {
+                      updateSlot(TOOL_ID, slot.id, { startTime: newStart, endTime: newEnd });
+                    }}
+                    onSeek={seekToTime}
+                  />
 
                   {/* Manual Numeric Input Fields */}
                   <div style={{display: 'flex', gap: '1rem'}}>
@@ -528,7 +617,7 @@ function VideoToGifSlot({ slot }) {
                           placeholder="SS.s"
                           value={Number((endTime % 60).toFixed(1))} 
                           onChange={(e) => {
-                            const val = (Math.floor(endTime / 60) * 60) + Number(e.target.value);
+                            const val = (Math.floor(startTime / 60) * 60) + Number(e.target.value);
                             updateSlot(TOOL_ID, slot.id, { endTime: val });
                             seekToTime(val);
                           }}
@@ -591,8 +680,6 @@ function VideoToGifSlot({ slot }) {
     </div>
   );
 }
-
-import { isVideoFile } from '../utils/fileTypes';
 
 export default function VideoToGif() {
   const { isFfmpegLoaded, workspaces, addSlot } = useProcessing();
