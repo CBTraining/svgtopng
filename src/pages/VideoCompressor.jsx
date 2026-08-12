@@ -269,6 +269,8 @@ function VideoCompressorSlot({ slot }) {
   );
 }
 
+import { isVideoFile } from '../utils/fileTypes';
+
 export default function VideoCompressor() {
   const { isFfmpegLoaded, workspaces, addSlot } = useProcessing();
   
@@ -277,7 +279,7 @@ export default function VideoCompressor() {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
-      if (file && file.type.startsWith('video/')) {
+      if (file && isVideoFile(file)) {
         const slotId = `video-compress-${Date.now()}-${Math.floor(Math.random()*1000)}`;
         addSlot(TOOL_ID, {
           id: slotId,
@@ -301,7 +303,7 @@ export default function VideoCompressor() {
         <Compress style={{width: 32, height: 32, fill: "url(#accent-grad)"}}/>
         <h1>Video Compressor</h1>
       </div>
-      <p>Compress MP4 videos instantly, fully offline in your browser. Open multiple windows below!</p>
+      <p>Compress MP4 & MOV videos instantly, fully offline in your browser. Open multiple windows below!</p>
       
       {!isFfmpegLoaded && (
         <div className="glass-panel" style={{marginBottom: '1rem', background: 'var(--accent-transparent)', border: '1px solid var(--accent-color)'}}>
@@ -320,7 +322,7 @@ export default function VideoCompressor() {
             onDrop={(files) => {
               const fileList = Array.isArray(files) ? files : [files];
               fileList.forEach(file => {
-                if (file && file.type.startsWith('video/')) {
+                if (file && isVideoFile(file)) {
                   const slotId = `video-compress-${Date.now()}-${Math.floor(Math.random()*1000)}`;
                   addSlot(TOOL_ID, {
                     id: slotId,
@@ -335,9 +337,9 @@ export default function VideoCompressor() {
                 }
               });
             }}
-            accept="video/*"
+            accept="video/*,.mov,.mp4,.webm,.mkv,.avi,.quicktime"
             title={slots.length > 0 ? "Add another video" : "Upload Video"}
-            subtitle="Drag & drop or click to select"
+            subtitle="Drag & drop or click to select (.mov, .mp4, etc.)"
             icon={<UploadCloud style={{width: 48, height: 48, color: 'var(--text-secondary)'}}/>}
           />
         </div>

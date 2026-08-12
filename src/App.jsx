@@ -22,6 +22,7 @@ import ClockModeOverlay from './components/ClockModeOverlay';
 import DiagnosticsOverlay from './components/DiagnosticsOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
+import { isVideoFile } from './utils/fileTypes';
 
 import PdfImageExtractor from './pages/PdfImageExtractor';
 import ShapeGenerator from './pages/ShapeGenerator';
@@ -483,7 +484,7 @@ function App() {
                   }, 'image/png');
                 };
                 img.src = URL.createObjectURL(file);
-              } else if (file.type.startsWith('video/')) {
+              } else if (isVideoFile(file)) {
                 alert('Passive Video to GIF conversion via ffmpeg.wasm will trigger here!');
               } else {
                 alert('Unsupported file type for passive conversion.');

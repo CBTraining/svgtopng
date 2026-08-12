@@ -592,6 +592,8 @@ function VideoToGifSlot({ slot }) {
   );
 }
 
+import { isVideoFile } from '../utils/fileTypes';
+
 export default function VideoToGif() {
   const { isFfmpegLoaded, workspaces, addSlot } = useProcessing();
   const slots = workspaces[TOOL_ID] || [];
@@ -599,7 +601,7 @@ export default function VideoToGif() {
   const handleFileUpload = (e) => {
     const files = Array.from(e.target.files);
     files.forEach(file => {
-      if (file && file.type.startsWith('video/')) {
+      if (file && isVideoFile(file)) {
         const slotId = `${TOOL_ID}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
         addSlot(TOOL_ID, {
           id: slotId,
@@ -624,7 +626,7 @@ export default function VideoToGif() {
         <Gif style={{width: "32px", height: "32px", fill: "url(#accent-grad)"}} />
         <h1>Video to GIF & Video Trimmer</h1>
       </div>
-      <p>Convert videos to high-quality GIFs or trim MP4 video clips offline with a visual timeline trimmer and loop preview player.</p>
+      <p>Convert MP4 & MOV videos to high-quality GIFs or trim video clips offline with a visual timeline trimmer and loop preview player.</p>
       
       {!isFfmpegLoaded && (
         <div className="glass-panel" style={{marginBottom: '1rem', background: 'var(--accent-transparent)', border: '1px solid var(--accent-color)'}}>
@@ -643,7 +645,7 @@ export default function VideoToGif() {
             onDrop={(files) => {
               const fileList = Array.isArray(files) ? files : [files];
               fileList.forEach(file => {
-                if (file && file.type.startsWith('video/')) {
+                if (file && isVideoFile(file)) {
                   const slotId = `${TOOL_ID}-${Date.now()}-${Math.floor(Math.random()*1000)}`;
                   addSlot(TOOL_ID, {
                     id: slotId,
@@ -660,9 +662,9 @@ export default function VideoToGif() {
                 }
               });
             }}
-            accept="video/*"
+            accept="video/*,.mov,.mp4,.webm,.mkv,.avi,.quicktime"
             title={slots.length > 0 ? "Add another video" : "Upload Video"}
-            subtitle="Drag & drop or click to select"
+            subtitle="Drag & drop or click to select (.mov, .mp4, etc.)"
             icon={<UploadCloud style={{width: 48, height: 48, color: 'var(--text-secondary)'}}/>}
           />
         </div>

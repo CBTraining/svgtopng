@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FilmIcon, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download, XMarkIcon as XMark, ClipboardDocumentIcon, CheckIcon as Check, PlayIcon, PauseIcon, ForwardIcon, BackwardIcon } from '@heroicons/react/24/solid';
+import { isVideoFile } from '../utils/fileTypes';
 
 function extractYouTubeVideoId(url) {
   if (!url) return null;
@@ -108,13 +109,13 @@ export default function VideoFrameExtractor() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && isVideoFile(file)) {
       setVideoFile(file);
       if (videoUrl && !videoUrl.startsWith('http')) {
         URL.revokeObjectURL(videoUrl);
       }
       setVideoUrl(URL.createObjectURL(file));
-      setExternalUrl(''); // clear external URL
+      setExternalUrl('');
       setIsLoading(true);
       setLoadingProgress(0);
     }
@@ -123,7 +124,7 @@ export default function VideoFrameExtractor() {
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('video/')) {
+    if (file && isVideoFile(file)) {
       handleFileChange({ target: { files: [file] } });
     }
   };
@@ -298,11 +299,11 @@ export default function VideoFrameExtractor() {
             >
               <input 
                 type="file" 
-                accept="video/*"
+                accept="video/*,.mov,.mp4,.webm,.mkv,.avi,.quicktime"
                 onChange={handleFileChange}
               />
               <UploadCloud style={{ width: '48px', height: '48px' }} />
-              <h3>Drag & Drop Video Here</h3>
+              <h3>Drag & Drop Video (.MOV, .MP4) Here</h3>
               <p>or click to browse</p>
             </div>
             

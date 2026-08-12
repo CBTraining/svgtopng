@@ -5,6 +5,8 @@ import {
   SparklesIcon, PhotoIcon, ArrowDownTrayIcon, FilmIcon, GifIcon, DocumentArrowDownIcon, CodeBracketIcon, Square3Stack3DIcon, CubeIcon
 } from '@heroicons/react/24/outline';
 
+import { isVideoFile, isImageFile } from '../utils/fileTypes';
+
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragType, setDragType] = useState('none');
@@ -22,28 +24,30 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
         const items = e.dataTransfer.items;
         if (items && items.length > 0) {
           let found = false;
-          // Look for files first (not text strings)
+          // Look for files first
           for (let i = 0; i < items.length; i++) {
              if (items[i].kind === 'file') {
                  found = true;
-                 const type = items[i].type;
-                 if (type === 'image/svg+xml') {
+                 const type = items[i].type || '';
+                 const fileObj = items[i].getAsFile ? items[i].getAsFile() : null;
+                 
+                 if (type === 'image/svg+xml' || (fileObj && /\.svg$/i.test(fileObj.name))) {
                    setDragType('svg');
-                 } else if (type === 'application/pdf') {
+                 } else if (type === 'application/pdf' || (fileObj && /\.pdf$/i.test(fileObj.name))) {
                    setDragType('pdf');
-                 } else if (type === 'application/json' || type === 'text/json') {
+                 } else if (type === 'application/json' || type === 'text/json' || (fileObj && /\.json$/i.test(fileObj.name))) {
                    setDragType('json');
-                 } else if (type.startsWith('image/') || type === '') {
-                   setDragType('image'); // Empty type occurs on Windows for .webp or unknown files, default to image tools
-                 } else if (type.startsWith('video/')) {
+                 } else if (isVideoFile(fileObj) || type.startsWith('video/') || (fileObj && /\.(mov|mp4|webm|mkv|avi|ogv)$/i.test(fileObj.name))) {
                    setDragType('video');
+                 } else if (isImageFile(fileObj) || type.startsWith('image/')) {
+                   setDragType('image');
                  } else {
                    setDragType('unknown');
                  }
                  break;
              }
           }
-          if (!found) setDragType('none'); // don't trigger for dragging text
+          if (!found) setDragType('none');
         }
       }
     };
