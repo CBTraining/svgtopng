@@ -30,7 +30,7 @@ function formatTime(seconds) {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 }
 
-function DirectTimelineTrimmer({ videoDuration, startTime, endTime, onUpdateTimes, onSeek }) {
+function DirectTimelineTrimmer({ videoDuration, startTime, endTime, onUpdateTimes, onSeek, isPlayingLoop, onToggleLoop }) {
   const trackRef = useRef(null);
   const [draggingHandle, setDraggingHandle] = useState(null); // 'start', 'end', or 'range'
   const dragStartRef = useRef({ mouseX: 0, startVal: 0, endVal: 0 });
@@ -91,8 +91,42 @@ function DirectTimelineTrimmer({ videoDuration, startTime, endTime, onUpdateTime
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', margin: '0.5rem 0' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-        <span>Direct Visual Timeline Trimmer:</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleLoop();
+            }}
+            style={{
+              padding: '0.25rem 0.65rem',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              borderRadius: '4px',
+              border: 'none',
+              background: isPlayingLoop ? '#ef4444' : 'var(--accent-color)',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.3)'
+            }}
+          >
+            {isPlayingLoop ? (
+              <>
+                <PauseIcon style={{ width: '12px', height: '12px' }} /> Pause Loop
+              </>
+            ) : (
+              <>
+                <PlayIcon style={{ width: '12px', height: '12px' }} /> Play Crop Loop
+              </>
+            )}
+          </button>
+          <span style={{ fontWeight: '500' }}>Timeline Trimmer:</span>
+        </div>
         <span>
           <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> — <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({(endTime - startTime).toFixed(1)}s)
         </span>
@@ -454,7 +488,7 @@ function VideoToGifSlot({ slot }) {
 
       <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
         
-        {/* Unified Video Player Container with Embedded Overlay Play Controls */}
+        {/* Clean Video Player Container */}
         <div style={{ position: 'relative', width: '100%', borderRadius: 'var(--border-radius-sm)', overflow: 'hidden', background: '#000' }}>
           <video 
             ref={videoRef}
@@ -464,46 +498,6 @@ function VideoToGifSlot({ slot }) {
             onTimeUpdate={handleTimeUpdate}
             style={{ width: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block' }} 
           />
-
-          {/* Floating Glassmorphic Loop Overlay Control */}
-          <div style={{ position: 'absolute', top: '12px', left: '12px', zIndex: 5, pointerEvents: 'auto' }}>
-            <button
-              onClick={() => {
-                if (!enableCrop) {
-                  updateSlot(TOOL_ID, slot.id, { enableCrop: true });
-                }
-                toggleLoopPlay();
-              }}
-              style={{
-                background: isPlayingLoop ? '#ef4444' : 'rgba(15, 23, 42, 0.85)',
-                backdropFilter: 'blur(12px)',
-                color: 'white',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontSize: '0.8rem',
-                fontWeight: '600',
-                padding: '0.4rem 0.85rem',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                cursor: 'pointer',
-                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.5)',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              {isPlayingLoop ? (
-                <>
-                  <PauseIcon style={{ width: '14px', height: '14px' }} />
-                  Looping Cut ({formatTime(startTime)} – {formatTime(endTime)})
-                </>
-              ) : (
-                <>
-                  <PlayIcon style={{ width: '14px', height: '14px', color: 'var(--accent-color)' }} />
-                  Play Cut Loop ({duration.toFixed(1)}s)
-                </>
-              )}
-            </button>
-          </div>
         </div>
         
         {!isProcessing && !resultUrl && (
@@ -567,6 +561,8 @@ function VideoToGifSlot({ slot }) {
                       updateSlot(TOOL_ID, slot.id, { startTime: newStart, endTime: newEnd });
                     }}
                     onSeek={seekToTime}
+                    isPlayingLoop={isPlayingLoop}
+                    onToggleLoop={toggleLoopPlay}
                   />
 
                   {/* Manual Numeric Input Fields */}
