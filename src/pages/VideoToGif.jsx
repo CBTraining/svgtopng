@@ -465,36 +465,40 @@ function VideoToGifSlot({ slot }) {
         />
 
         {/* Selection Preview Play Bar */}
-        {enableCrop && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg-tertiary)', padding: '0.5rem 1rem', borderRadius: '6px' }}>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Crop Selection: <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> to <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({duration.toFixed(1)}s)
-            </span>
-            <button 
-              className="btn"
-              onClick={toggleLoopPlay}
-              style={{
-                padding: '0.35rem 0.85rem',
-                fontSize: '0.8rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                background: isPlayingLoop ? 'var(--accent-color)' : 'rgba(255,255,255,0.08)',
-                color: 'white'
-              }}
-            >
-              {isPlayingLoop ? (
-                <>
-                  <PauseIcon style={{ width: '14px', height: '14px' }} /> Pause Selection
-                </>
-              ) : (
-                <>
-                  <PlayIcon style={{ width: '14px', height: '14px' }} /> Play Selection (Loop)
-                </>
-              )}
-            </button>
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: enableCrop ? 'rgba(59, 130, 246, 0.15)' : 'var(--bg-tertiary)', border: enableCrop ? '1px solid var(--accent-color)' : '1px solid var(--border-color)', padding: '0.6rem 1rem', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Crop Range: <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> to <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({duration.toFixed(1)}s)
+          </span>
+          <button 
+            className="btn btn-primary"
+            onClick={() => {
+              if (!enableCrop) {
+                updateSlot(TOOL_ID, slot.id, { enableCrop: true });
+              }
+              toggleLoopPlay();
+            }}
+            style={{
+              padding: '0.4rem 1rem',
+              fontSize: '0.8rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: isPlayingLoop ? '#ef4444' : 'var(--accent-color)',
+              color: 'white',
+              boxShadow: '0 0 10px rgba(59,130,246,0.3)'
+            }}
+          >
+            {isPlayingLoop ? (
+              <>
+                <PauseIcon style={{ width: '15px', height: '15px' }} /> Pause Selection
+              </>
+            ) : (
+              <>
+                <PlayIcon style={{ width: '15px', height: '15px' }} /> Play Selection Only (Loop)
+              </>
+            )}
+          </button>
+        </div>
         
         {!isProcessing && !resultUrl && (
           <div>
