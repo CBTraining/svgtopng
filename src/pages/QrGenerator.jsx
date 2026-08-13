@@ -582,14 +582,33 @@ export default function QrGenerator() {
                   <input 
                     type="range" 
                     min="0.10" 
-                    max="0.34" 
-                    step="0.02" 
+                    max="0.55" 
+                    step="0.01" 
                     value={logoSize} 
                     onChange={(e) => setLogoSize(parseFloat(e.target.value))} 
                     style={{ width: '100%', cursor: 'pointer' }}
                   />
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                    Keep under 30% for guaranteed camera detection.
+                  <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
+                    {[0.20, 0.26, 0.34, 0.40, 0.50].map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        className="btn"
+                        onClick={() => setLogoSize(s)}
+                        style={{
+                          padding: '0.2rem 0.5rem',
+                          fontSize: '0.7rem',
+                          background: Math.abs(logoSize - s) < 0.01 ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                          color: 'white',
+                          border: Math.abs(logoSize - s) < 0.01 ? '1px solid var(--accent-color)' : '1px solid var(--border-color)'
+                        }}
+                      >
+                        {Math.round(s * 100)}%
+                      </button>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: logoSize > 0.35 ? '#f59e0b' : 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                    {logoSize > 0.35 ? '⚠️ Large logo (>35%): Ensure payload is short for best scanner compatibility.' : 'Standard range (20–34%): Optimal for instant camera scanning.'}
                   </div>
                 </div>
 
