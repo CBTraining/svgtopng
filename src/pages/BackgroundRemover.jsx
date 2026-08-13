@@ -612,7 +612,8 @@ function BackgroundRemoverSlot({ slot }) {
 
     try {
       const config = {
-        device: "gpu", // Prioritize WebGL/WebGPU hardware acceleration
+        publicPath: 'https://staticimgly.com/@imgly/background-removal-data@1.7.0/dist/',
+        device: "gpu",
         model: modelVariant,
         progress: (key, current, total) => {
           if (total > 0) {
@@ -621,7 +622,15 @@ function BackgroundRemoverSlot({ slot }) {
         }
       };
 
-      const imageBlob = await removeBackground(imageFile, config);
+      let imageBlob;
+      try {
+        imageBlob = await removeBackground(imageFile, config);
+      } catch (gpuErr) {
+        console.warn("GPU background removal failed, retrying with CPU...", gpuErr);
+        updateJob(myJobId, { log: "Retrying with CPU mode..." });
+        imageBlob = await removeBackground(imageFile, { ...config, device: "cpu" });
+      }
+
       const rUrl = URL.createObjectURL(imageBlob);
       updateJob(myJobId, { status: 'success', resultUrl: rUrl, downloadName: `nobg-${Date.now()}.png` });
     } catch (error) {
