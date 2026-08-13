@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
   QrCodeIcon, 
   ArrowDownTrayIcon, 
@@ -8,7 +8,8 @@ import {
   XMarkIcon, 
   ClipboardDocumentIcon, 
   CheckIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  SparklesIcon
 } from '@heroicons/react/24/solid';
 import QRCodeStyling from 'qr-code-styling';
 
@@ -54,10 +55,14 @@ export default function QrGenerator() {
   const [dotType, setDotType] = useState('rounded'); // 'rounded', 'dots', 'classy-rounded', 'square', 'extra-rounded'
   
   // Center Logo / SVG Options
-  const [logoUrl, setLogoUrl] = useState('');
+  const [rawLogoUrl, setRawLogoUrl] = useState('');
+  const [processedLogoUrl, setProcessedLogoUrl] = useState('');
   const [logoFileName, setLogoFileName] = useState('');
   const [logoSize, setLogoSize] = useState(0.26); // 26% of QR size (safe threshold)
   const [logoMargin, setLogoMargin] = useState(4); // 4px safe margin
+  const [logoShape, setLogoShape] = useState('auto'); // 'auto', 'circle', 'rounded', 'square'
+  const [logoBgColor, setLogoBgColor] = useState('#ffffff'); // White background badge by default for maximum scan contrast
+  const [logoBgPadding, setLogoBgPadding] = useState(10); // 10% padding
   const [hideDotsBehindLogo, setHideDotsBehindLogo] = useState(true);
   const [errorCorrection, setErrorCorrection] = useState('H'); // 'H' (30%) is essential for reliable logo scanning!
   
@@ -72,11 +77,100 @@ export default function QrGenerator() {
   // Clean up object URLs on unmount
   useEffect(() => {
     return () => {
-      if (logoUrl && logoUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(logoUrl);
+      if (rawLogoUrl && rawLogoUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(rawLogoUrl);
       }
     };
-  }, [logoUrl]);
+  }, [rawLogoUrl]);
+
+  // Pre-process Logo to match QR Code Roundness & Shape
+  useEffect(() => {
+    if (!rawLogoUrl) {
+      setProcessedLogoUrl('');
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const sz = 512; // High-resolution logo badge
+      canvas.width = sz;
+      canvas.height = sz;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, sz, sz);
+
+      // Determine corner radius matching QR style
+      let effectiveShape = logoShape;
+      if (effectiveShape === 'auto') {
+        if (dotType === 'dots') {
+          effectiveShape = 'circle';
+        } else if (dotType === 'square') {
+          effectiveShape = 'square';
+        } else {
+          effectiveShape = 'rounded';
+        }
+      }
+
+      let radius = 0;
+      if (effectiveShape === 'circle') {
+        radius = sz / 2;
+      } else if (effectiveShape === 'rounded') {
+        radius = sz * 0.22;
+      } else if (effectiveShape === 'square') {
+        radius = 0;
+      }
+
+      // Draw background badge if not transparent
+      if (logoBgColor !== 'transparent') {
+        ctx.fillStyle = logoBgColor;
+        ctx.beginPath();
+        if (radius > 0 && ctx.roundRect) {
+          ctx.roundRect(0, 0, sz, sz, radius);
+        } else if (radius > 0) {
+          ctx.arc(sz / 2, sz / 2, radius, 0, Math.PI * 2);
+        } else {
+          ctx.rect(0, 0, sz, sz);
+        }
+        ctx.fill();
+      }
+
+      // Clip inner logo to the matching radius
+      ctx.save();
+      ctx.beginPath();
+      if (radius > 0 && ctx.roundRect) {
+        ctx.roundRect(0, 0, sz, sz, radius);
+      } else if (radius > 0) {
+        ctx.arc(sz / 2, sz / 2, radius, 0, Math.PI * 2);
+      } else {
+        ctx.rect(0, 0, sz, sz);
+      }
+      ctx.clip();
+
+      // Contain-fit aspect ratio for the logo inside the padded area
+      const imgAspect = (img.naturalWidth || 1) / (img.naturalHeight || 1);
+      const pad = logoBgColor !== 'transparent' ? (logoBgPadding * (sz / 100)) : 0;
+      const drawArea = sz - pad * 2;
+      let dW = drawArea;
+      let dH = drawArea;
+      let dX = pad;
+      let dY = pad;
+
+      if (imgAspect > 1) {
+        dH = drawArea / imgAspect;
+        dY = pad + (drawArea - dH) / 2;
+      } else {
+        dW = drawArea * imgAspect;
+        dX = pad + (drawArea - dW) / 2;
+      }
+
+      ctx.drawImage(img, dX, dY, dW, dH);
+      ctx.restore();
+
+      setProcessedLogoUrl(canvas.toDataURL('image/png'));
+    };
+    img.src = rawLogoUrl;
+  }, [rawLogoUrl, logoShape, logoBgColor, logoBgPadding, dotType, isRounded]);
 
   // Load Saved Presets
   useEffect(() => {
@@ -112,7 +206,7 @@ export default function QrGenerator() {
       width: size,
       height: size,
       data: data || ' ',
-      image: logoUrl || '',
+      image: processedLogoUrl || '',
       qrOptions: {
         errorCorrectionLevel: errorCorrection
       },
@@ -158,7 +252,7 @@ export default function QrGenerator() {
         width: size,
         height: size,
         data: data || ' ',
-        image: logoUrl || '',
+        image: processedLogoUrl || '',
         qrOptions: {
           errorCorrectionLevel: errorCorrection
         },
@@ -192,7 +286,7 @@ export default function QrGenerator() {
         }
       });
     }
-  }, [data, size, color1, color2, isRounded, isGradient, singleColor, bgColor, dotType, logoUrl, logoSize, logoMargin, hideDotsBehindLogo, errorCorrection]);
+  }, [data, size, color1, color2, isRounded, isGradient, singleColor, bgColor, dotType, processedLogoUrl, logoSize, logoMargin, hideDotsBehindLogo, errorCorrection]);
 
   const handleColorBlur = () => {
     setTimeout(() => {
@@ -203,8 +297,8 @@ export default function QrGenerator() {
 
   const handleLogoFile = (file) => {
     if (!file) return;
-    if (logoUrl && logoUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(logoUrl);
+    if (rawLogoUrl && rawLogoUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(rawLogoUrl);
     }
 
     if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
@@ -213,14 +307,14 @@ export default function QrGenerator() {
         const svgText = e.target.result;
         const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
-        setLogoUrl(url);
+        setRawLogoUrl(url);
         setLogoFileName(file.name);
         setErrorCorrection('H'); // Auto boost error correction to High (30%) for reliable scanning!
       };
       reader.readAsText(file);
     } else {
       const url = URL.createObjectURL(file);
-      setLogoUrl(url);
+      setRawLogoUrl(url);
       setLogoFileName(file.name);
       setErrorCorrection('H'); // Auto boost error correction to High (30%) for reliable scanning!
     }
@@ -232,10 +326,11 @@ export default function QrGenerator() {
   };
 
   const handleRemoveLogo = () => {
-    if (logoUrl && logoUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(logoUrl);
+    if (rawLogoUrl && rawLogoUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(rawLogoUrl);
     }
-    setLogoUrl('');
+    setRawLogoUrl('');
+    setProcessedLogoUrl('');
     setLogoFileName('');
     if (logoInputRef.current) logoInputRef.current.value = null;
   };
@@ -304,7 +399,7 @@ export default function QrGenerator() {
             <QrCodeIcon style={{ width: 32, height: 32 }} /> QR Code Generator
           </h1>
           <p style={{ marginTop: '0.5rem', color: 'var(--text-secondary)' }}>
-            Create scannable, high-resolution QR codes with custom SVG/image center logos, gradients, and shapes.
+            Create scannable, high-resolution QR codes with custom SVG/image center logos matching QR roundness, gradients, and custom styles.
           </p>
         </div>
       </header>
@@ -337,7 +432,7 @@ export default function QrGenerator() {
               <label style={{ margin: 0, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <PhotoIcon style={{ width: 18, height: 18, color: 'var(--accent-color)' }} /> Center Logo / SVG
               </label>
-              {logoUrl && (
+              {rawLogoUrl && (
                 <button 
                   onClick={handleRemoveLogo}
                   style={{ background: 'none', border: 'none', color: '#ff4444', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
@@ -347,7 +442,7 @@ export default function QrGenerator() {
               )}
             </div>
 
-            {!logoUrl ? (
+            {!rawLogoUrl ? (
               <div 
                 onDragOver={(e) => { e.preventDefault(); setIsLogoDragging(true); }}
                 onDragLeave={(e) => { e.preventDefault(); setIsLogoDragging(false); }}
@@ -384,15 +479,17 @@ export default function QrGenerator() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.5rem 0.75rem', borderRadius: 'var(--border-radius-sm)' }}>
                   <img 
-                    src={logoUrl} 
-                    alt="Center Logo" 
-                    style={{ width: '36px', height: '36px', objectFit: 'contain', background: '#ffffff', borderRadius: '4px', padding: '2px' }} 
+                    src={processedLogoUrl || rawLogoUrl} 
+                    alt="Center Logo Preview" 
+                    style={{ width: '40px', height: '40px', objectFit: 'contain', background: '#ffffff', borderRadius: logoShape === 'circle' || (logoShape === 'auto' && dotType === 'dots') ? '50%' : '6px', padding: '2px', border: '1px solid var(--border-color)' }} 
                   />
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                       {logoFileName || 'Custom Logo'}
                     </div>
-                    <div style={{ fontSize: '0.75rem', color: '#10b981' }}>Logo active & centered</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <SparklesIcon style={{ width: 12, height: 12 }} /> Auto-shaped to QR roundness
+                    </div>
                   </div>
                   <label className="btn" style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>
                     Change
@@ -403,6 +500,77 @@ export default function QrGenerator() {
                       style={{ display: 'none' }} 
                     />
                   </label>
+                </div>
+
+                {/* Logo Shape & Roundness Matching */}
+                <div>
+                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
+                    Logo Corner Roundness
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+                    {[
+                      { label: 'Auto (Match QR)', value: 'auto' },
+                      { label: 'Circle', value: 'circle' },
+                      { label: 'Rounded', value: 'rounded' },
+                      { label: 'Square', value: 'square' }
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        className="btn"
+                        onClick={() => setLogoShape(opt.value)}
+                        style={{
+                          padding: '0.3rem 0.35rem',
+                          fontSize: '0.7rem',
+                          background: logoShape === opt.value ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                          color: 'white',
+                          border: logoShape === opt.value ? '1px solid var(--accent-color)' : '1px solid var(--border-color)'
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Logo Background Badge Color */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', marginBottom: '0.35rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Logo Background Badge</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>High contrast for dark/light themes</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    {[
+                      { label: 'White', color: '#ffffff' },
+                      { label: 'Dark', color: '#090d16' },
+                      { label: 'Transparent', color: 'transparent' }
+                    ].map(bg => (
+                      <button
+                        key={bg.color}
+                        type="button"
+                        className="btn"
+                        onClick={() => setLogoBgColor(bg.color)}
+                        style={{
+                          padding: '0.25rem 0.6rem',
+                          fontSize: '0.75rem',
+                          background: logoBgColor === bg.color ? 'var(--accent-color)' : 'var(--bg-secondary)',
+                          color: 'white',
+                          border: logoBgColor === bg.color ? '1px solid var(--accent-color)' : '1px solid var(--border-color)'
+                        }}
+                      >
+                        {bg.label}
+                      </button>
+                    ))}
+                    {logoBgColor !== 'transparent' && (
+                      <input 
+                        type="color" 
+                        value={logoBgColor.startsWith('#') ? logoBgColor : '#ffffff'} 
+                        onChange={(e) => setLogoBgColor(e.target.value)} 
+                        style={{ width: '32px', height: '28px', border: 'none', background: 'none', cursor: 'pointer' }}
+                        title="Custom badge color"
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {/* Logo Size */}
@@ -456,7 +624,7 @@ export default function QrGenerator() {
             )}
           </div>
 
-          {/* Error Correction Level (Crucial for Logos) */}
+          {/* Error Correction Level */}
           <div className="control-group" style={{ marginTop: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
               <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -609,7 +777,7 @@ export default function QrGenerator() {
           </div>
 
           <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-            Error Correction: <strong style={{ color: '#10b981' }}>{errorCorrection} (30% Recovery)</strong> {logoUrl ? '• Logo Embedded' : ''}
+            Error Correction: <strong style={{ color: '#10b981' }}>{errorCorrection} (30% Recovery)</strong> {rawLogoUrl ? '• Logo Active' : ''}
           </div>
           
           <div className="button-group" style={{ marginTop: '1.5rem', width: '100%', display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
