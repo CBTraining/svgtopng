@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import '../index.css'; // Relies on index.css .dropzone styles
+import '../index.css';
+import { extractDroppedFiles } from '../utils/fileTypes';
 
 export default function Dropzone({ onDrop, accept = "*", title = "Upload File", subtitle = "Click or drag a file here", icon }) {
   const [isDragActive, setIsDragActive] = useState(false);
@@ -33,27 +34,16 @@ export default function Dropzone({ onDrop, accept = "*", title = "Upload File", 
     if (!isDragActive) setIsDragActive(true);
   };
 
-  const handleDropEvent = (e) => {
+  const handleDropEvent = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    // Extract files (supports Desktop files + Google Chat / Slack / web browser image drag)
+    const files = await extractDroppedFiles(e);
+    if (files.length > 0) {
       triggerBurst();
-      onDrop(Array.from(e.dataTransfer.files));
-    } else {
-      // Handle cross-tab html/image drag
-      const html = e.dataTransfer.getData('text/html');
-      if (html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const img = doc.querySelector('img');
-        if (img && img.src) {
-           // We can't trivially convert a cross-origin URL to a File object synchronously,
-           // but we can pass a dummy file or we should just alert for now.
-           alert("Please use CTRL+V to paste images from other tabs!");
-        }
-      }
+      onDrop(files);
     }
   };
 

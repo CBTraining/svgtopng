@@ -5,7 +5,7 @@ import {
   SparklesIcon, PhotoIcon, ArrowDownTrayIcon, FilmIcon, GifIcon, DocumentArrowDownIcon, CodeBracketIcon, Square3Stack3DIcon, CubeIcon
 } from '@heroicons/react/24/outline';
 
-import { isVideoFile, isImageFile } from '../utils/fileTypes';
+import { isVideoFile, isImageFile, extractDroppedFiles } from '../utils/fileTypes';
 
 export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
   const [isDragging, setIsDragging] = useState(false);
@@ -22,33 +22,42 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       if (dragCounter.current === 1) {
         setIsDragging(true);
         const items = e.dataTransfer.items;
+        const types = Array.from(e.dataTransfer.types || []);
+        
+        let detected = 'image'; // Default to image (covers Google Chat, PNGs, WebP, files)
+
         if (items && items.length > 0) {
-          let found = false;
-          // Look for files first
           for (let i = 0; i < items.length; i++) {
-             if (items[i].kind === 'file') {
-                 found = true;
-                 const type = items[i].type || '';
-                 const fileObj = items[i].getAsFile ? items[i].getAsFile() : null;
-                 
-                 if (type === 'image/svg+xml' || (fileObj && /\.svg$/i.test(fileObj.name))) {
-                   setDragType('svg');
-                 } else if (type === 'application/pdf' || (fileObj && /\.pdf$/i.test(fileObj.name))) {
-                   setDragType('pdf');
-                 } else if (type === 'application/json' || type === 'text/json' || (fileObj && /\.json$/i.test(fileObj.name))) {
-                   setDragType('json');
-                 } else if (isVideoFile(fileObj) || type.startsWith('video/') || (fileObj && /\.(mov|mp4|webm|mkv|avi|ogv)$/i.test(fileObj.name))) {
-                   setDragType('video');
-                 } else if (isImageFile(fileObj) || type.startsWith('image/') || type === '') {
-                   setDragType('image'); // Windows often gives empty MIME type for .webp, .avif, .ico - default to image tools
-                 } else {
-                   setDragType('unknown');
-                 }
-                 break;
-             }
+            const item = items[i];
+            const type = item.type || '';
+            
+            if (type === 'image/svg+xml') {
+              detected = 'svg';
+              break;
+            } else if (type === 'application/pdf') {
+              detected = 'pdf';
+              break;
+            } else if (type === 'application/json' || type === 'text/json') {
+              detected = 'json';
+              break;
+            } else if (type.startsWith('video/') || type.includes('quicktime')) {
+              detected = 'video';
+              break;
+            } else if (type.startsWith('image/') || type.includes('png') || type.includes('webp') || type.includes('jpeg')) {
+              detected = 'image';
+              break;
+            }
           }
-          if (!found) setDragType('none');
         }
+
+        // If dragged from Google Chat / Slack / web pages (text/html or text/uri-list)
+        if (types.includes('text/html') || types.includes('text/uri-list') || types.includes('Files') || types.includes('image/png')) {
+          if (detected !== 'svg' && detected !== 'pdf' && detected !== 'json' && detected !== 'video') {
+            detected = 'image';
+          }
+        }
+
+        setDragType(detected);
       }
     };
 
@@ -100,20 +109,23 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     setDragType('none');
     window.dispatchEvent(new CustomEvent('burst', { detail: { type: 'radial', x: e.clientX, y: e.clientY } }));
 
+    // Extract real File objects (handles Desktop files + Google Chat / Slack web image drag)
+    const files = await extractDroppedFiles(e);
+
     if (action === 'create-collage') {
-      const files = Array.from(e.dataTransfer.files || []).filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(f.name));
-      if (files.length > 0) {
-        navigate('/collage-maker', { state: { droppedFiles: files } });
+      const imgFiles = files.filter(f => isImageFile(f) || f.type.startsWith('image/'));
+      if (imgFiles.length > 0) {
+        navigate('/collage-maker', { state: { droppedFiles: imgFiles } });
       } else {
         navigate('/collage-maker');
       }
       return;
     }
     
-    const file = e.dataTransfer.files[0];
+    const file = files[0];
     if (!file) return;
 
-    if (dragType === 'json') {
+    if (dragType === 'json' || file.name.endsWith('.json')) {
       if (action === 'json-editor') {
         const text = await file.text();
         navigate('/json-saver', { state: { jsonText: text } });
@@ -136,7 +148,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       }
     }
 
-    if (dragType === 'svg') {
+    if (dragType === 'svg' || file.name.endsWith('.svg')) {
       if (action === 'svg-3d') {
         const text = await file.text();
         navigate('/svg-to-3d', { state: { svgContent: text, fileName: file.name } });
@@ -148,24 +160,12 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       }
     }
     
-    if (dragType === 'pdf' && action === 'pdf-extract') {
+    if ((dragType === 'pdf' || file.name.endsWith('.pdf')) && action === 'pdf-extract') {
       navigate('/pdf-image-extractor', { state: { pdfFile: file } });
       return;
     }
 
-    if (dragType === 'image') {
-      if (action === 'download-png') {
-        onDirectDownload(file, 'png');
-      } else if (action === 'rename-png') {
-        onDropImageToModal(file);
-      } else if (action === 'remove-bg') {
-        addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
-        navigate('/bg-remover');
-      } else if (action === 'upscale') {
-        addSlot('ai-upscaler', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
-        navigate('/image-upscaler');
-      }
-    } else if (dragType === 'video') {
+    if (dragType === 'video' || isVideoFile(file)) {
       if (action === 'convert-gif') {
         addSlot('video-to-gif', { id: crypto.randomUUID(), videoFile: file, previewUrl: URL.createObjectURL(file) });
         navigate('/video-to-gif');
@@ -175,6 +175,20 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       } else if (action === 'extract-frame') {
         navigate('/video-frame-extractor', { state: { videoFile: file } });
       }
+      return;
+    }
+
+    // Default: Image Actions
+    if (action === 'download-png') {
+      onDirectDownload(file, 'png');
+    } else if (action === 'rename-png') {
+      onDropImageToModal(file);
+    } else if (action === 'remove-bg') {
+      addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
+      navigate('/bg-remover');
+    } else if (action === 'upscale') {
+      addSlot('ai-upscaler', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
+      navigate('/image-upscaler');
     }
   };
 
