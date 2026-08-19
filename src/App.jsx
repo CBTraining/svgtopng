@@ -463,7 +463,7 @@ function App() {
           {isClockMode && <ClockModeOverlay 
             onClose={() => setIsClockMode(false)} 
             onDropFile={(file) => {
-              if (file.type.startsWith('image/')) {
+              if (isImageFile(file) || file.type.startsWith('image/')) {
                 const img = new Image();
                 img.onload = () => {
                   const canvas = document.createElement('canvas');

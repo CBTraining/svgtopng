@@ -39,8 +39,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
                    setDragType('json');
                  } else if (isVideoFile(fileObj) || type.startsWith('video/') || (fileObj && /\.(mov|mp4|webm|mkv|avi|ogv)$/i.test(fileObj.name))) {
                    setDragType('video');
-                 } else if (isImageFile(fileObj) || type.startsWith('image/')) {
-                   setDragType('image');
+                 } else if (isImageFile(fileObj) || type.startsWith('image/') || type === '') {
+                   setDragType('image'); // Windows often gives empty MIME type for .webp, .avif, .ico - default to image tools
                  } else {
                    setDragType('unknown');
                  }
