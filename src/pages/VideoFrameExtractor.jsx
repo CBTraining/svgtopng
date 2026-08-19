@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { FilmIcon, CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download, XMarkIcon as XMark, ClipboardDocumentIcon, CheckIcon as Check, PlayIcon, PauseIcon, ForwardIcon, BackwardIcon } from '@heroicons/react/24/solid';
 import { isVideoFile } from '../utils/fileTypes';
+import SendToDropdown from '../components/SendToDropdown';
 
 function extractYouTubeVideoId(url) {
   if (!url) return null;
@@ -404,15 +405,19 @@ export default function VideoFrameExtractor() {
             </div>
 
             {/* Export Options */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-              <button className="btn btn-primary" onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
-                <Download style={{width: '20px', height: '20px'}} />
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button className="btn btn-primary" onClick={handleDownload} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}>
+                <Download style={{width: '18px', height: '18px'}} />
                 Download PNG Frame
               </button>
-              <button className="btn" onClick={handleCopy} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem' }}>
-                {copySuccess ? <Check style={{width: '20px', height: '20px'}} /> : <ClipboardDocumentIcon style={{width: '20px', height: '20px'}} />}
+              <button className="btn" onClick={handleCopy} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}>
+                {copySuccess ? <Check style={{width: '18px', height: '18px', color: '#10b981' }} /> : <ClipboardDocumentIcon style={{width: '18px', height: '18px'}} />}
                 {copySuccess ? 'Copied!' : 'Copy to Clipboard'}
               </button>
+              <SendToDropdown 
+                imageUrl={canvasRef.current ? canvasRef.current.toDataURL('image/png') : undefined}
+                mediaType="image"
+              />
             </div>
             
             {/* Invisible Canvas for extraction */}

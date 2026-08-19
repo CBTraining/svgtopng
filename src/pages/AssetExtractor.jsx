@@ -18,6 +18,7 @@ import {
 } from '@heroicons/react/24/solid';
 import JSZip from 'jszip';
 import { playDing } from '../utils/audio';
+import SendToDropdown from '../components/SendToDropdown';
 
 const PROXIES = [
   (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -640,6 +641,12 @@ export default function AssetExtractor() {
                   >
                     {copiedIndex === index ? <CheckIcon style={{ width: 14, height: 14, color: '#10b981' }} /> : <ClipboardDocumentIcon style={{ width: 14, height: 14 }} />}
                   </button>
+
+                  <SendToDropdown 
+                    svgText={asset.rawSvg} 
+                    imageUrl={asset.type === 'svg' ? undefined : asset.url} 
+                    mediaType={asset.type === 'svg' ? 'svg' : asset.type === 'video' ? 'video' : 'image'} 
+                  />
                 </div>
               </div>
             ))}

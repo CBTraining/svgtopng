@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   QrCodeIcon, 
   ArrowDownTrayIcon, 
@@ -44,6 +45,7 @@ function PresetGallery({ presets, onApply, onDelete }) {
 }
 
 export default function QrGenerator() {
+  const location = useLocation();
   const [data, setData] = useState('https://google.com');
   const [size, setSize] = useState(320);
   const [isGradient, setIsGradient] = useState(true);
@@ -55,9 +57,9 @@ export default function QrGenerator() {
   const [dotType, setDotType] = useState('rounded'); // 'rounded', 'dots', 'classy-rounded', 'square', 'extra-rounded'
   
   // Center Logo / SVG Options
-  const [rawLogoUrl, setRawLogoUrl] = useState('');
+  const [rawLogoUrl, setRawLogoUrl] = useState(location.state?.logoUrl || '');
   const [processedLogoUrl, setProcessedLogoUrl] = useState('');
-  const [logoFileName, setLogoFileName] = useState('');
+  const [logoFileName, setLogoFileName] = useState(location.state?.logoFileName || '');
   const [logoSize, setLogoSize] = useState(0.26); // 26% of QR size (safe threshold)
   const [logoMargin, setLogoMargin] = useState(4); // 4px safe margin
   const [logoShape, setLogoShape] = useState('auto'); // 'auto', 'circle', 'rounded', 'square'
@@ -73,6 +75,14 @@ export default function QrGenerator() {
   const qrRef = useRef(null);
   const qrCodeInstance = useRef(null);
   const logoInputRef = useRef(null);
+
+  useEffect(() => {
+    if (location.state?.logoUrl) {
+      setRawLogoUrl(location.state.logoUrl);
+      if (location.state.logoFileName) setLogoFileName(location.state.logoFileName);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.logoUrl]);
 
   // Clean up object URLs on unmount
   useEffect(() => {

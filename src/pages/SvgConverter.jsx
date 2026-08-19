@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { CommandLineIcon as FileCode2, ArrowDownTrayIcon as Download, ClipboardDocumentIcon, CheckIcon as Check } from '@heroicons/react/24/solid';
+import SendToDropdown from '../components/SendToDropdown';
 
 export default function SvgConverter() {
   const location = useLocation();
@@ -446,7 +447,7 @@ export default function SvgConverter() {
                 Resolution: <strong>{width} x {height} px</strong>
               </div>
 
-              <div className="button-group" style={{ width: '100%', justifyContent: 'center' }}>
+              <div className="button-group" style={{ width: '100%', justifyContent: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <button className="btn btn-primary" onClick={handleDownload}>
                   <Download style={{ width: 18, height: 18 }} /> Download PNG
                 </button>
@@ -454,6 +455,7 @@ export default function SvgConverter() {
                   {copySuccess ? <Check style={{ width: 18, height: 18, color: '#10b981' }} /> : <ClipboardDocumentIcon style={{ width: 18, height: 18 }} />}
                   {copySuccess ? 'Copied!' : 'Copy PNG'}
                 </button>
+                <SendToDropdown svgText={svgText} imageUrl={previewUrl} mediaType="svg" />
               </div>
             </div>
           ) : (

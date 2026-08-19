@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { SparklesIcon as ImageMinus, XMarkIcon as XMark } from '@heroicons/react/24/solid';
 import { CloudArrowUpIcon as UploadCloud, ArrowDownTrayIcon as Download } from '@heroicons/react/24/outline';
 import Dropzone from '../components/Dropzone';
+import SendToDropdown from '../components/SendToDropdown';
 import { removeBackground } from '@imgly/background-removal';
 import { useProcessing } from '../contexts/ProcessingContext';
 
@@ -571,10 +572,11 @@ function CanvasEditor({ originalUrl, resultUrl, fileName, onDiscard }) {
          />
        </div>
 
-       <div className="button-group" style={{marginTop: '0.5rem'}}>
+       <div className="button-group" style={{marginTop: '0.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem'}}>
          <button onClick={handleDownload} className="btn btn-primary">
             <Download style={{width: "18px", height: "18px"}} /> Download HD
          </button>
+         <SendToDropdown imageUrl={canvasRef.current ? canvasRef.current.toDataURL('image/png') : resultUrl} mediaType="image" />
          <button className="btn" onClick={handleResetCanvas}>
             Reset Changes
          </button>

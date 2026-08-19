@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { XMarkIcon as XMark } from '@heroicons/react/24/solid';
 import { SparklesIcon, ArrowDownTrayIcon as Download, CloudArrowUpIcon as UploadCloud } from '@heroicons/react/24/outline';
 import Dropzone from '../components/Dropzone';
+import SendToDropdown from '../components/SendToDropdown';
 import { useProcessing } from '../contexts/ProcessingContext';
 
 const TOOL_ID = 'ai-upscaler';
@@ -151,10 +152,11 @@ function UpscalerSlot({ slot }) {
            <div className="canvas-container">
               <img src={resultUrl} alt="Upscaled" style={{ maxWidth: '100%', maxHeight: '50vh', objectFit: 'contain', display: 'block', margin: '0 auto' }} />
            </div>
-           <div className="button-group" style={{marginTop: '1rem'}}>
-             <a href={resultUrl} download={`upscaled-${imageFile.name}.png`} className="btn btn-primary">
+           <div className="button-group" style={{marginTop: '1rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem'}}>
+             <a href={resultUrl} download={`upscaled-${imageFile?.name || 'image'}.png`} className="btn btn-primary">
                 <Download style={{width: "18px", height: "18px"}} /> Download HD
              </a>
+             <SendToDropdown imageUrl={resultUrl} file={imageFile} mediaType="image" />
              <button className="btn" onClick={() => removeJob(myJobId)}>
                 Discard Result
              </button>
