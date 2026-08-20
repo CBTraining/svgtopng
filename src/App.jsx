@@ -22,7 +22,7 @@ import ClockModeOverlay from './components/ClockModeOverlay';
 import DiagnosticsOverlay from './components/DiagnosticsOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
-import { isVideoFile } from './utils/fileTypes';
+import { isVideoFile, compressImageUnder20MB } from './utils/fileTypes';
 
 import PdfImageExtractor from './pages/PdfImageExtractor';
 import ShapeGenerator from './pages/ShapeGenerator';
@@ -544,6 +544,19 @@ function App() {
                 setGlobalToast({ text: "Error: The dragged file is not a valid image.", type: 'error' });
               };
               img.src = URL.createObjectURL(file);
+            }}
+            onCompressImage={async (file) => {
+              try {
+                setGlobalToast({ text: "Compressing image under 20MB (preserving full resolution)...", type: 'success' });
+                const res = await compressImageUnder20MB(file);
+                setGlobalToast({ 
+                  text: `Compressed to ${res.sizeMB} MB (${res.format}, ${res.width}x${res.height}px) and downloaded!`, 
+                  type: 'success' 
+                });
+              } catch (err) {
+                console.error(err);
+                setGlobalToast({ text: `Compression failed: ${err.message}`, type: 'error' });
+              }
             }}
           />
 

@@ -65,3 +65,107 @@ export async function extractDroppedFiles(e) {
 
   return [];
 }
+
+export async function compressImageUnder20MB(file) {
+  const MAX_BYTES = 20 * 1024 * 1024; // 20MB limit
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = async () => {
+      URL.revokeObjectURL(url);
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+
+      // 1. Try lossless PNG first (preserves transparency and pixel perfection)
+      const pngCanvas = document.createElement('canvas');
+      pngCanvas.width = width;
+      pngCanvas.height = height;
+      const pngCtx = pngCanvas.getContext('2d');
+      pngCtx.drawImage(img, 0, 0, width, height);
+
+      const getBlob = (canvas, type, quality) => {
+        return new Promise((res) => {
+          canvas.toBlob((b) => res(b), type, quality);
+        });
+      };
+
+      const pngBlob = await getBlob(pngCanvas, 'image/png');
+      const baseName = file.name ? file.name.replace(/\.[^/.]+$/, "") : 'image';
+
+      if (pngBlob && pngBlob.size <= MAX_BYTES) {
+        const downloadName = `compressed-${baseName}.png`;
+        const blobUrl = URL.createObjectURL(pngBlob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = downloadName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+        resolve({
+          format: 'PNG',
+          sizeMB: (pngBlob.size / (1024 * 1024)).toFixed(2),
+          originalSizeMB: (file.size / (1024 * 1024)).toFixed(2),
+          width,
+          height,
+          downloadName
+        });
+        return;
+      }
+
+      // 2. PNG exceeds 20MB. Compress to JPEG to fit under 20MB while preserving 100% resolution!
+      const jpegCanvas = document.createElement('canvas');
+      jpegCanvas.width = width;
+      jpegCanvas.height = height;
+      const jCtx = jpegCanvas.getContext('2d');
+      // Fill with white background to cleanly handle any transparent alpha channels
+      jCtx.fillStyle = '#ffffff';
+      jCtx.fillRect(0, 0, width, height);
+      jCtx.drawImage(img, 0, 0, width, height);
+
+      const qualitySteps = [0.96, 0.92, 0.88, 0.84, 0.80, 0.75, 0.70, 0.60, 0.50, 0.40, 0.30];
+      let bestBlob = null;
+
+      for (const q of qualitySteps) {
+        const b = await getBlob(jpegCanvas, 'image/jpeg', q);
+        if (b && b.size <= MAX_BYTES) {
+          bestBlob = b;
+          break;
+        }
+      }
+
+      if (!bestBlob) {
+        bestBlob = await getBlob(jpegCanvas, 'image/jpeg', 0.25);
+      }
+
+      if (bestBlob) {
+        const downloadName = `compressed-${baseName}.jpg`;
+        const blobUrl = URL.createObjectURL(bestBlob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = downloadName;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+
+        resolve({
+          format: 'JPEG',
+          sizeMB: (bestBlob.size / (1024 * 1024)).toFixed(2),
+          originalSizeMB: (file.size / (1024 * 1024)).toFixed(2),
+          width,
+          height,
+          downloadName
+        });
+      } else {
+        reject(new Error("Unable to compress image below 20MB"));
+      }
+    };
+
+    img.onerror = (err) => {
+      URL.revokeObjectURL(url);
+      reject(err);
+    };
+
+    img.src = url;
+  });
+}

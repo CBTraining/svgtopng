@@ -2,12 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProcessing } from '../contexts/ProcessingContext';
 import { 
-  SparklesIcon, PhotoIcon, ArrowDownTrayIcon, FilmIcon, GifIcon, DocumentArrowDownIcon, CodeBracketIcon, Square3Stack3DIcon, CubeIcon
+  SparklesIcon, 
+  PhotoIcon, 
+  ArrowDownTrayIcon, 
+  FilmIcon, 
+  GifIcon, 
+  DocumentArrowDownIcon, 
+  CodeBracketIcon, 
+  Square3Stack3DIcon, 
+  CubeIcon,
+  ArrowsPointingInIcon
 } from '@heroicons/react/24/outline';
 
-import { isVideoFile, isImageFile, extractDroppedFiles } from '../utils/fileTypes';
+import { isVideoFile, isImageFile, extractDroppedFiles, compressImageUnder20MB } from '../utils/fileTypes';
 
-export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }) {
+export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, onCompressImage }) {
   const [isDragging, setIsDragging] = useState(false);
   const [dragType, setDragType] = useState('none');
   const navigate = useNavigate();
@@ -179,7 +188,13 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
     }
 
     // Default: Image Actions
-    if (action === 'download-png') {
+    if (action === 'compress-image') {
+      if (onCompressImage) {
+        onCompressImage(file);
+      } else {
+        compressImageUnder20MB(file);
+      }
+    } else if (action === 'download-png') {
       onDirectDownload(file, 'png');
     } else if (action === 'rename-png') {
       onDropImageToModal(file);
@@ -211,46 +226,53 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload }
       onDragLeave={(e) => { e.currentTarget.classList.remove('active'); }}
       onDrop={(e) => { e.currentTarget.classList.remove('active'); handleZoneDrop(e, action); }}
       style={{
-        minHeight: '250px',
-        padding: '3rem 2rem'
+        minHeight: '230px',
+        padding: '2.5rem 1.5rem',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        gap: '0.75rem'
       }}
     >
       {icon}
-      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.25rem' }}>{title}</h3>
+      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.15rem' }}>{title}</h3>
     </div>
   );
 
   return (
     <div style={overlayStyle} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); setIsDragging(false); }}>
-      <div style={{ width: '100%', maxWidth: '900px', display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
+      <div style={{ width: '100%', maxWidth: '950px', display: 'grid', gap: '1.5rem', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
         {dragType === 'image' && (
           <>
-            <Card title="Create Photo Collage" icon={<Square3Stack3DIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="create-collage" />
-            <Card title="Remove background" icon={<SparklesIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="remove-bg" />
-            <Card title="Upscale" icon={<PhotoIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="upscale" />
-            <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="download-png" />
+            <Card title="Create Photo Collage" icon={<Square3Stack3DIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="create-collage" />
+            <Card title="Remove background" icon={<SparklesIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="remove-bg" />
+            <Card title="Upscale" icon={<PhotoIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="upscale" />
+            <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="download-png" />
+            <Card title="Compress (<20MB)" icon={<ArrowsPointingInIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="compress-image" />
           </>
         )}
         {dragType === 'video' && (
           <>
-            <Card title="Extract Frame" icon={<FilmIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="extract-frame" />
-            <Card title="Convert to GIF" icon={<GifIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="convert-gif" />
-            <Card title="Compress Video" icon={<FilmIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="compress-video" />
+            <Card title="Extract Frame" icon={<FilmIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="extract-frame" />
+            <Card title="Convert to GIF" icon={<GifIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="convert-gif" />
+            <Card title="Compress Video" icon={<FilmIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="compress-video" />
           </>
         )}
         {dragType === 'pdf' && (
-          <Card title="Extract PDF Images" icon={<DocumentArrowDownIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="pdf-extract" />
+          <Card title="Extract PDF Images" icon={<DocumentArrowDownIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="pdf-extract" />
         )}
         {dragType === 'svg' && (
           <>
-            <Card title="Convert SVG to 3D" icon={<CubeIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-3d" />
-            <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="svg-convert" />
+            <Card title="Convert SVG to 3D" icon={<CubeIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="svg-3d" />
+            <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="svg-convert" />
           </>
         )}
         {dragType === 'json' && (
           <>
-            <Card title="Format & Save JSON" icon={<CodeBracketIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="json-editor" />
-            <Card title="Convert Lottie to GIF" icon={<GifIcon style={{ width: 48, height: 48, color: 'var(--primary-color)' }} />} action="lottie-convert" />
+            <Card title="Format & Save JSON" icon={<CodeBracketIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="json-editor" />
+            <Card title="Convert Lottie to GIF" icon={<GifIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="lottie-convert" />
           </>
         )}
         {dragType === 'unknown' && (
