@@ -7,24 +7,11 @@ import {
   ArrowPathIcon,
   ClipboardDocumentIcon,
   CheckIcon,
-  SparklesIcon,
-  AdjustmentsHorizontalIcon,
   EyeIcon,
-  ArrowsPointingOutIcon
+  SparklesIcon
 } from '@heroicons/react/24/solid';
 import Dropzone from '../components/Dropzone';
 import SendToDropdown from '../components/SendToDropdown';
-
-const PRESETS = [
-  { name: 'Normal', values: { brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: 0, sepia: 0, hue: 0, invert: 0 } },
-  { name: 'Vivid', values: { brightness: 105, contrast: 125, saturation: 140, blur: 0, grayscale: 0, sepia: 0, hue: 0, invert: 0 } },
-  { name: 'B&W Vintage', values: { brightness: 100, contrast: 130, saturation: 0, blur: 0, grayscale: 100, sepia: 30, hue: 0, invert: 0 } },
-  { name: 'Warm Glow', values: { brightness: 105, contrast: 110, saturation: 115, blur: 0, grayscale: 0, sepia: 35, hue: -10, invert: 0 } },
-  { name: 'Cool Breeze', values: { brightness: 100, contrast: 110, saturation: 95, blur: 0, grayscale: 0, sepia: 0, hue: 180, invert: 0 } },
-  { name: 'Dramatic', values: { brightness: 90, contrast: 150, saturation: 110, blur: 0, grayscale: 0, sepia: 0, hue: 0, invert: 0 } },
-  { name: 'Soft Privacy Blur', values: { brightness: 100, contrast: 100, saturation: 100, blur: 12, grayscale: 0, sepia: 0, hue: 0, invert: 0 } },
-  { name: 'Cyberpunk', values: { brightness: 110, contrast: 140, saturation: 160, blur: 0, grayscale: 0, sepia: 0, hue: 90, invert: 0 } }
-];
 
 export default function ImageTools() {
   const location = useLocation();
@@ -39,18 +26,23 @@ export default function ImageTools() {
   const [lockAspect, setLockAspect] = useState(true);
   const [radius, setRadius] = useState(0);
 
-  // Filters & Adjustments
-  const [brightness, setBrightness] = useState(100);   // 0% - 200%
-  const [contrast, setContrast] = useState(100);       // 0% - 200%
-  const [saturation, setSaturation] = useState(100);   // 0% - 200%
-  const [blur, setBlur] = useState(0);                 // 0px - 40px
-  const [grayscale, setGrayscale] = useState(0);       // 0% - 100%
-  const [sepia, setSepia] = useState(0);               // 0% - 100%
-  const [hue, setHue] = useState(0);                   // -180deg to +180deg
-  const [invert, setInvert] = useState(0);             // 0% - 100%
+  // Blur Effects
+  const [gaussianBlur, setGaussianBlur] = useState(0);   // 0px - 40px
+  const [radialBlur, setRadialBlur] = useState(0);       // 0 - 40
+  const [radialCenterX, setRadialCenterX] = useState(50); // 0% - 100%
+  const [radialCenterY, setRadialCenterY] = useState(50); // 0% - 100%
+
+  // Light & Color Adjustments
+  const [brightness, setBrightness] = useState(100);     // 0% - 200%
+  const [contrast, setContrast] = useState(100);         // 0% - 200%
+  const [saturation, setSaturation] = useState(100);     // 0% - 200%
+  const [grayscale, setGrayscale] = useState(0);         // 0% - 100%
+  const [sepia, setSepia] = useState(0);                 // 0% - 100%
+  const [hue, setHue] = useState(0);                     // -180deg to +180deg
+  const [invert, setInvert] = useState(0);               // 0% - 100%
 
   // Transform
-  const [rotation, setRotation] = useState(0);         // 0, 90, 180, 270
+  const [rotation, setRotation] = useState(0);           // 0, 90, 180, 270
   const [flipH, setFlipH] = useState(false);
   const [flipV, setFlipV] = useState(false);
 
@@ -58,7 +50,6 @@ export default function ImageTools() {
   const [quality, setQuality] = useState(0.92);
   const [copySuccess, setCopySuccess] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
-  const [activeTab, setActiveTab] = useState('adjust'); // 'adjust', 'transform', 'presets'
 
   const canvasRef = useRef(null);
   const loadedImgRef = useRef(null);
@@ -130,10 +121,13 @@ export default function ImageTools() {
 
   // Reset all adjustments
   const resetFilters = () => {
+    setGaussianBlur(0);
+    setRadialBlur(0);
+    setRadialCenterX(50);
+    setRadialCenterY(50);
     setBrightness(100);
     setContrast(100);
     setSaturation(100);
-    setBlur(0);
     setGrayscale(0);
     setSepia(0);
     setHue(0);
@@ -146,18 +140,6 @@ export default function ImageTools() {
       setWidth(naturalWidth);
       setHeight(naturalHeight);
     }
-  };
-
-  const applyPreset = (preset) => {
-    const v = preset.values;
-    setBrightness(v.brightness);
-    setContrast(v.contrast);
-    setSaturation(v.saturation);
-    setBlur(v.blur);
-    setGrayscale(v.grayscale);
-    setSepia(v.sepia);
-    setHue(v.hue);
-    setInvert(v.invert);
   };
 
   // 60fps instant direct canvas rendering
@@ -193,12 +175,12 @@ export default function ImageTools() {
       ctx.clip();
     }
 
-    // Apply Canvas Filters (Brightness, Contrast, Saturation, Blur, Grayscale, Sepia, Hue, Invert)
+    // Apply Canvas Standard Filters
     const filterParts = [];
     if (brightness !== 100) filterParts.push(`brightness(${brightness}%)`);
     if (contrast !== 100) filterParts.push(`contrast(${contrast}%)`);
     if (saturation !== 100) filterParts.push(`saturate(${saturation}%)`);
-    if (blur > 0) filterParts.push(`blur(${blur}px)`);
+    if (gaussianBlur > 0) filterParts.push(`blur(${gaussianBlur}px)`);
     if (grayscale > 0) filterParts.push(`grayscale(${grayscale}%)`);
     if (sepia > 0) filterParts.push(`sepia(${sepia}%)`);
     if (hue !== 0) filterParts.push(`hue-rotate(${hue}deg)`);
@@ -216,11 +198,52 @@ export default function ImageTools() {
     const drawH = isSideways ? targetW : targetH;
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
-  }, [width, height, radius, brightness, contrast, saturation, blur, grayscale, sepia, hue, invert, rotation, flipH, flipV]);
+
+    // Reset filter for secondary custom passes
+    ctx.filter = 'none';
+
+    // Apply Radial / Zoom Blur Pass if enabled
+    if (radialBlur > 0) {
+      const steps = Math.min(18, Math.max(6, Math.round(radialBlur * 0.7)));
+      const cx = (targetW * radialCenterX) / 100;
+      const cy = (targetH * radialCenterY) / 100;
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = targetW;
+      tempCanvas.height = targetH;
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCtx.drawImage(canvas, 0, 0);
+
+      ctx.save();
+      const maxScale = 1 + (radialBlur * 0.007);
+      ctx.globalAlpha = 1 / steps;
+
+      for (let i = 1; i <= steps; i++) {
+        const scale = 1 + ((maxScale - 1) * (i / steps));
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
+        ctx.drawImage(tempCanvas, -cx, -cy);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+  }, [width, height, radius, gaussianBlur, radialBlur, radialCenterX, radialCenterY, brightness, contrast, saturation, grayscale, sepia, hue, invert, rotation, flipH, flipV]);
 
   useEffect(() => {
     renderCanvas();
   }, [renderCanvas, naturalWidth, naturalHeight]);
+
+  const handleCanvasClick = (e) => {
+    if (radialBlur <= 0 || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+    const pctX = Math.max(0, Math.min(100, Math.round((clickX / rect.width) * 100)));
+    const pctY = Math.max(0, Math.min(100, Math.round((clickY / rect.height) * 100)));
+    setRadialCenterX(pctX);
+    setRadialCenterY(pctY);
+  };
 
   const handleDownload = (format = 'png') => {
     if (!canvasRef.current) return;
@@ -264,7 +287,7 @@ export default function ImageTools() {
         <h1>Image Editor</h1>
       </div>
       <p style={{ marginTop: '-0.5rem', color: 'var(--text-secondary)' }}>
-        Resize, crop, round corners, and apply Gaussian blur, brightness, contrast, and color filters with instant live preview.
+        Adjust blur (Gaussian & Radial), lighting, colors, rotation, and dimensions in one unified editor with instant 60fps preview.
       </p>
 
       {!imageSrc ? (
@@ -281,69 +304,108 @@ export default function ImageTools() {
           />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 380px) 1fr', gap: '2rem', alignItems: 'start' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(330px, 400px) 1fr', gap: '2rem', alignItems: 'start' }}>
           
-          {/* Controls Column */}
-          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          {/* Single Unified Controls Column */}
+          <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: '85vh', overflowY: 'auto' }}>
             
-            {/* Tabs */}
-            <div style={{ display: 'flex', background: 'var(--bg-tertiary)', padding: '0.3rem', borderRadius: 'var(--border-radius-sm)', gap: '0.3rem' }}>
-              {[
-                { id: 'adjust', label: 'Adjustments', icon: AdjustmentsHorizontalIcon },
-                { id: 'transform', label: 'Transform', icon: ArrowsPointingOutIcon },
-                { id: 'presets', label: 'Presets', icon: SparklesIcon }
-              ].map(tab => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className="btn"
-                    onClick={() => setActiveTab(tab.id)}
-                    style={{
-                      flex: 1,
-                      padding: '0.4rem 0.5rem',
-                      fontSize: '0.78rem',
-                      border: 'none',
-                      background: isActive ? 'var(--accent-color)' : 'transparent',
-                      color: isActive ? '#ffffff' : 'var(--text-secondary)',
-                      fontWeight: isActive ? '600' : 'normal',
-                      gap: '0.3rem'
-                    }}
-                  >
-                    <Icon style={{ width: 14, height: 14 }} />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Section 1: Blur Effects */}
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>🌫️</span> Blur Effects
+              </div>
 
-            {/* Tab 1: Adjustments */}
-            {activeTab === 'adjust' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {/* Gaussian Blur */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>🌫️ Gaussian Blur</span>
-                    <span style={{ color: blur > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{blur}px</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Gaussian Blur</span>
+                    <span style={{ color: gaussianBlur > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{gaussianBlur}px</span>
                   </div>
                   <input 
                     type="range" 
                     min="0" 
                     max="40" 
                     step="0.5" 
-                    value={blur} 
-                    onChange={(e) => setBlur(parseFloat(e.target.value))} 
+                    value={gaussianBlur} 
+                    onChange={(e) => setGaussianBlur(parseFloat(e.target.value))} 
                     style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
                   />
                 </div>
 
+                {/* Radial Blur */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Radial / Zoom Blur</span>
+                    <span style={{ color: radialBlur > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{radialBlur}</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="40" 
+                    value={radialBlur} 
+                    onChange={(e) => setRadialBlur(parseInt(e.target.value))} 
+                    style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                  />
+                </div>
+
+                {/* Radial Center Position (shown when radial blur > 0) */}
+                {radialBlur > 0 && (
+                  <div style={{ background: 'var(--bg-tertiary)', padding: '0.6rem 0.75rem', borderRadius: 'var(--border-radius-sm)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Radial Center (or click on image)</span>
+                      <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{radialCenterX}%, {radialCenterY}%</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Center X: {radialCenterX}%</label>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={radialCenterX} 
+                          onChange={(e) => setRadialCenterX(parseInt(e.target.value))} 
+                          style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block' }}>Center Y: {radialCenterY}%</label>
+                        <input 
+                          type="range" 
+                          min="0" 
+                          max="100" 
+                          value={radialCenterY} 
+                          onChange={(e) => setRadialCenterY(parseInt(e.target.value))} 
+                          style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.3rem' }}>
+                      <button 
+                        type="button" 
+                        className="btn" 
+                        onClick={() => { setRadialCenterX(50); setRadialCenterY(50); }}
+                        style={{ flex: 1, padding: '0.2rem', fontSize: '0.7rem' }}
+                      >
+                        Reset Center (50%, 50%)
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Section 2: Light & Color Adjustments */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>☀️</span> Color & Lighting
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {/* Brightness */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>☀️ Brightness</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Brightness</span>
                     <span style={{ color: brightness !== 100 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{brightness}%</span>
                   </div>
                   <input 
@@ -358,8 +420,8 @@ export default function ImageTools() {
 
                 {/* Contrast */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>🌓 Contrast</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Contrast</span>
                     <span style={{ color: contrast !== 100 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{contrast}%</span>
                   </div>
                   <input 
@@ -374,8 +436,8 @@ export default function ImageTools() {
 
                 {/* Saturation */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>🎨 Saturation</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Saturation</span>
                     <span style={{ color: saturation !== 100 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{saturation}%</span>
                   </div>
                   <input 
@@ -388,115 +450,116 @@ export default function ImageTools() {
                   />
                 </div>
 
-                {/* Grayscale */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>⚪ Black & White / Grayscale</span>
-                    <span style={{ color: grayscale > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{grayscale}%</span>
+                {/* Grayscale & Sepia */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Black & White</span>
+                      <span style={{ color: grayscale > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{grayscale}%</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={grayscale} 
+                      onChange={(e) => setGrayscale(parseInt(e.target.value))} 
+                      style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                    />
                   </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={grayscale} 
-                    onChange={(e) => setGrayscale(parseInt(e.target.value))} 
-                    style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                  />
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Sepia</span>
+                      <span style={{ color: sepia > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{sepia}%</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={sepia} 
+                      onChange={(e) => setSepia(parseInt(e.target.value))} 
+                      style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                    />
+                  </div>
                 </div>
 
-                {/* Sepia */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>📜 Vintage Sepia</span>
-                    <span style={{ color: sepia > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{sepia}%</span>
+                {/* Hue Rotate & Invert */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Hue Tint</span>
+                      <span style={{ color: hue !== 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{hue}°</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="-180" 
+                      max="180" 
+                      value={hue} 
+                      onChange={(e) => setHue(parseInt(e.target.value))} 
+                      style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                    />
                   </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={sepia} 
-                    onChange={(e) => setSepia(parseInt(e.target.value))} 
-                    style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                  />
-                </div>
 
-                {/* Hue Rotate */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>🌈 Hue / Color Tint</span>
-                    <span style={{ color: hue !== 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{hue}°</span>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                      <span style={{ color: 'var(--text-secondary)' }}>Invert</span>
+                      <span style={{ color: invert > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{invert}%</span>
+                    </div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      value={invert} 
+                      onChange={(e) => setInvert(parseInt(e.target.value))} 
+                      style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
+                    />
                   </div>
-                  <input 
-                    type="range" 
-                    min="-180" 
-                    max="180" 
-                    value={hue} 
-                    onChange={(e) => setHue(parseInt(e.target.value))} 
-                    style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                  />
-                </div>
-
-                {/* Invert */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>🔄 Invert Colors</span>
-                    <span style={{ color: invert > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{invert}%</span>
-                  </div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="100" 
-                    value={invert} 
-                    onChange={(e) => setInvert(parseInt(e.target.value))} 
-                    style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
-                  />
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* Tab 2: Transform & Geometry */}
-            {activeTab === 'transform' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                
+            {/* Section 3: Transform, Scaling & Corners */}
+            <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <span>📐</span> Transform & Dimensions
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
                 {/* Dimensions */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Resolution & Scaling</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>Dimensions (px)</span>
                     <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', color: lockAspect ? 'var(--accent-color)' : 'var(--text-muted)' }}>
                       <input 
                         type="checkbox" 
                         checked={lockAspect} 
                         onChange={(e) => setLockAspect(e.target.checked)} 
                       />
-                      Lock Aspect Ratio ({(naturalWidth / naturalHeight).toFixed(2)})
+                      Lock Aspect Ratio
                     </label>
                   </div>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-                    <div>
-                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Width (px)</label>
-                      <input 
-                        type="number" 
-                        className="input-field" 
-                        value={width} 
-                        onChange={(e) => handleWidthChange(parseInt(e.target.value) || 10)} 
-                        style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem' }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.2rem' }}>Height (px)</label>
-                      <input 
-                        type="number" 
-                        className="input-field" 
-                        value={height} 
-                        onChange={(e) => handleHeightChange(parseInt(e.target.value) || 10)} 
-                        style={{ width: '100%', padding: '0.4rem', fontSize: '0.85rem' }}
-                      />
-                    </div>
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={width} 
+                      onChange={(e) => handleWidthChange(parseInt(e.target.value) || 10)} 
+                      style={{ width: '100%', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                      title="Width"
+                    />
+                    <input 
+                      type="number" 
+                      className="input-field" 
+                      value={height} 
+                      onChange={(e) => handleHeightChange(parseInt(e.target.value) || 10)} 
+                      style={{ width: '100%', padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                      title="Height"
+                    />
                   </div>
 
-                  {/* Preset Dimension Scaling Buttons */}
-                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.5rem' }}>
+                  {/* Preset Scale Buttons */}
+                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.4rem' }}>
                     {[0.25, 0.5, 0.75, 1, 1.5, 2].map(scale => (
                       <button
                         key={scale}
@@ -506,7 +569,7 @@ export default function ImageTools() {
                           setWidth(Math.round(naturalWidth * scale));
                           setHeight(Math.round(naturalHeight * scale));
                         }}
-                        style={{ flex: 1, padding: '0.2rem 0.3rem', fontSize: '0.7rem', background: 'var(--bg-tertiary)' }}
+                        style={{ flex: 1, padding: '0.2rem', fontSize: '0.68rem', background: 'var(--bg-tertiary)' }}
                       >
                         {scale * 100}%
                       </button>
@@ -516,8 +579,8 @@ export default function ImageTools() {
 
                 {/* Corner Radius */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>⭕ Corner Radius</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Corner Radius</span>
                     <span style={{ color: radius > 0 ? 'var(--accent-color)' : 'var(--text-muted)', fontWeight: 'bold' }}>{radius}px</span>
                   </div>
                   <input 
@@ -532,7 +595,7 @@ export default function ImageTools() {
 
                 {/* Rotation & Flip */}
                 <div>
-                  <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.4rem', fontWeight: 'bold' }}>
+                  <label style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.3rem' }}>
                     Orientation & Flip
                   </label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
@@ -540,7 +603,7 @@ export default function ImageTools() {
                       type="button" 
                       className="btn" 
                       onClick={() => setRotation(r => (r + 270) % 360)}
-                      style={{ padding: '0.4rem', fontSize: '0.75rem' }}
+                      style={{ padding: '0.35rem', fontSize: '0.75rem' }}
                       title="Rotate 90° Counter-Clockwise"
                     >
                       ↺ -90°
@@ -549,7 +612,7 @@ export default function ImageTools() {
                       type="button" 
                       className="btn" 
                       onClick={() => setRotation(r => (r + 90) % 360)}
-                      style={{ padding: '0.4rem', fontSize: '0.75rem' }}
+                      style={{ padding: '0.35rem', fontSize: '0.75rem' }}
                       title="Rotate 90° Clockwise"
                     >
                       ↻ +90°
@@ -558,7 +621,7 @@ export default function ImageTools() {
                       type="button" 
                       className="btn" 
                       onClick={() => setFlipH(f => !f)}
-                      style={{ padding: '0.4rem', fontSize: '0.75rem', background: flipH ? 'var(--accent-color)' : 'var(--bg-tertiary)' }}
+                      style={{ padding: '0.35rem', fontSize: '0.75rem', background: flipH ? 'var(--accent-color)' : 'var(--bg-tertiary)' }}
                       title="Flip Horizontal"
                     >
                       ⇄ Flip H
@@ -567,7 +630,7 @@ export default function ImageTools() {
                       type="button" 
                       className="btn" 
                       onClick={() => setFlipV(f => !f)}
-                      style={{ padding: '0.4rem', fontSize: '0.75rem', background: flipV ? 'var(--accent-color)' : 'var(--bg-tertiary)' }}
+                      style={{ padding: '0.35rem', fontSize: '0.75rem', background: flipV ? 'var(--accent-color)' : 'var(--bg-tertiary)' }}
                       title="Flip Vertical"
                     >
                       ⇅ Flip V
@@ -575,9 +638,9 @@ export default function ImageTools() {
                   </div>
                 </div>
 
-                {/* JPEG Quality Slider */}
+                {/* JPEG / WEBP Quality Slider */}
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
                     <span style={{ color: 'var(--text-secondary)' }}>JPEG / WEBP Quality</span>
                     <span style={{ color: 'var(--accent-color)', fontWeight: 'bold' }}>{Math.round(quality * 100)}%</span>
                   </div>
@@ -591,52 +654,24 @@ export default function ImageTools() {
                     style={{ width: '100%', accentColor: 'var(--accent-color)', cursor: 'pointer' }}
                   />
                 </div>
-
               </div>
-            )}
+            </div>
 
-            {/* Tab 3: Presets */}
-            {activeTab === 'presets' && (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                {PRESETS.map((preset) => (
-                  <button
-                    key={preset.name}
-                    type="button"
-                    className="btn"
-                    onClick={() => applyPreset(preset)}
-                    style={{
-                      padding: '0.75rem 0.5rem',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-color)',
-                      textAlign: 'center'
-                    }}
-                  >
-                    <SparklesIcon style={{ width: 16, height: 16, color: 'var(--accent-color)' }} />
-                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{preset.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Bottom Global Reset */}
+            {/* Bottom Global Reset & Actions */}
             <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
               <button 
                 type="button" 
                 className="btn" 
                 onClick={resetFilters} 
-                style={{ flex: 1, padding: '0.4rem', fontSize: '0.8rem' }}
+                style={{ flex: 1, padding: '0.45rem', fontSize: '0.8rem' }}
               >
-                <ArrowPathIcon style={{ width: 14, height: 14 }} /> Reset Adjustments
+                <ArrowPathIcon style={{ width: 14, height: 14 }} /> Reset All Adjustments
               </button>
               <button 
                 type="button" 
                 className="btn" 
                 onClick={() => { setImageSrc(null); setImageFile(null); loadedImgRef.current = null; }} 
-                style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', color: '#ff4444' }}
+                style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', color: '#ff4444' }}
               >
                 New Image
               </button>
@@ -677,24 +712,27 @@ export default function ImageTools() {
             {/* Direct Canvas Preview Container */}
             <div 
               className="checkerboard-bg"
+              onClick={handleCanvasClick}
               style={{
                 borderRadius: 'var(--border-radius-sm)',
                 overflow: 'hidden',
-                maxHeight: '60vh',
+                maxHeight: '62vh',
                 minHeight: '280px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '1rem',
                 border: '1px solid var(--border-color)',
-                position: 'relative'
+                position: 'relative',
+                cursor: radialBlur > 0 ? 'crosshair' : 'default'
               }}
+              title={radialBlur > 0 ? "Click anywhere to reposition radial blur focal point" : ""}
             >
               {showOriginal && (
                 <img 
                   src={imageSrc} 
                   alt="Original Source" 
-                  style={{ maxWidth: '100%', maxHeight: '55vh', objectFit: 'contain' }} 
+                  style={{ maxWidth: '100%', maxHeight: '58vh', objectFit: 'contain' }} 
                 />
               )}
 
@@ -703,7 +741,7 @@ export default function ImageTools() {
                 ref={canvasRef} 
                 style={{ 
                   maxWidth: '100%', 
-                  maxHeight: '55vh', 
+                  maxHeight: '58vh', 
                   objectFit: 'contain',
                   display: showOriginal ? 'none' : 'block'
                 }} 
