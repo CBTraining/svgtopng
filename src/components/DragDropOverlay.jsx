@@ -11,7 +11,8 @@ import {
   CodeBracketIcon, 
   Square3Stack3DIcon, 
   CubeIcon,
-  ArrowsPointingInIcon
+  ArrowsPointingInIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 
 import { isVideoFile, isImageFile, extractDroppedFiles, compressImageUnder20MB } from '../utils/fileTypes';
@@ -198,6 +199,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
       onDirectDownload(file, 'png');
     } else if (action === 'rename-png') {
       onDropImageToModal(file);
+    } else if (action === 'edit-image') {
+      navigate('/image-tools', { state: { imageFile: file, previewUrl: URL.createObjectURL(file) } });
     } else if (action === 'remove-bg') {
       addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: file, previewUrl: URL.createObjectURL(file) });
       navigate('/bg-remover');
@@ -251,6 +254,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
             <Card title="Upscale" icon={<PhotoIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="upscale" />
             <Card title="Download as PNG" icon={<ArrowDownTrayIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="download-png" />
             <Card title="Compress (<20MB)" icon={<ArrowsPointingInIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="compress-image" />
+            <Card title="Image Editor" icon={<AdjustmentsHorizontalIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="edit-image" />
           </>
         )}
         {dragType === 'video' && (

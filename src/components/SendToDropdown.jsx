@@ -11,7 +11,8 @@ import {
   CodeBracketIcon, 
   FilmIcon, 
   GifIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
 
 export default function SendToDropdown({ 
@@ -52,7 +53,9 @@ export default function SendToDropdown({
       }
     }
 
-    if (target === 'bg-remover') {
+    if (target === 'image-editor') {
+      navigate('/image-tools', { state: { imageFile: activeImageFile, imageUrl: imageUrl || (activeImageFile ? URL.createObjectURL(activeImageFile) : '') } });
+    } else if (target === 'bg-remover') {
       if (activeImageFile) {
         addSlot('bg-remove', { id: crypto.randomUUID(), imageFile: activeImageFile, previewUrl: URL.createObjectURL(activeImageFile) });
       }
@@ -150,6 +153,13 @@ export default function SendToDropdown({
             <>
               {mediaType === 'image' && (
                 <>
+                  <button 
+                    className="btn" 
+                    onClick={() => handleAction('image-editor')}
+                    style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '0.4rem 0.6rem', fontSize: '0.82rem' }}
+                  >
+                    <AdjustmentsHorizontalIcon style={{ width: 16, height: 16, color: 'var(--accent-color)' }} /> Image Editor
+                  </button>
                   <button 
                     className="btn" 
                     onClick={() => handleAction('bg-remover')}

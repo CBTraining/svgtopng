@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   PhotoIcon as ImageIcon, 
   CloudArrowUpIcon as UploadCloud, 
@@ -28,6 +29,7 @@ const PRESETS = [
 ];
 
 export default function ImageTools() {
+  const location = useLocation();
   const [imageFile, setImageFile] = useState(null);
   const [imageSrc, setImageSrc] = useState(null);
   const [naturalWidth, setNaturalWidth] = useState(800);
@@ -69,6 +71,25 @@ export default function ImageTools() {
       if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
     };
   }, [imageSrc, previewUrl]);
+
+  useEffect(() => {
+    if (location.state?.imageFile) {
+      loadFile(location.state.imageFile);
+      window.history.replaceState({}, document.title);
+    } else if (location.state?.previewUrl || location.state?.imageUrl) {
+      const url = location.state.previewUrl || location.state.imageUrl;
+      setImageSrc(url);
+      const img = new Image();
+      img.onload = () => {
+        setNaturalWidth(img.naturalWidth || img.width);
+        setNaturalHeight(img.naturalHeight || img.height);
+        setWidth(img.naturalWidth || img.width);
+        setHeight(img.naturalHeight || img.height);
+      };
+      img.src = url;
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   const loadFile = (file) => {
     if (!file) return;
