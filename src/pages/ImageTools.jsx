@@ -9,13 +9,11 @@ import {
   CheckIcon,
   SparklesIcon,
   AdjustmentsHorizontalIcon,
-  SunIcon,
   EyeIcon,
   ArrowsPointingOutIcon
 } from '@heroicons/react/24/solid';
 import Dropzone from '../components/Dropzone';
 import SendToDropdown from '../components/SendToDropdown';
-import { extractDroppedFiles } from '../utils/fileTypes';
 
 const PRESETS = [
   { name: 'Normal', values: { brightness: 100, contrast: 100, saturation: 100, blur: 0, grayscale: 0, sepia: 0, hue: 0, invert: 0 } },
@@ -63,15 +61,36 @@ export default function ImageTools() {
   const [activeTab, setActiveTab] = useState('adjust'); // 'adjust', 'transform', 'presets'
 
   const canvasRef = useRef(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const loadedImgRef = useRef(null);
 
   useEffect(() => {
     return () => {
       if (imageSrc && imageSrc.startsWith('blob:')) URL.revokeObjectURL(imageSrc);
-      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
     };
-  }, [imageSrc, previewUrl]);
+  }, [imageSrc]);
 
+  // Load a file into memory and cache the image element
+  const loadFile = (file) => {
+    if (!file) return;
+    setImageFile(file);
+    const url = URL.createObjectURL(file);
+    setImageSrc(url);
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      loadedImgRef.current = img;
+      const nw = img.naturalWidth || img.width;
+      const nh = img.naturalHeight || img.height;
+      setNaturalWidth(nw);
+      setNaturalHeight(nh);
+      setWidth(nw);
+      setHeight(nh);
+    };
+    img.src = url;
+  };
+
+  // Load from location.state if navigated via drag or Send To
   useEffect(() => {
     if (location.state?.imageFile) {
       loadFile(location.state.imageFile);
@@ -80,32 +99,20 @@ export default function ImageTools() {
       const url = location.state.previewUrl || location.state.imageUrl;
       setImageSrc(url);
       const img = new Image();
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
-        setNaturalWidth(img.naturalWidth || img.width);
-        setNaturalHeight(img.naturalHeight || img.height);
-        setWidth(img.naturalWidth || img.width);
-        setHeight(img.naturalHeight || img.height);
+        loadedImgRef.current = img;
+        const nw = img.naturalWidth || img.width;
+        const nh = img.naturalHeight || img.height;
+        setNaturalWidth(nw);
+        setNaturalHeight(nh);
+        setWidth(nw);
+        setHeight(nh);
       };
       img.src = url;
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
-
-  const loadFile = (file) => {
-    if (!file) return;
-    setImageFile(file);
-    const url = URL.createObjectURL(file);
-    setImageSrc(url);
-
-    const img = new Image();
-    img.onload = () => {
-      setNaturalWidth(img.naturalWidth || img.width);
-      setNaturalHeight(img.naturalHeight || img.height);
-      setWidth(img.naturalWidth || img.width);
-      setHeight(img.naturalHeight || img.height);
-    };
-    img.src = url;
-  };
 
   const handleWidthChange = (newWidth) => {
     setWidth(newWidth);
@@ -121,7 +128,7 @@ export default function ImageTools() {
     }
   };
 
-  // Reset all filters to default
+  // Reset all adjustments
   const resetFilters = () => {
     setBrightness(100);
     setContrast(100);
@@ -153,81 +160,67 @@ export default function ImageTools() {
     setInvert(v.invert);
   };
 
-  // Render processed image onto canvas
+  // 60fps instant direct canvas rendering
   const renderCanvas = useCallback(() => {
-    if (!imageSrc || !canvasRef.current) return;
+    const img = loadedImgRef.current;
+    const canvas = canvasRef.current;
+    if (!img || !canvas) return;
 
-    const img = new Image();
-    img.onload = () => {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d');
+    const isSideways = rotation === 90 || rotation === 270;
+    const targetW = isSideways ? height : width;
+    const targetH = isSideways ? width : height;
 
-      // Account for 90 or 270 degree rotation switching width & height
-      const isSideways = rotation === 90 || rotation === 270;
-      const targetW = isSideways ? height : width;
-      const targetH = isSideways ? width : height;
+    canvas.width = targetW;
+    canvas.height = targetH;
 
-      canvas.width = targetW;
-      canvas.height = targetH;
+    ctx.clearRect(0, 0, targetW, targetH);
 
-      ctx.clearRect(0, 0, targetW, targetH);
+    // Rounded corners clipping
+    if (radius > 0) {
+      const r = Math.min(radius, targetW / 2, targetH / 2);
+      ctx.beginPath();
+      ctx.moveTo(r, 0);
+      ctx.lineTo(targetW - r, 0);
+      ctx.quadraticCurveTo(targetW, 0, targetW, r);
+      ctx.lineTo(targetW, targetH - r);
+      ctx.quadraticCurveTo(targetW, targetH, targetW - r, targetH);
+      ctx.lineTo(r, targetH);
+      ctx.quadraticCurveTo(0, targetH, 0, targetH - r);
+      ctx.lineTo(0, r);
+      ctx.quadraticCurveTo(0, 0, r, 0);
+      ctx.closePath();
+      ctx.clip();
+    }
 
-      // Rounded corners clipping if radius > 0
-      if (radius > 0) {
-        const r = Math.min(radius, targetW / 2, targetH / 2);
-        ctx.beginPath();
-        ctx.moveTo(r, 0);
-        ctx.lineTo(targetW - r, 0);
-        ctx.quadraticCurveTo(targetW, 0, targetW, r);
-        ctx.lineTo(targetW, targetH - r);
-        ctx.quadraticCurveTo(targetW, targetH, targetW - r, targetH);
-        ctx.lineTo(r, targetH);
-        ctx.quadraticCurveTo(0, targetH, 0, targetH - r);
-        ctx.lineTo(0, r);
-        ctx.quadraticCurveTo(0, 0, r, 0);
-        ctx.closePath();
-        ctx.clip();
-      }
+    // Apply Canvas Filters (Brightness, Contrast, Saturation, Blur, Grayscale, Sepia, Hue, Invert)
+    const filterParts = [];
+    if (brightness !== 100) filterParts.push(`brightness(${brightness}%)`);
+    if (contrast !== 100) filterParts.push(`contrast(${contrast}%)`);
+    if (saturation !== 100) filterParts.push(`saturate(${saturation}%)`);
+    if (blur > 0) filterParts.push(`blur(${blur}px)`);
+    if (grayscale > 0) filterParts.push(`grayscale(${grayscale}%)`);
+    if (sepia > 0) filterParts.push(`sepia(${sepia}%)`);
+    if (hue !== 0) filterParts.push(`hue-rotate(${hue}deg)`);
+    if (invert > 0) filterParts.push(`invert(${invert}%)`);
 
-      // Apply Canvas Filters (Brightness, Contrast, Saturation, Blur, Grayscale, Sepia, Hue, Invert)
-      const filterParts = [];
-      if (brightness !== 100) filterParts.push(`brightness(${brightness}%)`);
-      if (contrast !== 100) filterParts.push(`contrast(${contrast}%)`);
-      if (saturation !== 100) filterParts.push(`saturate(${saturation}%)`);
-      if (blur > 0) filterParts.push(`blur(${blur}px)`);
-      if (grayscale > 0) filterParts.push(`grayscale(${grayscale}%)`);
-      if (sepia > 0) filterParts.push(`sepia(${sepia}%)`);
-      if (hue !== 0) filterParts.push(`hue-rotate(${hue}deg)`);
-      if (invert > 0) filterParts.push(`invert(${invert}%)`);
+    ctx.filter = filterParts.length > 0 ? filterParts.join(' ') : 'none';
 
-      ctx.filter = filterParts.length > 0 ? filterParts.join(' ') : 'none';
+    // Transformations (Rotate, Flip)
+    ctx.save();
+    ctx.translate(targetW / 2, targetH / 2);
+    ctx.rotate((rotation * Math.PI) / 180);
+    ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
 
-      // Transforms (Rotation & Flips)
-      ctx.save();
-      ctx.translate(targetW / 2, targetH / 2);
-      ctx.rotate((rotation * Math.PI) / 180);
-      ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
-
-      // Draw the image centered
-      const drawW = isSideways ? targetH : targetW;
-      const drawH = isSideways ? targetW : targetH;
-      ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
-      ctx.restore();
-
-      // Update Preview URL
-      canvas.toBlob((blob) => {
-        if (blob) {
-          if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
-          setPreviewUrl(URL.createObjectURL(blob));
-        }
-      }, 'image/png');
-    };
-    img.src = imageSrc;
-  }, [imageSrc, width, height, radius, brightness, contrast, saturation, blur, grayscale, sepia, hue, invert, rotation, flipH, flipV]);
+    const drawW = isSideways ? targetH : targetW;
+    const drawH = isSideways ? targetW : targetH;
+    ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+    ctx.restore();
+  }, [width, height, radius, brightness, contrast, saturation, blur, grayscale, sepia, hue, invert, rotation, flipH, flipV]);
 
   useEffect(() => {
     renderCanvas();
-  }, [renderCanvas]);
+  }, [renderCanvas, naturalWidth, naturalHeight]);
 
   const handleDownload = (format = 'png') => {
     if (!canvasRef.current) return;
@@ -642,7 +635,7 @@ export default function ImageTools() {
               <button 
                 type="button" 
                 className="btn" 
-                onClick={() => { setImageSrc(null); setImageFile(null); }} 
+                onClick={() => { setImageSrc(null); setImageFile(null); loadedImgRef.current = null; }} 
                 style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', color: '#ff4444' }}
               >
                 New Image
@@ -657,7 +650,7 @@ export default function ImageTools() {
             {/* Top Toolbar */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Resolution: <strong style={{ color: 'var(--text-primary)' }}>{width} × {height} px</strong>
+                Resolution: <strong style={{ color: 'var(--text-primary)' }}>{rotation === 90 || rotation === 270 ? height : width} × {rotation === 90 || rotation === 270 ? width : height} px</strong>
               </div>
 
               {/* Hold to View Original */}
@@ -681,7 +674,7 @@ export default function ImageTools() {
               </button>
             </div>
 
-            {/* Canvas Preview Container */}
+            {/* Direct Canvas Preview Container */}
             <div 
               className="checkerboard-bg"
               style={{
@@ -697,24 +690,24 @@ export default function ImageTools() {
                 position: 'relative'
               }}
             >
-              {showOriginal ? (
+              {showOriginal && (
                 <img 
                   src={imageSrc} 
-                  alt="Original" 
+                  alt="Original Source" 
                   style={{ maxWidth: '100%', maxHeight: '55vh', objectFit: 'contain' }} 
                 />
-              ) : (
-                previewUrl && (
-                  <img 
-                    src={previewUrl} 
-                    alt="Edited Live Preview" 
-                    style={{ maxWidth: '100%', maxHeight: '55vh', objectFit: 'contain' }} 
-                  />
-                )
               )}
 
-              {/* Hidden Working Canvas */}
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
+              {/* Visible Live Working Canvas */}
+              <canvas 
+                ref={canvasRef} 
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '55vh', 
+                  objectFit: 'contain',
+                  display: showOriginal ? 'none' : 'block'
+                }} 
+              />
             </div>
 
             {/* Export Buttons */}
@@ -749,7 +742,11 @@ export default function ImageTools() {
                 {copySuccess ? 'Copied!' : 'Copy'}
               </button>
 
-              <SendToDropdown imageUrl={previewUrl} file={imageFile} mediaType="image" />
+              <SendToDropdown 
+                imageUrl={canvasRef.current ? canvasRef.current.toDataURL('image/png') : undefined} 
+                file={imageFile} 
+                mediaType="image" 
+              />
             </div>
 
           </div>
