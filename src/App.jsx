@@ -56,7 +56,7 @@ const Home = () => (
         <div>
           <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Image Tools</h4>
           <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
-            <li>Image Converter</li>
+            <li>Image Editor</li>
             <li>Background Remover</li>
             <li>Image Upscaler</li>
             <li>Color Picker</li>
