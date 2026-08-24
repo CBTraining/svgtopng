@@ -868,7 +868,7 @@ function BackgroundRemoverSlot({ slot }) {
 
     try {
       const config = {
-        publicPath: 'https://staticimgly.com/@imgly/background-removal-data@1.7.0/dist/',
+        publicPath: 'https://staticimgly.com/@imgly/background-removal-data/1.7.0/dist/',
         device: "gpu",
         model: modelVariant,
         progress: (key, current, total) => {
