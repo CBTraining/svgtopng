@@ -128,7 +128,7 @@ function DirectTimelineTrimmer({ videoDuration, startTime, endTime, onUpdateTime
           <span style={{ fontWeight: '500' }}>Timeline Trimmer:</span>
         </div>
         <span>
-          <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> — <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({(endTime - startTime).toFixed(1)}s)
+          <strong style={{ color: 'var(--accent-color)' }}>{formatTime(startTime)}</strong> to <strong style={{ color: 'var(--accent-color)' }}>{formatTime(endTime)}</strong> ({(endTime - startTime).toFixed(1)}s)
         </span>
       </div>
 

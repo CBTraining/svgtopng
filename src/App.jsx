@@ -32,8 +32,161 @@ import CollageMaker from './pages/CollageMaker';
 import SvgTo3D from './pages/SvgTo3D';
 import AssetExtractor from './pages/AssetExtractor';
 
+import { NavLink } from 'react-router-dom';
+import {
+  PhotoIcon,
+  SparklesIcon,
+  DocumentArrowDownIcon,
+  PaintBrushIcon,
+  RectangleGroupIcon,
+  CommandLineIcon,
+  FilmIcon,
+  GifIcon,
+  ScissorsIcon,
+  GlobeAltIcon,
+  QrCodeIcon,
+  CodeBracketSquareIcon,
+  ClockIcon,
+  WindowIcon,
+  CubeIcon,
+  Square3Stack3DIcon,
+  ArrowsPointingInIcon
+} from '@heroicons/react/24/outline';
+
+const FEATURE_CATEGORIES = [
+  {
+    title: 'Image & Graphic Tools',
+    items: [
+      {
+        to: '/image-tools',
+        icon: PhotoIcon,
+        title: 'Image Editor',
+        desc: 'Gaussian and Radial Zoom blur, lighting, contrast, saturation, hue tint, rotation, and corner rounding.'
+      },
+      {
+        to: '/content-extractor',
+        icon: DocumentArrowDownIcon,
+        title: 'Content Extractor',
+        desc: 'Extract all embedded GIFs, images, videos, and audio from PPTX, PDF, DOCX, XLSX, and ZIP archives.'
+      },
+      {
+        to: '/bg-remover',
+        icon: SparklesIcon,
+        title: 'Background Remover',
+        desc: 'On-device AI cutout with sub-pixel edge refinement, anti-halo de-fringe, and studio backdrops.'
+      },
+      {
+        to: '/image-upscaler',
+        icon: SparklesIcon,
+        title: 'AI Image Upscaler',
+        desc: 'Enhance and upscale photos by 2x or 4x locally using neural super-resolution networks.'
+      },
+      {
+        to: '/collage-maker',
+        icon: Square3Stack3DIcon,
+        title: 'Photo Collage Maker',
+        desc: 'Combine multiple images into customizable grid and masonry photo layouts.'
+      },
+      {
+        to: '/svg-to-3d',
+        icon: CubeIcon,
+        title: 'SVG to 3D',
+        desc: 'Extrude 2D SVG vector graphics into interactive 3D meshes with real-time lighting.'
+      },
+      {
+        to: '/svg-converter',
+        icon: CommandLineIcon,
+        title: 'SVG Converter',
+        desc: 'Scale vectors to any resolution without loss, apply color overrides, and export PNGs.'
+      },
+      {
+        to: '/color-picker',
+        icon: PaintBrushIcon,
+        title: 'Color Picker',
+        desc: 'Extract color palettes and sample hex, rgb, hsl, and cmyk values.'
+      },
+      {
+        to: '/shape-generator',
+        icon: RectangleGroupIcon,
+        title: 'Shape Generator',
+        desc: 'Generate custom CSS and SVG geometric shapes, organic blobs, and decorative waves.'
+      }
+    ]
+  },
+  {
+    title: 'Video & Animation',
+    items: [
+      {
+        to: '/video-compressor',
+        icon: FilmIcon,
+        title: 'Video Compressor',
+        desc: 'Client-side FFmpeg compression to shrink video file size while maintaining visual clarity.'
+      },
+      {
+        to: '/video-to-gif',
+        icon: GifIcon,
+        title: 'Video to GIF',
+        desc: 'Convert video clips into smooth, optimized animated GIFs with custom FPS and sizing.'
+      },
+      {
+        to: '/video-frame-extractor',
+        icon: FilmIcon,
+        title: 'Video Frame Extractor',
+        desc: 'Capture full-resolution still frames from uploaded video files or direct video URLs.'
+      },
+      {
+        to: '/lottie-to-gif',
+        icon: ScissorsIcon,
+        title: 'Lottie to GIF',
+        desc: 'Render Lottie JSON animation files into lightweight, looping animated GIFs.'
+      }
+    ]
+  },
+  {
+    title: 'Web & Developer Utilities',
+    items: [
+      {
+        to: '/asset-extractor',
+        icon: GlobeAltIcon,
+        title: 'Website Asset Extractor',
+        desc: 'Scrape and extract SVGs, images, logos, and media from any live web page URL.'
+      },
+      {
+        to: '/qr-generator',
+        icon: QrCodeIcon,
+        title: 'QR Code Generator',
+        desc: 'Create custom branded QR codes with center logos, custom dot styles, and color gradients.'
+      },
+      {
+        to: '/json-saver',
+        icon: CodeBracketSquareIcon,
+        title: 'JSON Formatter & Saver',
+        desc: 'Format, validate, and inspect JSON documents with syntax highlighting.'
+      },
+      {
+        to: '/timezone-converter',
+        icon: ClockIcon,
+        title: 'Timezone Converter',
+        desc: 'Compare and convert multiple time zones across global locations in real time.'
+      },
+      {
+        to: '/html-preview',
+        icon: WindowIcon,
+        title: 'HTML Live Preview',
+        desc: 'Sandboxed code playground for HTML, CSS, and JS with instant split-pane preview.'
+      },
+      {
+        to: '/component-generator',
+        icon: CodeBracketSquareIcon,
+        title: 'Component Generator',
+        desc: 'Interactive UI builder generating clean React and Tailwind component code.'
+      }
+    ]
+  }
+];
+
 const Home = () => (
-  <div className="animate-fade-in">
+  <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
     {/* Draggable region for Window Controls Overlay */}
     <div style={{
       position: 'fixed',
@@ -46,46 +199,64 @@ const Home = () => (
     <div className="page-header" style={{ marginBottom: '0.5rem', borderBottom: 'none', paddingBottom: '0', paddingTop: 'env(titlebar-area-height, 0px)' }}>
       <h1>Welcome to WebTools</h1>
     </div>
-    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
-      Made by Christopher Gammello
+    <div style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--border-color)' }}>
+      A suite of fast, offline-capable, private client-side utilities. No servers, no tracking, 100% in-browser.
     </div>
-    <p>A suite of offline-capable, highly aesthetic client-side utilities.</p>
-    <div className="glass-panel" style={{marginTop: '2rem'}}>
-      <h3>Features</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
-        <div>
-          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Image Tools</h4>
-          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
-            <li>Image Editor</li>
-            <li>Background Remover</li>
-            <li>Image Upscaler</li>
-            <li>Color Picker</li>
-            <li>PDF Image Extractor</li>
-            <li>Shape Generator</li>
-            <li>SVG Converter</li>
-          </ul>
+
+    {/* Feature Sections */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+      {FEATURE_CATEGORIES.map((cat, idx) => (
+        <div key={idx}>
+          <h2 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {cat.title}
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+            {cat.items.map((feat) => {
+              const Icon = feat.icon;
+              return (
+                <NavLink
+                  key={feat.to}
+                  to={feat.to}
+                  className="glass-panel hover-glow"
+                  style={{
+                    padding: '1.25rem',
+                    textDecoration: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    borderRadius: 'var(--border-radius-sm)',
+                    transition: 'transform 0.2s ease, border-color 0.2s ease',
+                    cursor: 'pointer',
+                    border: '1px solid var(--border-color)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '8px',
+                      background: 'var(--bg-tertiary)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0
+                    }}>
+                      <Icon style={{ width: 22, height: 22, color: 'var(--accent-color)' }} />
+                    </div>
+                    <h3 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-primary)' }}>
+                      {feat.title}
+                    </h3>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: '1.45' }}>
+                    {feat.desc}
+                  </p>
+                </NavLink>
+              );
+            })}
+          </div>
         </div>
-        <div>
-          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Video & Animation</h4>
-          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
-            <li>Video Compressor</li>
-            <li>Video to GIF</li>
-            <li>Video Frame Extractor</li>
-            <li>Lottie to GIF</li>
-          </ul>
-        </div>
-        <div>
-          <h4 style={{ color: 'var(--primary-color)', marginBottom: '0.5rem' }}>Web & Dev</h4>
-          <ul style={{ paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
-            <li>Website Asset Extractor</li>
-            <li>QR Generator</li>
-            <li>JSON Saver</li>
-            <li>Timezone Converter</li>
-            <li>HTML Preview</li>
-            <li>Component Generator</li>
-          </ul>
-        </div>
-      </div>
+      ))}
     </div>
   </div>
 );

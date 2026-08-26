@@ -308,7 +308,7 @@ export default function VideoFrameExtractor() {
               <p>or click to browse</p>
             </div>
             
-            <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>— OR —</div>
+            <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>- OR -</div>
             
             {/* External / YouTube URL Input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%', maxWidth: '550px', margin: '0 auto' }}>
