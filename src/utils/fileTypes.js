@@ -14,12 +14,25 @@ export function isImageFile(file) {
   return ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'ico', 'avif', 'heic', 'tiff'].includes(ext);
 }
 
+export function getOriginalGoogleAssetUrl(url) {
+  if (!url) return url;
+  if (/googleusercontent\.com/i.test(url)) {
+    if (/=[swh]\d+/i.test(url)) {
+      return url.replace(/=[swh]\d+.*$/i, '=s0');
+    }
+    if (!url.includes('=')) {
+      return `${url}=s0`;
+    }
+  }
+  return url;
+}
+
 export async function extractDroppedFiles(e) {
   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
     return Array.from(e.dataTransfer.files);
   }
 
-  // Handle Google Chat / Slack / Browser Tab Image Drag & Drop
+  // Handle Google Chat / Slack / Google Slides / Browser Tab Image Drag & Drop
   const html = e.dataTransfer.getData('text/html');
   let src = '';
   if (html) {
@@ -32,11 +45,25 @@ export async function extractDroppedFiles(e) {
   }
 
   if (src && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:') || src.startsWith('blob:'))) {
+    const targetUrl = getOriginalGoogleAssetUrl(src);
     try {
-      const resp = await fetch(src);
+      const resp = await fetch(targetUrl);
+      if (!resp.ok) throw new Error("Fetch failed");
       const blob = await resp.blob();
-      const filename = `image-${Date.now()}.${blob.type.split('/')[1] || 'png'}`;
-      return [new File([blob], filename, { type: blob.type || 'image/png' })];
+      
+      // Check magic bytes for GIF
+      let isGif = blob.type === 'image/gif';
+      if (!isGif && blob.size >= 6) {
+        try {
+          const buf = await blob.slice(0, 6).arrayBuffer();
+          const head = new TextDecoder().decode(buf);
+          if (head.startsWith('GIF8')) isGif = true;
+        } catch {}
+      }
+
+      const ext = isGif ? 'gif' : (blob.type.split('/')[1] || 'png');
+      const filename = `image-${Date.now()}.${ext}`;
+      return [new File([blob], filename, { type: isGif ? 'image/gif' : (blob.type || 'image/png') })];
     } catch {
       // Fallback via Image object to handle CORS images
       const file = await new Promise((resolve) => {
