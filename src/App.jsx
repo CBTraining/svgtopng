@@ -111,6 +111,8 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [filename, setFilename] = useState('clipboard_image');
   const [pendingBlob, setPendingBlob] = useState(null);
+  const [blobType, setBlobType] = useState('png'); // 'png' or 'gif'
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isClockMode, setIsClockMode] = useState(() => localStorage.getItem('isClockMode') === 'true');
   const [globalToast, setGlobalToast] = useState(null);
@@ -136,6 +138,14 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [globalToast]);
+
+  // Revoke preview URL on close
+  useEffect(() => {
+    if (!showModal && previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+    }
+  }, [showModal, previewUrl]);
 
   // Track mouse position for glowing card effect
   useEffect(() => {
@@ -185,7 +195,35 @@ function App() {
     return () => window.removeEventListener('dblclick', handleDoubleClick);
   }, []);
 
-  const processImageBlob = useCallback((blob, defaultName = 'clipboard_image') => {
+  // Check magic bytes for GIF (GIF87a or GIF89a)
+  const isGifBlob = async (blob) => {
+    if (!blob) return false;
+    if (blob.type === 'image/gif') return true;
+    if (blob.size >= 6) {
+      try {
+        const buffer = await blob.slice(0, 6).arrayBuffer();
+        const header = new TextDecoder().decode(buffer);
+        if (header.startsWith('GIF8')) return true;
+      } catch (e) {}
+    }
+    return false;
+  };
+
+  const processImageBlob = useCallback(async (blob, defaultName = 'clipboard_image') => {
+    const isGif = await isGifBlob(blob);
+    if (isGif) {
+      const gifBlob = blob.type === 'image/gif' ? blob : new Blob([blob], { type: 'image/gif' });
+      setPendingBlob(gifBlob);
+      setBlobType('gif');
+      const url = URL.createObjectURL(gifBlob);
+      setPreviewUrl(url);
+      const cleanName = defaultName.replace(/\.(png|gif|jpe?g|webp)$/i, '');
+      setFilename(`${cleanName}.gif`);
+      setShowModal(true);
+      return;
+    }
+
+    // Otherwise convert static image to clean PNG
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
@@ -197,7 +235,11 @@ function App() {
       canvas.toBlob((pngBlob) => {
         if (!pngBlob) return;
         setPendingBlob(pngBlob);
-        setFilename(defaultName);
+        setBlobType('png');
+        const url = URL.createObjectURL(pngBlob);
+        setPreviewUrl(url);
+        const cleanName = defaultName.replace(/\.(png|gif|jpe?g|webp)$/i, '');
+        setFilename(`${cleanName}.png`);
         setShowModal(true);
       }, 'image/png');
       URL.revokeObjectURL(img.src);
@@ -207,7 +249,6 @@ function App() {
 
   // Global Clipboard Listener
   useEffect(() => {
-
     const handlePaste = async (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -218,6 +259,31 @@ function App() {
       if (items) {
         for (let item of items) {
           availableTypes.push(item.type);
+        }
+
+        // Prioritize text/html from Google Slides / Docs / Web to preserve raw GIF animation & high-res assets
+        const htmlItem = Array.from(items).find(i => i.type === 'text/html');
+        if (htmlItem) {
+          e.preventDefault();
+          htmlItem.getAsString(async (html) => {
+            const res = await processHtmlPaste(html);
+            if (!res.success) {
+              // Fallback to native image item if html extraction failed
+              const imgItem = Array.from(items).find(i => i.type.startsWith('image/'));
+              if (imgItem) {
+                const blob = imgItem.getAsFile();
+                if (blob) processImageBlob(blob);
+              } else {
+                setGlobalToast(`Ext: ${res.error} Len: ${html.length}`);
+                window.dispatchEvent(new Event('paste-error'));
+              }
+            }
+          });
+          return;
+        }
+
+        // Check image items directly
+        for (let item of items) {
           if (item.type.indexOf('image') === 0) {
             const blob = item.getAsFile();
             if (blob) {
@@ -230,22 +296,6 @@ function App() {
         }
       }
 
-      if (!handled && items) {
-        for (let item of items) {
-          if (item.type === 'text/html') {
-            e.preventDefault();
-            item.getAsString(async (html) => {
-              const res = await processHtmlPaste(html);
-              if (!res.success) {
-                setGlobalToast(`Ext: ${res.error} Len: ${html.length}`);
-                window.dispatchEvent(new Event('paste-error'));
-              }
-            });
-            return; // Exit early since it's async
-          }
-        }
-      }
-
       if (!handled) {
         setGlobalToast("Ctrl+V Diagnostic: Types seen: " + availableTypes.join(', '));
         window.dispatchEvent(new Event('paste-error'));
@@ -254,7 +304,7 @@ function App() {
     
     window.addEventListener('paste', handlePaste);
     return () => window.removeEventListener('paste', handlePaste);
-  }, []);
+  }, [processImageBlob]);
 
   const handleManualPaste = async () => {
     try {
@@ -262,6 +312,24 @@ function App() {
       let allTypes = [];
       for (const clipboardItem of clipboardItems) {
         allTypes.push(...clipboardItem.types);
+
+        // If text/html is present (e.g. Google Slides), prioritize extracting source URL / raw GIF
+        if (clipboardItem.types.includes('text/html')) {
+          const blob = await clipboardItem.getType('text/html');
+          const html = await blob.text();
+          const res = await processHtmlPaste(html);
+          if (res.success) return;
+        }
+
+        // Check image/gif first if explicitly present
+        if (clipboardItem.types.includes('image/gif')) {
+          const blob = await clipboardItem.getType('image/gif');
+          if (blob) {
+            processImageBlob(blob, 'clipboard_animation');
+            return;
+          }
+        }
+
         const imageTypes = clipboardItem.types.filter(type => type.startsWith('image/'));
         for (const type of imageTypes) {
           const blob = await clipboardItem.getType(type);
@@ -269,19 +337,6 @@ function App() {
             processImageBlob(blob);
             return;
           }
-        }
-      }
-
-      // No native image blob found, let's try reading text/html
-      for (const clipboardItem of clipboardItems) {
-        if (clipboardItem.types.includes('text/html')) {
-          const blob = await clipboardItem.getType('text/html');
-          const html = await blob.text();
-          const res = await processHtmlPaste(html);
-          if (res.success) return;
-          setGlobalToast(`Ext: ${res.error} Len: ${html.length}`);
-          window.dispatchEvent(new Event('paste-error'));
-          return;
         }
       }
       
@@ -335,20 +390,19 @@ function App() {
         return { success: false, error: "No image source found in HTML." };
       }
 
-      // Handle Data URIs immediately
+      // Handle Data URIs directly
       if (src.startsWith('data:image/')) {
         try {
           const response = await fetch(src);
           if (!response.ok) throw new Error("Fetch response not ok");
           const blob = await response.blob();
-          processImageBlob(blob);
+          processImageBlob(blob, src.startsWith('data:image/gif') ? 'pasted_animation' : 'clipboard_image');
           return { success: true };
         } catch (err) {
-          // Fallback manual base64 parsing if fetch fails due to size/security
+          // Fallback manual base64 parsing if fetch fails
           try {
             const arr = src.split(',');
             const mime = arr[0].match(/:(.*?);/)[1];
-            // Aggressively strip all whitespace, newlines, and html entities from the base64 data
             let b64Data = arr[1].replace(/[\s\r\n]+/g, '').replace(/&quot;/g, '').replace(/&amp;/g, '&');
             if (b64Data.endsWith('"') || b64Data.endsWith("'")) b64Data = b64Data.slice(0, -1);
             
@@ -357,7 +411,7 @@ function App() {
             const u8arr = new Uint8Array(n);
             while(n--) { u8arr[n] = bstr.charCodeAt(n); }
             const blob = new Blob([u8arr], {type: mime});
-            processImageBlob(blob);
+            processImageBlob(blob, mime === 'image/gif' ? 'pasted_animation' : 'clipboard_image');
             return { success: true };
           } catch(manualErr) {
             return { success: false, error: `atob failed: ${manualErr.message}. Src len: ${src.length}` };
@@ -365,8 +419,15 @@ function App() {
         }
       }
 
-      // Handle URLs (like lh3.googleusercontent.com)
-      const loadImage = (url) => {
+      // Handle URLs (like lh3.googleusercontent.com from Google Slides)
+      // Fetch the raw blob directly so animated GIFs preserve full frame sequences!
+      const fetchDirectBlob = async (url) => {
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error(`Fetch status: ${resp.status}`);
+        return await resp.blob();
+      };
+
+      const loadImageFallback = (url) => {
         return new Promise((resolve, reject) => {
           const img = new Image();
           img.crossOrigin = 'anonymous';
@@ -386,24 +447,34 @@ function App() {
         });
       };
 
+      // 1. Try Direct Raw Fetch (Preserves GIFs)
       try {
-        const blob = await loadImage(src);
-        processImageBlob(blob);
+        const rawBlob = await fetchDirectBlob(src);
+        processImageBlob(rawBlob, 'google_slides_image');
         return { success: true };
-      } catch (e1) {
+      } catch (eDirect) {
+        // 2. Try AllOrigins CORS Proxy Raw Fetch (Preserves GIFs)
         try {
           const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(src)}`;
-          const blob = await loadImage(proxyUrl);
-          processImageBlob(blob);
+          const rawBlob = await fetchDirectBlob(proxyUrl);
+          processImageBlob(rawBlob, 'google_slides_image');
           return { success: true };
-        } catch (e2) {
+        } catch (eProxy1) {
+          // 3. Try CorsProxy.io Raw Fetch (Preserves GIFs)
           try {
             const proxyUrl2 = `https://corsproxy.io/?${encodeURIComponent(src)}`;
-            const blob = await loadImage(proxyUrl2);
-            processImageBlob(blob);
+            const rawBlob = await fetchDirectBlob(proxyUrl2);
+            processImageBlob(rawBlob, 'google_slides_image');
             return { success: true };
-          } catch (e3) {
-            return { success: false, error: "Network fetch blocked by CORS on all proxies." };
+          } catch (eProxy2) {
+            // 4. Final Fallback: Canvas DOM image load
+            try {
+              const fallbackBlob = await loadImageFallback(src);
+              processImageBlob(fallbackBlob, 'google_slides_image');
+              return { success: true };
+            } catch (eFinal) {
+              return { success: false, error: "Network fetch blocked by CORS on all proxies." };
+            }
           }
         }
       }
@@ -418,9 +489,12 @@ function App() {
       const url = URL.createObjectURL(pendingBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename.endsWith('.png') ? filename : `${filename}.png`;
+      const isGif = blobType === 'gif' || pendingBlob.type === 'image/gif' || filename.toLowerCase().endsWith('.gif');
+      const ext = isGif ? '.gif' : '.png';
+      const cleanName = filename.replace(/\.(png|gif|jpe?g|webp)$/i, '');
+      a.download = `${cleanName}${ext}`;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
     setShowModal(false);
     setPendingBlob(null);
@@ -572,9 +646,54 @@ function App() {
 
           {showModal && (
             <div className="modal-overlay">
-              <div className="modal glass-panel animate-fade-in">
-                <h3>Save Image</h3>
-                <p style={{marginBottom: '1rem', fontSize: '0.9rem'}}>Enter a name for your pasted image.</p>
+              <div className="modal glass-panel animate-fade-in" style={{ maxWidth: '420px', width: '90%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <h3 style={{ margin: 0 }}>Save {blobType === 'gif' ? 'Animated GIF' : 'Image'}</h3>
+                  {blobType === 'gif' && (
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      fontWeight: 'bold', 
+                      background: 'rgba(64, 224, 208, 0.15)', 
+                      color: 'var(--accent-color)', 
+                      padding: '0.2rem 0.6rem', 
+                      borderRadius: '12px',
+                      border: '1px solid var(--accent-color)',
+                      letterSpacing: '0.5px'
+                    }}>
+                      ✨ ANIMATED GIF
+                    </span>
+                  )}
+                </div>
+                <p style={{ marginBottom: '1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                  {blobType === 'gif' 
+                    ? 'Animated GIF detected! We preserved all frames and original animation.' 
+                    : 'Enter a name for your pasted image.'}
+                </p>
+
+                {previewUrl && (
+                  <div style={{ 
+                    maxHeight: '160px', 
+                    borderRadius: 'var(--border-radius-sm)', 
+                    overflow: 'hidden', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    marginBottom: '1rem',
+                    background: 'url("data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'16\'><rect width=\'8\' height=\'8\' fill=\'%23222\'/><rect x=\'8\' y=\'8\' width=\'8\' height=\'8\' fill=\'%23222\'/><rect x=\'8\' width=\'8\' height=\'8\' fill=\'%23333\'/><rect y=\'8\' width=\'8\' height=\'8\' fill=\'%23333\'/></svg>")',
+                    border: '1px solid var(--border-color)',
+                    padding: '0.5rem'
+                  }}>
+                    <img 
+                      src={previewUrl} 
+                      alt="Pasted Preview" 
+                      style={{ maxWidth: '100%', maxHeight: '140px', objectFit: 'contain' }} 
+                    />
+                  </div>
+                )}
+
+                <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+                  Filename ({blobType === 'gif' ? '.gif' : '.png'}):
+                </label>
                 <input 
                   ref={inputRef}
                   type="text" 
@@ -585,10 +704,13 @@ function App() {
                     if (e.key === 'Enter') handleDownload();
                     if (e.key === 'Escape') handleCancel();
                   }}
+                  style={{ width: '100%' }}
                 />
-                <div className="button-group" style={{justifyContent: 'flex-end', marginTop: '1.5rem'}}>
+                <div className="button-group" style={{ justifyContent: 'flex-end', marginTop: '1.5rem' }}>
                   <button className="btn" onClick={handleCancel}>Cancel</button>
-                  <button className="btn btn-primary" onClick={handleDownload}>Save</button>
+                  <button className="btn btn-primary" onClick={handleDownload}>
+                    Save {blobType === 'gif' ? 'as GIF' : 'as PNG'}
+                  </button>
                 </div>
               </div>
             </div>
