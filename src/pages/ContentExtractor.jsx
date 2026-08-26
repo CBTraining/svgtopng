@@ -18,11 +18,6 @@ import SendToDropdown from '../components/SendToDropdown';
 import { playDing } from '../utils/audio';
 import { useLocation } from 'react-router-dom';
 
-// Import pdfjs
-import * as pdfjsLib from 'pdfjs-dist';
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl;
-
 const MIME_MAP = {
   gif: 'image/gif',
   png: 'image/png',
@@ -186,6 +181,11 @@ export default function ContentExtractor() {
 
   // 2. Extract from PDF using PDF.js
   const extractPdf = async (file, baseName) => {
+    setStatusText('Loading PDF engine...');
+    const pdfjsLib = await import('pdfjs-dist');
+    const workerModule = await import('pdfjs-dist/build/pdf.worker.mjs?url');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerModule.default || workerModule;
+
     setStatusText('Parsing PDF document...');
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
