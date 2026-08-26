@@ -44,8 +44,16 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
             if (type === 'image/svg+xml') {
               detected = 'svg';
               break;
-            } else if (type === 'application/pdf') {
-              detected = 'pdf';
+            } else if (
+              type === 'application/pdf' || 
+              type.includes('presentation') || 
+              type.includes('powerpoint') || 
+              type.includes('word') || 
+              type.includes('zip') || 
+              type.includes('officedocument') || 
+              type.includes('opendocument')
+            ) {
+              detected = 'doc';
               break;
             } else if (type === 'application/json' || type === 'text/json') {
               detected = 'json';
@@ -170,8 +178,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
       }
     }
     
-    if ((dragType === 'pdf' || file.name.endsWith('.pdf')) && action === 'pdf-extract') {
-      navigate('/pdf-image-extractor', { state: { pdfFile: file } });
+    if ((dragType === 'doc' || dragType === 'pdf' || file.name.match(/\.(pdf|pptx|docx|xlsx|zip|key|odp|odt)$/i)) && (action === 'pdf-extract' || action === 'content-extract')) {
+      navigate('/content-extractor', { state: { file } });
       return;
     }
 
@@ -264,8 +272,8 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
             <Card title="Compress Video" icon={<FilmIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="compress-video" />
           </>
         )}
-        {dragType === 'pdf' && (
-          <Card title="Extract PDF Images" icon={<DocumentArrowDownIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="pdf-extract" />
+        {(dragType === 'pdf' || dragType === 'doc') && (
+          <Card title="Extract Embedded Content" icon={<DocumentArrowDownIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="content-extract" />
         )}
         {dragType === 'svg' && (
           <>

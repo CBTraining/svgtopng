@@ -24,7 +24,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import DragDropOverlay from './components/DragDropOverlay';
 import { isVideoFile, compressImageUnder20MB } from './utils/fileTypes';
 
-import PdfImageExtractor from './pages/PdfImageExtractor';
+import ContentExtractor from './pages/ContentExtractor';
 import ShapeGenerator from './pages/ShapeGenerator';
 import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
@@ -600,7 +600,8 @@ function App() {
               <Route path="/color-picker" element={<ColorPicker />} />
               <Route path="/qr-generator" element={<QrGenerator />} />
               <Route path="/image-upscaler" element={<ImageUpscaler />} />
-              <Route path="/pdf-image-extractor" element={<PdfImageExtractor />} />
+              <Route path="/content-extractor" element={<ContentExtractor />} />
+              <Route path="/pdf-image-extractor" element={<ContentExtractor />} />
               <Route path="/timezone-converter" element={<TimezoneConverter />} />
               <Route path="/html-preview" element={<HtmlPreview />} />
               <Route path="/shape-generator" element={<ShapeGenerator />} />
