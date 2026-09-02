@@ -34,18 +34,17 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
         const items = e.dataTransfer.items;
         const types = Array.from(e.dataTransfer.types || []);
         
-        let detected = 'image'; // Default to image (covers Google Chat, PNGs, WebP, files)
+        let detected = 'unknown';
 
         if (items && items.length > 0) {
           for (let i = 0; i < items.length; i++) {
             const item = items[i];
-            const type = item.type || '';
+            const type = (item.type || '').toLowerCase();
             
-            if (type === 'image/svg+xml') {
-              detected = 'svg';
+            if (type === 'application/pdf') {
+              detected = 'pdf';
               break;
             } else if (
-              type === 'application/pdf' || 
               type.includes('presentation') || 
               type.includes('powerpoint') || 
               type.includes('word') || 
@@ -55,22 +54,28 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
             ) {
               detected = 'doc';
               break;
+            } else if (type === 'image/svg+xml') {
+              detected = 'svg';
+              break;
             } else if (type === 'application/json' || type === 'text/json') {
               detected = 'json';
               break;
             } else if (type.startsWith('video/') || type.includes('quicktime')) {
               detected = 'video';
               break;
-            } else if (type.startsWith('image/') || type.includes('png') || type.includes('webp') || type.includes('jpeg')) {
+            } else if (type.startsWith('image/')) {
               detected = 'image';
               break;
             }
           }
         }
 
-        // If dragged from Google Chat / Slack / web pages (text/html or text/uri-list)
-        if (types.includes('text/html') || types.includes('text/uri-list') || types.includes('Files') || types.includes('image/png')) {
-          if (detected !== 'svg' && detected !== 'pdf' && detected !== 'json' && detected !== 'video') {
+        // Fallback for HTML/URI drops (e.g. Google Chat, Slack, Web Images)
+        if (detected === 'unknown') {
+          if (types.includes('text/html') || types.includes('text/uri-list') || types.includes('image/png')) {
+            detected = 'image';
+          } else if (types.includes('Files')) {
+            // Check if any item might indicate type
             detected = 'image';
           }
         }
@@ -230,7 +235,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
     pointerEvents: 'auto'
   };
 
-  const Card = ({ title, icon, action }) => (
+  const Card = ({ title, subtitle, icon, action }) => (
     <div 
       className="dropzone"
       onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('active'); }}
@@ -244,11 +249,17 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        gap: '0.75rem'
+        gap: '0.75rem',
+        cursor: 'pointer'
       }}
     >
       {icon}
-      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.15rem' }}>{title}</h3>
+      <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: '1.2rem' }}>{title}</h3>
+      {subtitle && (
+        <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '280px' }}>
+          {subtitle}
+        </p>
+      )}
     </div>
   );
 
@@ -272,8 +283,21 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
             <Card title="Compress Video" icon={<FilmIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="compress-video" />
           </>
         )}
-        {(dragType === 'pdf' || dragType === 'doc') && (
-          <Card title="Extract Embedded Content" icon={<DocumentArrowDownIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="content-extract" />
+        {dragType === 'pdf' && (
+          <Card 
+            title="Content Extractor (PDF)" 
+            subtitle="Extract all embedded images, diagrams, and figures across all PDF pages"
+            icon={<DocumentArrowDownIcon style={{ width: 52, height: 52, color: 'var(--primary-color)' }} />} 
+            action="content-extract" 
+          />
+        )}
+        {dragType === 'doc' && (
+          <Card 
+            title="Content Extractor (PPTX / DOCX / ZIP)" 
+            subtitle="Extract all embedded raw animated GIFs, images, videos, and audio clips"
+            icon={<DocumentArrowDownIcon style={{ width: 52, height: 52, color: 'var(--primary-color)' }} />} 
+            action="content-extract" 
+          />
         )}
         {dragType === 'svg' && (
           <>
