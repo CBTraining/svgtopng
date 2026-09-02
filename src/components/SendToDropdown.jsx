@@ -82,8 +82,6 @@ export default function SendToDropdown({
       } else {
         navigate('/qr-generator');
       }
-    } else if (target === 'svg-to-3d') {
-      navigate('/svg-to-3d', { state: { svgContent: svgText || '', fileName: file?.name || 'vector.svg' } });
     } else if (target === 'svg-converter') {
       navigate('/svg-converter', { state: { svgText: svgText || '' } });
     } else if (target === 'video-to-gif') {
@@ -185,22 +183,13 @@ export default function SendToDropdown({
               )}
 
               {mediaType === 'svg' && (
-                <>
-                  <button 
-                    className="btn" 
-                    onClick={() => handleAction('svg-to-3d')}
-                    style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '0.4rem 0.6rem', fontSize: '0.82rem' }}
-                  >
-                    <CubeIcon style={{ width: 16, height: 16, color: 'var(--accent-color)' }} /> SVG to 3D Scene
-                  </button>
-                  <button 
-                    className="btn" 
-                    onClick={() => handleAction('svg-converter')}
-                    style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '0.4rem 0.6rem', fontSize: '0.82rem' }}
-                  >
-                    <CodeBracketIcon style={{ width: 16, height: 16, color: 'var(--accent-color)' }} /> SVG Converter
-                  </button>
-                </>
+                <button 
+                  className="btn" 
+                  onClick={() => handleAction('svg-converter')}
+                  style={{ justifyContent: 'flex-start', border: 'none', background: 'transparent', padding: '0.4rem 0.6rem', fontSize: '0.82rem' }}
+                >
+                  <CodeBracketIcon style={{ width: 16, height: 16, color: 'var(--accent-color)' }} /> SVG Converter
+                </button>
               )}
 
               <button 

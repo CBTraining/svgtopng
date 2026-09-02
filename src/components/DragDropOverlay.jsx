@@ -172,11 +172,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
     }
 
     if (dragType === 'svg' || file.name.endsWith('.svg')) {
-      if (action === 'svg-3d') {
-        const text = await file.text();
-        navigate('/svg-to-3d', { state: { svgContent: text, fileName: file.name } });
-        return;
-      } else if (action === 'svg-convert') {
+      if (action === 'svg-convert' || action === 'svg-3d') {
         const text = await file.text();
         navigate('/svg-converter', { state: { svgText: text } });
         return;
@@ -300,10 +296,7 @@ export default function DragDropOverlay({ onDropImageToModal, onDirectDownload, 
           />
         )}
         {dragType === 'svg' && (
-          <>
-            <Card title="Convert SVG to 3D" icon={<CubeIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="svg-3d" />
-            <Card title="SVG Converter" icon={<CodeBracketIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="svg-convert" />
-          </>
+          <Card title="SVG Converter" subtitle="Scale vector graphics, apply color fills, and export PNGs" icon={<CodeBracketIcon style={{ width: 44, height: 44, color: 'var(--primary-color)' }} />} action="svg-convert" />
         )}
         {dragType === 'json' && (
           <>

@@ -29,7 +29,6 @@ import ShapeGenerator from './pages/ShapeGenerator';
 import ComponentGenerator from './pages/ComponentGenerator';
 import VideoFrameExtractor from './pages/VideoFrameExtractor';
 import CollageMaker from './pages/CollageMaker';
-import SvgTo3D from './pages/SvgTo3D';
 import AssetExtractor from './pages/AssetExtractor';
 
 import { NavLink } from 'react-router-dom';
@@ -86,12 +85,6 @@ const FEATURE_CATEGORIES = [
         icon: Square3Stack3DIcon,
         title: 'Photo Collage Maker',
         desc: 'Combine multiple images into customizable grid and masonry photo layouts.'
-      },
-      {
-        to: '/svg-to-3d',
-        icon: CubeIcon,
-        title: 'SVG to 3D',
-        desc: 'Extrude 2D SVG vector graphics into interactive 3D meshes with real-time lighting.'
       },
       {
         to: '/svg-converter',
@@ -779,7 +772,6 @@ function App() {
               <Route path="/component-generator" element={<ComponentGenerator />} />
               <Route path="/video-frame-extractor" element={<VideoFrameExtractor />} />
               <Route path="/collage-maker" element={<CollageMaker />} />
-              <Route path="/svg-to-3d" element={<SvgTo3D />} />
               <Route path="/asset-extractor" element={<AssetExtractor />} />
             </Routes>
           </MainContentWrapper>
